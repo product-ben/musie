@@ -98,18 +98,18 @@ is public.
 | `lib/music.test.ts`, `lib/music.db.test.ts` | the rules, and the database |
 | `lib/mixer.ts`, `lib/mixer.test.ts` | the two-stream playback |
 
-## It does not own `exercise_tracks`
+## It does not own which piece a card plays
 
-> The deck says which piece a card plays; this file says what the pieces are
-> and how the exercises are rendered.
+> The card says which piece it plays; this file says what the pieces are and
+> how the exercises are rendered.
 
 Neither generator writes a row the other owns, **so neither can delete the
 other's work.**
 
 ## `tracks.id` is opaque on purpose
 
-`trk-01`, never a title slug. It reaches the client through `exercise_cuts` and
-`exercise_tracks`, so a title-derived id would hand over the answer the column
+`trk-01`, never a title slug. It reaches the client through `exercise_cuts`,
+the cards and the sessions, so a title-derived id would hand over the answer the column
 grant on `title` exists to withhold.
 
 `licence_ref` was withheld from the client too, from 21 September — **it named

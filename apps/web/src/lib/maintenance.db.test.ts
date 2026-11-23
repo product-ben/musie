@@ -13,8 +13,10 @@
  *      local stack grants every new table to `anon` and `authenticated` by
  *      default, so a missing revoke looks exactly like a working one until
  *      somebody reads a row. CLAUDE.md rule 2.
- *   2. THE PROJECTION. `exercise_tracks` is derived now, and "derived"
- *      is a claim about a function nobody has watched run.
+ *   2. THE PROJECTION. A card's picture and its description are derived,
+ *      and "derived" is a claim about a function nobody has watched run.
+ *      (`exercise_tracks` was the third output until 2026-11-23, when it was
+ *      dropped: the card carries its pieces and nothing read the table.)
  *   3. THE REVERT. A revert that appends rather than erases, and a revert of
  *      a revert that returns to where it started, is the whole of
  *      MAINTENANCE-UI.md §7 — described in prose everywhere and true only
@@ -297,8 +299,8 @@ describe('a piece of music', () => {
 
 /* ── TWO TRACKS PER CARD — 2026-11-20 ──────────────────────────────────────
    The card carries its picture and both pieces, and they move with it (PRD
-   D12). `exercise_tracks` is still projected — activation only — for the
-   branches that read it; the app reads the card. */
+   D12). `exercise_tracks`, the activation-only projection kept for old
+   branches, was dropped on 2026-11-23; these hold the card itself to it. */
 
 describe('a card carries its picture and both pieces', () => {
   beforeEach(async () => {
@@ -310,45 +312,22 @@ describe('a card carries its picture and both pieces', () => {
     await write('card', CARD, { code: CARD_CODE, valence: CELL.valence, arousal: CELL.arousal });
   });
 
-  const pairings = async (): Promise<Record<string, unknown>[]> => {
-    const { data } = await serviceClient()
-      .from('exercise_tracks').select('exercise_id, track_id').eq('card_id', CARD);
-    return (data ?? []) as Record<string, unknown>[];
-  };
-
   const card = async (): Promise<Record<string, unknown>> => {
     const { data } = await serviceClient().from('cards').select('*').eq('id', CARD).single();
     return (data ?? {}) as Record<string, unknown>;
   };
 
-  it('pairs a card with its activation piece, in both card exercises', async () => {
+  it('holds its two pieces apart, each in its own column', async () => {
     await write('card', CARD, { activation_track_id: TRACK });
-
-    const rows = await pairings();
-    expect(rows).toHaveLength(2);
-    expect(new Set(rows.map((r) => r.exercise_id)))
-      .toEqual(new Set(['mindfulness-cards', 'free-rein']));
-    expect(rows.every((r) => r.track_id === TRACK)).toBe(true);
-  });
-
-  it('keeps the relax piece out of exercise_tracks — that table is activation only', async () => {
     await write('card', CARD, { relax_track_id: RELAX });
-    expect(await pairings()).toHaveLength(0);
-    expect((await card()).relax_track_id).toBe(RELAX);
-  });
+    const both = await card();
+    expect(both.activation_track_id).toBe(TRACK);
+    expect(both.relax_track_id).toBe(RELAX);
 
-  it('removes the pairing when the activation piece is cleared', async () => {
-    await write('card', CARD, { activation_track_id: TRACK });
     await write('card', CARD, { activation_track_id: null });
-    expect(await pairings()).toHaveLength(0);
-  });
-
-  /* Archiving names its cost on screen — *this leaves MC-02 · Energie
-     sammeln silent* — and this is the half that makes the sentence true. */
-  it('removes the pairing when the track is retired', async () => {
-    await write('card', CARD, { activation_track_id: TRACK });
-    await write('track', TRACK, { archived_at: new Date().toISOString() });
-    expect(await pairings()).toHaveLength(0);
+    const one = await card();
+    expect(one.activation_track_id).toBeNull();
+    expect(one.relax_track_id).toBe(RELAX);
   });
 
   /* D12, Ben: „alles soll sich mit verschieben". */
@@ -362,7 +341,6 @@ describe('a card carries its picture and both pieces', () => {
     expect(off.activation_track_id).toBe(TRACK);
     expect(off.relax_track_id).toBe(RELAX);
     expect(off.image_url).toBe('art-98-ffffffff.webp');
-    expect(await pairings()).toHaveLength(2);
 
     await write('card', CARD, { valence: CELL.valence, arousal: CELL.arousal });
     expect((await card()).relax_track_id).toBe(RELAX);
@@ -370,24 +348,7 @@ describe('a card carries its picture and both pieces', () => {
 
   it('no longer takes anything from the square it stands on', async () => {
     await write('cell', CELL_ID, { track_id: TRACK });
-    expect(await pairings()).toHaveLength(0);
     expect((await card()).activation_track_id).toBeNull();
-  });
-
-  /**
-   * `card_id is null` rows would be a cardless exercise's OWN track. None has
-   * ever existed, but the projection deletes by card, and a missing
-   * `card_id is not null` would take any of them with it.
-   */
-  it('leaves a cardless exercise\'s own track alone', async () => {
-    const before = await serviceClient()
-      .from('exercise_tracks').select('exercise_id').is('card_id', null);
-
-    await write('card', CARD, { activation_track_id: TRACK });
-
-    const after = await serviceClient()
-      .from('exercise_tracks').select('exercise_id').is('card_id', null);
-    expect(after.data).toEqual(before.data);
   });
 
   it('writes its artwork onto image_url, and the description into both locales', async () => {
@@ -496,6 +457,15 @@ describe('a session plays the piece its goal asks for', () => {
 
   it('no goal („Musie entdecken") → the activation piece, as before', async () => {
     expect(await draw(null)).toEqual({ track_id: TRACK, music_mode: 'activate' });
+  });
+
+  /* Archiving names its cost on screen — *this leaves MC-02 · Energie
+     sammeln silent* — and this is the half that makes the sentence true.
+     (It was asserted on `exercise_tracks` until that table was dropped.) */
+  it('a retired piece plays nothing, and the card keeps naming it', async () => {
+    await write('track', TRACK, { archived_at: new Date().toISOString() });
+    expect(await draw('wake-up')).toEqual({ track_id: null, music_mode: 'activate' });
+    await write('track', TRACK, { archived_at: null });
   });
 
   it('entspannen on a card with no relax piece → nothing, never the other one', async () => {

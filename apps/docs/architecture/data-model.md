@@ -64,7 +64,7 @@ erDiagram
         text kind "card_based | listening_only | digital_interactive"
         int timeframe_min
         int timeframe_max
-        bool needs_cards "mirror of kind, by constraint"
+        text code "EX-01 … printed on the exercise card"
         int cards_dealt "5, 1, or null where none are drawn"
         bool implemented
         int listen_gate_seconds
@@ -181,7 +181,6 @@ difference between them.
 | `exercise_goals` | mapping | `select` |
 | `cards` + `card_i18n` | 9 | `select` |
 | `tracks` | the recordings | `select (id, src, duration_seconds)` only |
-| `exercise_tracks` | pairings | `select` whole — it holds only ids |
 | `exercise_cuts` | the listening exercises' audio | `select` |
 | `sessions` | a person's runs | all four, own rows |
 | `reflections` | one per session | all four, own rows |
@@ -224,13 +223,14 @@ constraint sessions_step_known
 constraint exercises_cards_dealt_matches_kind
   check ((kind = 'card_based') = (cards_dealt is not null))
 
--- needs_cards is a mirror of kind, not a second answer
-constraint exercises_cards_match_kind check ((kind = 'card_based') = needs_cards)
-
--- one pairing per (exercise, card), where null card = the exercise's own track
-constraint exercise_tracks_one_per_pair
-  unique nulls not distinct (exercise_id, card_id)
+-- the code printed on an exercise card, once and never reused
+constraint exercises_code_shape check (code is null or code ~ '^EX-[0-9]{2}$')
+constraint exercises_code_key unique (code)
 ```
+
+`exercises.needs_cards` and `exercise_tracks` were dropped on 2026-11-23: the
+first mirrored `kind`, the second paired cards with tracks that a card now
+names itself.
 
 `sessions_ended_at_matches_status` is written as one equality between booleans
 rather than two or-ed implications because **both failures are equally bad**:
@@ -243,12 +243,13 @@ edge function would each have to be told again.
 
 ## `tracks.id` is TEXT and deliberately meaningless
 
-`trk-01`, never `morgenlicht`. `exercise_tracks.track_id` *is* granted to the
-client, so a slug id would leak the answer through the join the column grant
-exists to protect — and the URL must not carry it either.
+`trk-01`, never `morgenlicht`. Track ids *are* readable by the client —
+`sessions.track_id`, a card's two pieces — so a slug id would leak the answer
+the column grant on `tracks` exists to protect — and the URL must not carry it
+either.
 
 DOMAIN-MODEL.md originally said `sessions.track_id` was a `uuid`. Written as
-uuid the table does not create; only `exercise_tracks.id` is a uuid.
+uuid the table does not create.
 
 ## `exercise_cuts`: the listening exercises' audio
 

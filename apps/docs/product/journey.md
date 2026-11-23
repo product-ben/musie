@@ -28,9 +28,11 @@ flowchart TB
 
 ## The shortcut that is the point
 
-A scanned QR code leads via `/s/:code` **straight into the session** — so you
-can start with the phone's own camera app and land in Musie at exactly the card
-you drew. The card is therefore an advertisement that redeems itself.
+A scanned QR code leads via `/s/:code` **straight into a session** — so you can
+start with the phone's own camera app and land in Musie on the intro of the
+exercise you hold: an exercise card (`EX-02`) starts its exercise, a deck card
+(`MC-04`) starts Freie Bahn with that card. Something already running is asked
+about first. The card is therefore an advertisement that redeems itself.
 
 ## `/` is a decision, not a page
 

@@ -2,52 +2,39 @@
  * A session is already running — the choice, as a dialog.
  *
  * ── WHY A DIALOG ──────────────────────────────────────────────────────────
- * Because a press has already happened and an answer is owed before anything
- * else can occur. The screen behind it offers five cards and a notice saying
- * the same thing (see `RunningSessionNotice` in routes/Exercises.tsx); this is
- * what stops the deck and takes a decision.
+ * Because a press — or a scan — has already happened and an answer is owed
+ * before anything else can occur. On /exercises the screen behind it offers
+ * the pile and a notice saying the same thing (see `RunningSessionNotice` in
+ * routes/Exercises.tsx); after a printed card's QR code (`/s/:code`) there is
+ * nothing behind it at all.
  *
- * The header here used to argue that a dialog was needed because "the refusal
- * is the answer to a SWIPE — a gesture that has already thrown the card off
- * the screen". Both halves of that are stale: /exercises no longer renders a
- * `Message` version of this (the deck replaced the list), and a swipe no longer
- * starts anything — a PRESS does, and the card is still under the thumb.
+ * ── STARTING THE NEW ONE IS THE PRIMARY ANSWER — 2026-11-23 ───────────────
+ * PRD „Übungskarten mit QR-Code" (D13, D14). Ben: the person asked for the
+ * new exercise — by pressing it, or by scanning its card — so starting it is
+ * the likeliest answer and takes the filled treatment. Continuing the running
+ * one is `secondary`. It was the other way round until this day, and the
+ * ghost *Cancel* went with it: the two answers are *start the new one* and
+ * *stay with the old one*, and staying is what continuing is. The X still
+ * closes; what that means is the caller's (D15) — on /exercises the pile is
+ * behind it, after a scan the running session is.
  *
- * ── IT IS THE SECOND PLACE THIS IS SAID, AND THE WORDS ARE THE SAME ───────
- * `exercises.running.headline` names the running exercise here and in the
- * notice at the top of the screen. The dialog adds exactly one sentence the
- * notice does not need — `exercises.running.choice`, which is the choice — and
- * leaves out exactly one the notice has: where the run stopped. That is not
- * symmetry for its own sake. `session.step.intro` is the word *Start*, and
- * "You stopped at Start" beside a button reading "Start Body Scan and end this
- * one" is a riddle. The notice has no Start button, so it carries the step.
+ * L6's order, unchanged: the likeliest answer outermost, the quieter one
+ * first in the DOM so tab order matches the screen.
  *
- * ── THE ANSWER THAT LOSES NOTHING IS THE PRIMARY ONE ──────────────────────
- * *Continue session* is `primary`: it is the way on from here and it costs
- * nothing. Ending is `secondary` and spells out what it ends, *Cancel* is
- * `ghost`, and the order is L6's — the likeliest answer outermost, the quiet
- * one first in the DOM so tab order matches the screen.
- *
- * THE DIALOG SAYS WHAT ENDING COSTS, which it never did: a session recorded
- * `abandoned` cannot be picked up again, and until now the only screen that
- * said so was the one you close a session FROM (`session.close.text`). The
- * button that does it from the outside said nothing at all.
+ * ── ITS OWN TITLE, AND THE SENTENCE NAMES BOTH ────────────────────────────
+ * „Neue Übung starten?" (Ben, 2026-11-23), where the dialog used to repeat
+ * the notice's „{name} läuft noch". The notice keeps that headline. With the
+ * running exercise gone from the title, the sentence names both — and says
+ * what ending costs: a session recorded `abandoned` cannot be picked up again.
  *
  * ── NO CONTENT BOX, AND THAT IS THE FIX RATHER THAN A SHORTCUT ────────────
  * Every other lightbox in this app frames its content in a `ContentBox` and
- * hides one of the two headlines — the dialog's or the box's. Measured: that
- * leaves BOTH headings in the accessibility tree with the same accessible
- * name, because `.musy-sr-only` hides a heading from the eye and from nothing
- * else. A screen reader navigating by heading hears the sentence twice, and
- * `getByRole('heading', { name })` matches two elements, which is how the
- * end-to-end walks have been failing.
- *
- * `ContentBox` cannot be asked to drop it — `headline` is required and its own
- * docs say "Never remove the headline to hide it", because the headline is the
- * article's accessible name. So the box goes instead. This is the system's own
- * `MinimalContent` shape (Lightbox.stories.tsx): a title, a line of body copy,
- * and the actions. The box earns its place where the frame means something;
- * here it was a wrapper repeating the dialog's name back to it.
+ * hides one of the two headlines. That leaves BOTH headings in the
+ * accessibility tree with the same name (`.musy-sr-only` hides from the eye
+ * only), and `getByRole('heading', { name })` matches two. `ContentBox` cannot
+ * drop its required headline, so the box goes: this is the system's own
+ * `MinimalContent` shape (Lightbox.stories.tsx) — a title, a line of body
+ * copy, and the actions.
  */
 import { ButtonGroup, Button, Lightbox } from '@musie/design-system';
 import { Link } from 'react-router';
@@ -55,14 +42,15 @@ import { useT } from '../i18n/localeContext';
 import type { ActiveSession } from '../lib/session';
 
 export interface SessionRunningLightboxProps {
-  /** The exercise that was asked for, named in the destructive action. */
+  /** The exercise that was asked for, named in the primary action. */
   name: string;
   /**
-   * The exercise that is RUNNING, named in the headline.
+   * The exercise that is RUNNING, named in the sentence and the secondary
+   * action.
    *
    * Null when the catalogue has no row for `session.exerciseId` — content it
    * does not know about, or a session started before an exercise was retired.
-   * The dialog falls back to naming no exercise rather than printing an id.
+   * The dialog then names no exercise rather than printing an id.
    */
   runningName: string | null;
   /** The running session, or null when reading it back also failed. */
@@ -71,6 +59,7 @@ export interface SessionRunningLightboxProps {
   onEndAndStart: () => void;
   /** True while that is in flight. */
   starting: boolean;
+  /** The X and Escape. What closing means is the caller's (D15). */
   onClose: () => void;
 }
 
@@ -79,64 +68,56 @@ export function SessionRunningLightbox({
 }: SessionRunningLightboxProps) {
   const t = useT();
 
-  /* THE HEADLINE NEEDS A NAME AND MIGHT NOT HAVE ONE. `exercises.running.*`
-     interpolates the running exercise; with no row to read it from, the generic
-     noun is the honest filler — "A session is still running" rather than an id
-     nobody has seen before. */
-  const running = runningName ?? t('exercises.running.fallback');
-
   return (
     <Lightbox
       open
-      /* VISIBLE, and drawn exactly once. It was `titleHidden` with the same
-         sentence repeated as the box's headline below — which put two headings
-         with one accessible name in the tree, read as a stutter to a screen
-         reader, and made `getByRole('heading')` ambiguous for the walks. The
-         box hides its headline instead, exactly as the close-session
-         confirmation does (routes/Session.tsx). */
-      title={t('exercises.running.headline', { name: running })}
+      title={t('exercises.running.dialogTitle')}
       closeLabel={t('common.closeLabel')}
       /* No `trigger`: a press on a card opened this, and that card is still
-         mounted behind the scrim — base-ui returns focus to it. */
+         mounted behind the scrim — base-ui returns focus to it. After a scan
+         there is nothing to return to, and the caller navigates instead. */
       onOpenChange={(next) => {
         if (!next) onClose();
       }}
     >
       <div className="musie-dialog">
-        <p data-type-step="body-md">{t('exercises.running.choice', { name })}</p>
+        <p data-type-step="body-md">
+          {runningName === null
+            ? t('exercises.running.replaceUnknown', { name })
+            : t('exercises.running.replace', { name, running: runningName })}
+        </p>
 
         {/* L6's action row: the likeliest answer outermost, the quiet one first
             in the DOM so tab order matches the screen. */}
         <ButtonGroup align="end">
-          <Button variant="ghost" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            variant="secondary"
-            loading={starting}
-            loadingLabel={t('content.loading')}
-            onClick={onEndAndStart}
-          >
-            {t('exercises.endAndStart', { name })}
-          </Button>
-          {/* THE ONE THAT LOSES NOTHING. Absent when the running session could
+          {/* STAYING WITH THE RUNNING ONE. Absent when the running session could
               not be read back — there is nowhere to send anybody — and then the
-              dialog is a choice between ending and backing out, which is the
-              honest shape of that state.
+              dialog is starting or closing, which is the honest shape of that
+              state.
 
               `nativeButton={false}` because this one renders an `<a>`: base-ui
               asks to be told, and warns in the console when it is not. */}
           {session !== null && (
             <Button
-              variant="primary"
+              variant="secondary"
               nativeButton={false}
               render={
                 <Link to={`/session/${encodeURIComponent(session.id)}/${session.step}`} />
               }
             >
-              {t('exercises.goToSession')}
+              {runningName === null
+                ? t('exercises.goToSession')
+                : t('exercises.running.continue', { name: runningName })}
             </Button>
           )}
+          <Button
+            variant="primary"
+            loading={starting}
+            loadingLabel={t('content.loading')}
+            onClick={onEndAndStart}
+          >
+            {t('exercises.running.start', { name })}
+          </Button>
         </ButtonGroup>
       </div>
     </Lightbox>

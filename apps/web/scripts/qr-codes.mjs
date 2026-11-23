@@ -45,8 +45,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS = join(HERE, '..', '..', '..', 'supabase', 'migrations');
 
 /** Kept in step with `src/lib/scanCode.ts` by the round-trip test there. */
-const CARD_CODE = /^MC-\d{2}$/;
-const CARD_CODE_ANYWHERE = /'(MC-\d{2})'/g;
+/* A deck card (`MC-NN`) or, since 2026-11-23, an exercise card (`EX-NN`) —
+   `src/lib/scanCode.ts`'s CARD_CODE and EXERCISE_CODE. */
+const CARD_CODE = /^(MC|EX)-\d{2}$/;
+const CARD_CODE_ANYWHERE = /'((?:MC|EX)-\d{2})'/g;
 
 /** The dev server, so the default output is scannable without an argument. */
 const DEFAULT_BASE_URL = 'http://localhost:5173';

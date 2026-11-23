@@ -14,7 +14,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { CARD_CODE, decodeScan, scanLink } from './scanCode';
+import { CARD_CODE, decodeLink, decodeScan, scanLink } from './scanCode';
 
 describe('decodeScan', () => {
   /* ── PAYLOAD FORM 1: the URL a phone camera follows ───────────────────── */
@@ -92,6 +92,33 @@ describe('scanLink', () => {
   it('refuses a code it could not decode again', () => {
     expect(() => scanLink('MC-1', 'https://musie.app')).toThrow(/not a card code/);
     expect(() => scanLink('', 'https://musie.app')).toThrow(/not a card code/);
+  });
+});
+
+describe('decodeLink', () => {
+  it('names a deck card and an exercise apart', () => {
+    expect(decodeLink('https://musie.org/s/MC-04')).toEqual({ kind: 'card', code: 'MC-04' });
+    expect(decodeLink('https://musie.org/s/EX-02')).toEqual({ kind: 'exercise', code: 'EX-02' });
+    expect(decodeLink('ex-05')).toEqual({ kind: 'exercise', code: 'EX-05' });
+  });
+
+  it('refuses the shapes the printed codes do not use', () => {
+    expect(decodeLink('EX-1')).toBeNull();
+    expect(decodeLink('EX02')).toBeNull();
+    expect(decodeLink('XY-01')).toBeNull();
+    expect(decodeLink('')).toBeNull();
+  });
+
+  /* The in-app scanner reads deck cards only: an exercise card held up to a
+     card exercise's scan step is not a card. */
+  it('leaves decodeScan to deck cards', () => {
+    expect(decodeScan('https://musie.org/s/EX-02')).toBeNull();
+  });
+
+  it('round-trips an exercise link', () => {
+    for (const code of ['EX-01', 'EX-08']) {
+      expect(decodeLink(scanLink(code, 'https://musie.org'))).toEqual({ kind: 'exercise', code });
+    }
   });
 });
 

@@ -51,6 +51,27 @@
  */
 export const CARD_CODE = /^MC-\d{2}$/;
 
+/**
+ * The shape of a code printed on an EXERCISE card — 2026-11-23, PRD
+ * „Übungskarten mit QR-Code" (D4).
+ *
+ * `exercises.code` is `EX-01` … `EX-08`, held to this shape by
+ * `exercises_code_shape`. Same rules as `CARD_CODE` and for the same reasons:
+ * two digits, the hyphen required, shape only — whether an exercise carries
+ * the code is the database's question.
+ *
+ * A SECOND PATTERN, NOT A WIDER FIRST ONE. The in-app scanner on a card
+ * exercise's scan step reads deck cards and nothing else; an exercise card
+ * held up to it is "not a card code", which is what `decodeScan` says. Only
+ * the link (`/s/:code`) takes both, through `decodeLink`.
+ */
+export const EXERCISE_CODE = /^EX-\d{2}$/;
+
+/** What a link's code names: a deck card or an exercise. */
+export type LinkCode =
+  | { kind: 'card'; code: string }
+  | { kind: 'exercise'; code: string };
+
 /** The one path segment `/s/:code` is mounted at. Shared so the route table
  *  and the generator cannot drift into two spellings of one link. */
 export const SCAN_PATH = 's';
@@ -75,8 +96,27 @@ export const SCAN_PATH = 's';
  * reads the printed form, would then be the strict one.
  */
 export function decodeScan(scanned: string): string | null {
+  const code = lastSegment(scanned);
+  return CARD_CODE.test(code) ? code : null;
+}
+
+/**
+ * The code a LINK carries, deck card or exercise — `/s/:code`.
+ *
+ * The same reading as `decodeScan` (last segment, case-folded, shape only),
+ * with the second shape allowed. Null for anything else.
+ */
+export function decodeLink(scanned: string): LinkCode | null {
+  const code = lastSegment(scanned);
+  if (CARD_CODE.test(code)) return { kind: 'card', code };
+  if (EXERCISE_CODE.test(code)) return { kind: 'exercise', code };
+  return null;
+}
+
+/** The last non-empty path segment, upper-cased; empty when there is none. */
+function lastSegment(scanned: string): string {
   const trimmed = scanned.trim();
-  if (trimmed === '') return null;
+  if (trimmed === '') return '';
 
   /* Query and fragment first: they can contain slashes, so stripping them
      after the split would hand back a segment of somebody's tracking
@@ -84,8 +124,7 @@ export function decodeScan(scanned: string): string | null {
   const path = trimmed.split('#')[0].split('?')[0];
   const segment = path.split('/').filter((part) => part !== '').pop() ?? '';
 
-  const code = segment.toUpperCase();
-  return CARD_CODE.test(code) ? code : null;
+  return segment.toUpperCase();
 }
 
 /**
@@ -103,7 +142,7 @@ export function decodeScan(scanned: string): string | null {
  */
 export function scanLink(code: string, baseUrl: string): string {
   const upper = code.trim().toUpperCase();
-  if (!CARD_CODE.test(upper)) {
+  if (!CARD_CODE.test(upper) && !EXERCISE_CODE.test(upper)) {
     throw new Error(`[musie] "${code}" is not a card code, so it cannot be printed as one`);
   }
   /* A base that already ends in a slash is the common mistake, and it would

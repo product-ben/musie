@@ -138,8 +138,8 @@ than returning null — there is no policy to get wrong and no filter to forget.
 `licence_ref` was later revoked too: it is an operator record, not a listener's.
 
 Track ids are **deliberately meaningless** — `trk-01`, never `morgenlicht` —
-because `exercise_tracks.track_id` *is* granted, so a slug id would leak
-through the join the column grant exists to protect. The URL must not carry the
+because track ids *are* readable — `sessions.track_id`, a card's two pieces —
+so a slug id would leak what the column grant exists to protect. The URL must not carry the
 answer either.
 
 Release happens in [`reveal-track`](/features/listen), which takes a **session
@@ -170,7 +170,6 @@ users:
 - the three granted `tracks` columns read — the positive control, so a
   false pass is visible;
 - `title`, `artist` and `licence_ref` are refused;
-- `exercise_tracks` is granted whole, because it holds only ids;
 - content tables are readable and **never** writable;
 - the renamed goal tables kept the access they had, and no longer answer to
   the old names.

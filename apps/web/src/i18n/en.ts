@@ -465,11 +465,18 @@ export const en = {
      else. 'End', not 'close': the row is written `abandoned`, which is what the
      diary already calls a run that stopped before its reflection. */
   'exercises.running.end': 'End that session',
-  /* Only in the dialog, where a choice is actually being asked for. The last
-     sentence is the honest one and it is new: `session.close.text` has always
-     said a closed run cannot be picked up again, and the dialog whose second
-     button does exactly that never mentioned it. */
-  'exercises.running.choice': 'You can pick it up where you left it, or end it and start {name} instead. A session you end cannot be picked up again.',
+  /* ── THE DIALOG, 2026-11-23 — PRD „Übungskarten mit QR-Code" (D13, D14) ──
+     Starting the new exercise is now the primary answer, here and after a
+     scanned card, and the dialog has its own title: Ben asked for „Neue Übung
+     starten?" in place of „… läuft noch", which stays the notice's headline
+     above the pile. With the running exercise gone from the title, the
+     sentence names both — and says what ending costs. */
+  'exercises.running.dialogTitle': 'Start a new exercise?',
+  'exercises.running.replace': 'Starting {name} ends {running}. A session you end can’t be picked up again.',
+  /* The running exercise could not be named (no catalogue row for it). */
+  'exercises.running.replaceUnknown': 'Starting {name} ends the session that is running. A session you end can’t be picked up again.',
+  'exercises.running.start': 'Start {name}',
+  'exercises.running.continue': 'Continue {name}',
   /* THE SAME WORDS THE DRAWER USES (`menu.continueSession`), deliberately: two
      doors to one running session that name it differently are two doors people
      have to learn separately. Two keys rather than one because they are
@@ -477,13 +484,6 @@ export const en = {
      of a dialog. If a third place ever needs this sentence, it moves to
      `common.`. */
   'exercises.goToSession': 'Continue session',
-  /* THE OTHER WAY OUT, and the exercise's name stays at the FRONT (Ben,
-     2026-09-24: it is what you look for when you reach for this button). What
-     went is the description of the other session — 'and end the previous
-     session' — now that the headline above names it. The session it ends is
-     recorded as abandoned, so 'end' is the honest verb and 'finish' would be a
-     lie about the row. */
-  'exercises.endAndStart': 'Start {name} and end this one',
   /* NOT `content.error`. That one says "This content could not be loaded",
      which is true of a list that did not arrive and false of a tap that did
      not start anything — and this is the only thing on the screen that says
@@ -672,10 +672,6 @@ export const en = {
   'session.scan.codeMalformed': 'A card code looks like MC-01. Check the one printed on your card.',
   'session.scan.codeUnknown': 'No card in this deck carries the code {code}.',
   'session.scan.codeFailed': 'That could not be checked. Try again in a moment.',
-  /* Pre-filled from a code scanned before there was a session to put it in
-     (lib/scan.ts). It says where the code came from, because a field that
-     filled itself without explanation is the app having decided something. */
-  'session.scan.heldHint': 'This is the card you scanned. Use it, or type a different code.',
   'session.scan.done': 'Card scanned',
   'session.scan.yourCard': 'Your card',
   'session.scan.again': 'Scan a different card',
@@ -1479,20 +1475,14 @@ export const en = {
   'scan.route.title': 'Scanned card',
   'scan.working': 'Looking up that card…',
   'scan.malformed.title': 'That is not a card code',
-  'scan.malformed.text': 'The code in that link is not one of Musie’s. A card code looks like MC-01.',
+  'scan.malformed.text': 'The code in that link is not one of Musie’s. A card code looks like MC-01 or EX-01.',
   'scan.unknown.title': 'No card with that code',
   'scan.unknown.text': 'The code {code} is not in this deck.',
-  /* NOT AN ERROR, and the commonest one of the five: somebody with the deck in
-     their hands scans a card before starting anything. The code is held and
-     the scan step will have it typed in — see `lib/scan.ts`. */
-  'scan.noSession.title': 'You scanned {code}',
-  'scan.noSession.text': 'Nothing is running yet. Choose an exercise, and this card will be waiting at the scan step.',
+  /* „Nothing is running" and „this exercise draws no cards" went on
+     2026-11-23: a scanned card now STARTS something — Freie Bahn, or the
+     exercise an exercise card names — and anything already running is asked
+     about in the dialog (PRD „Übungskarten mit QR-Code", D2, D3). */
   'scan.chooseExercise': 'Choose an exercise',
-  /* A cardless exercise skips the scan step entirely, so a scanned card has
-     nowhere to go. Said plainly rather than silently ignored. */
-  'scan.cardless.title': 'This exercise draws no cards',
-  'scan.cardless.text': 'The session you are in works without the deck, so this card has nowhere to go.',
-  'scan.cardless.action': 'Back to the session',
 
   /* ── The dev QR sheet · E.0 ──────────────────────────────────────────────
      DEV-ONLY, AND LAZILY ROUTED so a visitor downloads none of it. It exists
@@ -1502,9 +1492,9 @@ export const en = {
      It generates its codes from the origin it was LOADED from, which is what
      makes it work with no domain: open it on the laptop, scan it with the
      phone against the same dev server, and the link resolves. */
-  'scan.dev.title': 'QR codes for the deck',
+  'scan.dev.title': 'QR codes for the deck and the exercise cards',
   'scan.dev.text': 'Generated from {origin}, so every code here points back at the server that served this page. Print day is the same codes from the generator script, with the real address.',
-  'scan.dev.qrLabel': 'QR code for card {code}',
+  'scan.dev.qrLabel': 'QR code for {code}',
   /* ── Voice · what @musie/voice could not say for itself ─────────────────
      F.0 brought the voice proof-of-concept in as a package below the app, and
      a package below the app cannot hold a user-visible string: it has no

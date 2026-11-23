@@ -120,6 +120,7 @@ function freshRow(): SessionRow {
     rejectedThisRound: [],
     posture: null,
     ending: null,
+    goalId: null,
   };
 }
 

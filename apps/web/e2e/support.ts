@@ -447,41 +447,69 @@ export async function startExercise(page: Page, locale: Locale, named?: string) 
 }
 
 /**
- * Walk a fresh visitor from the explainer to the exercise library.
+ * A signed-in account, on the exercise library.
  *
- * Every walk starts here — a new browser profile has no user type, so `/` is
- * the carousel and the CTA is locked until the last slide has been seen.
- * Shared so a second walk cannot get the preamble subtly different from the
- * first and then disagree about where the product begins.
+ * Every walk starts here. It used to walk a fresh visitor through the
+ * explainer carousel and *About you*, which is where an ANONYMOUS account
+ * began. Anonymous accounts went on 2026-10-20 and the first screen became the
+ * sign-in gate, so every walk that started here stopped at the gate — the
+ * suite was red on `main` for that reason alone (OPEN-QUESTIONS.md). Since
+ * 2026-11-23 it signs an onboarded account in (`signIn`, below) and opens the
+ * library, which is where every caller wanted to be.
  */
 export async function reachTheLibrary(page: Page, locale: Locale) {
-  await page.goto('/');
-
-  const carousel = page.getByRole('group', { name: /.+/ }).first();
-  await expect(carousel).toBeVisible({ timeout: 15_000 });
-
-  /* Next until it locks. Found by its accessible name, which the carousel
-     takes from the catalogue, so the German run presses the German button. */
-  const next = page.getByRole('button', { name: label(locale, 'about.nextSlide'), exact: true });
-  for (let i = 0; i < 10; i += 1) {
-    if (await next.isDisabled()) break;
-    await next.click();
-    await page.waitForTimeout(150);
-  }
-  await expect(next).toBeDisabled();
-
-  const start = page.getByRole('button', { name: label(locale, 'menu.startSession'), exact: true });
-  await expect(start).toBeEnabled();
-  await start.click();
-
-  /* About you — "By myself" is preselected, so Continue does the writing and
-     nothing has to be picked. That is the path almost everyone takes. */
-  await expect(page).toHaveURL(/\/about-you$/);
-  await expect(page.getByRole('radio').first()).toBeChecked();
-
-  const carryOn = page.getByRole('button', { name: label(locale, 'common.continue'), exact: true });
-  await expect(carryOn).toBeEnabled();
-  await carryOn.click();
-
+  await signIn(page, locale);
+  await page.goto('/exercises');
   await expect(page).toHaveURL(/\/exercises$/);
+}
+
+/**
+ * A signed-in, onboarded account, in the run's locale — for the walks that
+ * start at a printed card's link (2026-11-23).
+ *
+ * `reachTheLibrary` above walks the explainer carousel, which anonymous
+ * accounts used to reach; since 2026-10-20 the first screen is the sign-in
+ * gate and that walk ends there. This is `instruments.spec.ts`'s way in,
+ * shared: the service role creates the account, answers the two consent
+ * questions and the legal documents so no dialog stands in the way, sets the
+ * profile's language (a signed-in profile's language wins over the browser's),
+ * and the session is put where supabase-js looks for it before the first
+ * paint. The sign-in screen itself — which mails a one-time code — is walked
+ * by `scanlink.spec.ts` once, for the signed-out scan.
+ */
+export async function signIn(page: Page, locale: Locale, options: { inject?: boolean } = {}): Promise<{
+  userId: string;
+  email: string;
+}> {
+  const admin = service();
+  const email = `walk-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@musie.test`;
+  const password = `walk-${Math.random().toString(36).slice(2)}A1!`;
+  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  if (created.error !== null) throw created.error;
+  const userId = created.data.user.id;
+
+  const now = new Date().toISOString();
+  const profile = await admin.from('profiles').update({
+    language: locale,
+    user_type_id: 'by-myself',
+    analytics_consent: 'refused', analytics_consent_at: now, analytics_consent_version: '2026-10-20',
+    research_consent: 'refused', research_consent_at: now, research_consent_version: '2026-10-20',
+  }).eq('user_id', userId);
+  if (profile.error !== null) throw profile.error;
+
+  const legal = await admin.from('legal_acceptances').insert([
+    { user_id: userId, document: 'terms', version: '2026-10-20', accepted_at: now },
+    { user_id: userId, document: 'privacy', version: '2026-10-20', accepted_at: now },
+  ]);
+  if (legal.error !== null) throw legal.error;
+
+  if (options.inject !== false) {
+    const signed = await admin.auth.signInWithPassword({ email, password });
+    if (signed.error !== null) throw signed.error;
+    const storageKey = `sb-${new URL(stack().API_URL).hostname.split('.')[0]}-auth-token`;
+    await page.addInitScript(([key, value]) => {
+      localStorage.setItem(key, value);
+    }, [storageKey, JSON.stringify(signed.data.session)] as const);
+  }
+  return { userId, email };
 }

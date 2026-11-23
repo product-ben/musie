@@ -844,6 +844,50 @@ export async function getListenAudio(
  * the client is not granted at all, so the reveal needs its own call, designed
  * with the reveal.
  */
+/**
+ * The exercise an EXERCISE CARD names — `EX-02` → Freie Bahn — or null.
+ *
+ * `exercises.code` (2026-11-23, PRD „Übungskarten mit QR-Code"). A lookup of
+ * its own rather than a field on `Exercise`: the code matters to exactly one
+ * screen, `/s/:code`, and every other reader of an exercise — the library,
+ * the session, the builder's previews — would carry it for nothing.
+ *
+ * An exercise that is not implemented counts as unknown: no printed card
+ * names one (EX-03 is reserved), and a link to it must not start a run that
+ * has no steps to show.
+ */
+export async function getExerciseByCode(code: string, locale: Locale): Promise<Exercise | null> {
+  const { data, error } = await getSupabase()
+    .from('exercises')
+    .select('id')
+    .eq('code', code)
+    .eq('implemented', true)
+    .maybeSingle();
+
+  if (error !== null) fail(`exercises (code=${code})`, error.message);
+  if (data === null) return null;
+
+  return getExercise(data.id, locale);
+}
+
+/**
+ * Every exercise card's code, in catalogue order — for `/dev/qr`, which
+ * shows the exercise cards' codes beside the deck's so they can be scanned
+ * without a print (PRD „Übungskarten mit QR-Code", P5). Implemented
+ * exercises only: those are the ones with a card.
+ */
+export async function getExerciseCodes(): Promise<{ id: string; code: string }[]> {
+  const { data, error } = await getSupabase()
+    .from('exercises')
+    .select('id, code')
+    .eq('implemented', true)
+    .not('code', 'is', null)
+    .order('sort');
+
+  if (error !== null) fail('exercises (codes)', error.message);
+  return (data ?? []).flatMap((row) => (row.code === null ? [] : [{ id: row.id, code: row.code }]));
+}
+
 export async function getCardByCode(code: string, locale: Locale): Promise<Card | null> {
   const { data, error } = await getSupabase()
     .from('cards')

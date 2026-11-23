@@ -1,162 +1,162 @@
 /**
- * `/s/:code` — where a QR code on a paper card lands. E.0.
+ * `/s/:code` — where a QR code on a printed card lands. E.0, and since
+ * 2026-11-23 the start of a run (PRD „Übungskarten mit QR-Code").
  *
- * ── THIS IS THE COMMON WAY IN, AND IT NEVER OPENS MUSIE'S CAMERA ───────────
- * The code printed on a card carries `<origin>/s/MC-01`. A phone's own camera
- * app reads that without Musie being open, which means the ordinary path from
- * a printed card to a running session goes through this route rather than
- * through the in-app reader — and it works today, before E.2 and E.3 exist.
- * That is what E.0 bought.
+ * ── TWO KINDS OF CARD, AND BOTH START SOMETHING ───────────────────────────
+ * An EXERCISE card (`EX-02`) starts its exercise. A DECK card (`MC-04`)
+ * starts Freie Bahn with that card (D2): its picture stands in the intro, and
+ * „Weiter" writes the card and skips the scan step, straight to the music.
+ * Either way the run opens on its intro, where a card exercise asks „Was
+ * brauchst du gerade?" (D5, D6).
  *
- * ── SAME-ORIGIN, WHICH IS WHY NO DOMAIN IS NEEDED ─────────────────────────
- * The route is relative. It resolves on `localhost:5173`, on a LAN address a
- * phone can reach, on a branch preview URL and on whatever domain eventually
- * exists, with nothing configured anywhere. The decoder never compares a host
- * (lib/scanCode.ts), so a code printed for one origin still decodes at
- * another — which matters exactly once, on the day the domain changes and the
- * cards are already printed.
+ * Until this day a deck card was written INTO the running session, a card
+ * scanned with nothing running was held for later, and a cardless exercise
+ * was told it had no use for one. All three went (D2, D3): the phone's camera
+ * app always starts, and whatever is running is asked about.
  *
- * ── IT IS A RESOLVER, NOT A SCREEN ────────────────────────────────────────
- * The happy path renders nothing: it writes the card to the running session
- * and replaces itself with that session's LISTEN step. The four states below
- * are the ways that cannot happen, and none of them is dressed as an error —
- * "nothing is running yet" is the commonest of them and is simply what
- * happens when somebody with the deck in their hands scans a card first.
+ * ── SOMETHING IS RUNNING: THE DIALOG, ALWAYS ──────────────────────────────
+ * Even for the same exercise, and even while a card exercise waits on its scan
+ * step (D3): a QR code is a deliberate request to start fresh. Primary starts
+ * the new run and ends the old one as abandoned; secondary continues the old
+ * one at its step. The X does what *continue* does (D15) — there is no screen
+ * behind this route to go back to.
  *
- * ── IT LANDS ON `listen`, AND IT WRITES THE STEP TO GET THERE ─────────────
- * Ben, 2026-09-24: scanning a card successfully IS finishing the scan step, so
- * a scan takes the person to the recording rather than to a screen that tells
- * them which card they are holding. It used to land on `scan`.
+ * ── HOW THE RUN BEGAN TRAVELS IN THE ADDRESS (V3) ─────────────────────────
+ * `lib/startedVia.ts`: `?via=exercise-card`, or `?via=deck-card&card=MC-04`,
+ * on the intro. The deck card is written only on „Weiter", once the goal is
+ * final (D11), and the address is where it waits until then.
  *
- * The write is not optional and it is not bookkeeping. The session this link
- * lands on may be standing anywhere — commonly `intro`, because the deck is in
- * somebody's hand before they have pressed Continue — and `listen` is
- * unreachable from there by the reachability rule, so the session screen's
- * guard would bounce them straight back. `saveStep` is what makes the step
- * they are being sent to the step the session is actually on; the machine then
- * derives `completed` from it on arrival (`completedBefore`), which is the
- * same path *Continue session* takes.
+ * ── SAME-ORIGIN, WHICH IS WHY NO DOMAIN IS NEEDED HERE ────────────────────
+ * The route is relative and the decoder never compares a host
+ * (lib/scanCode.ts), so a card printed for `musie.org` decodes on localhost,
+ * on a preview, and on the real domain alike.
  *
- * `replace`, so Back from the session does not land on a resolver that would
- * resolve all over again.
- *
- * ── A SCAN ENDS A DIGITAL RUN, AND THAT IS BEN'S DECISION ──────────────────
- * Ben, 2026-10-13, asked which should win when a card is scanned into a
- * session that was started without the deck: *Scan gewinnt*. A code on a
- * printed card is proof that the deck is in somebody's hands, and the switch
- * said otherwise only because it was answered before they went looking.
- *
- * So `digital_cards` goes off here. It is not cosmetic: that column decides
- * which steps the run HAS, so a row left saying `true` would send this person
- * to a rail naming a step they skipped — *Auswählen*, offering five cards the
- * deterministic deal chose, none of them necessarily the card in their hand.
- * Written only when it is actually true, so the ordinary scan costs no extra
- * request, and AWAITED for the same reason `saveStep` is: the session screen
- * computes the step list the moment it mounts.
+ * ── SIGNED OUT ────────────────────────────────────────────────────────────
+ * The sign-in gate renders above the router (main.tsx) and keeps the address,
+ * so this route runs after signing in, with the code it was opened with (A11).
  */
-import { Link, Navigate, useParams } from 'react-router';
+import * as React from 'react';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router';
 import { ContentBox, Button, Message } from '@musie/design-system';
+import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
 import { useLocale, useT } from '../i18n/localeContext';
-import { getCardByCode, getExercise } from '../lib/content';
-import { holdCode, scanCardInto } from '../lib/scan';
-import { decodeScan } from '../lib/scanCode';
-import { readActiveSession, readSession, saveDigitalCards, saveStep } from '../lib/session';
+import { useAuth } from '../lib/authContext';
+import { getCardByCode, getExercise, getExerciseByCode, getGoals } from '../lib/content';
+import type { Exercise } from '../lib/content';
+import { readCachedGoal } from '../lib/goals';
+import { decodeLink } from '../lib/scanCode';
+import type { ActiveSession } from '../lib/session';
+import { startSession } from '../lib/startSession';
+import { goalForPrintedStart, introPath } from '../lib/startedVia';
+import type { StartedVia } from '../lib/startedVia';
 import { useAsync } from '../lib/useAsync';
-import type { StepId } from '../routeHandle';
+import type { Locale } from '../i18n';
+
+/** The exercise a deck card starts (D2). */
+const FREE_REIN = 'free-rein';
+
+/** A run the link asks for, once it is known what it is. */
+interface Request {
+  exercise: Exercise;
+  goalId: string | null;
+  via: StartedVia;
+  /** The deck card's code, for a deck card. */
+  cardCode?: string;
+}
 
 /** What the link turned out to mean. */
 type Landing =
-  /** Written to the running session; the listen step is where the person goes. */
-  | { kind: 'applied'; sessionId: string }
-  /** The link did not carry a card code at all. */
+  /** Not signed in yet — the gate is above this, so this is a frame or two. */
+  | { kind: 'waiting' }
+  /** Started: the intro is where the person goes. */
+  | { kind: 'started'; path: string }
+  /** Something is running: the dialog asks. */
+  | { kind: 'running'; request: Request; session: ActiveSession | null; runningName: string | null }
+  /** The link did not carry a code at all. */
   | { kind: 'malformed' }
-  /** A well-formed code that this deck does not have. */
-  | { kind: 'unknown'; code: string }
-  /** Nothing is running, so the code is held for the scan step. */
-  | { kind: 'no-session'; code: string }
-  /** The running session's exercise draws no cards. */
-  | { kind: 'cardless'; sessionId: string; step: StepId };
+  /** A well-formed code that names no card and no exercise. */
+  | { kind: 'unknown'; code: string };
+
+/**
+ * ── ONE START PER ARRIVAL ─────────────────────────────────────────────────
+ * Starting a session is not idempotent, and `useAsync` runs its effect twice
+ * under StrictMode in development: the second call would find the first one's
+ * session running and open the dialog over the run that was just started.
+ * So the resolution is held per arrival — the router's `location.key`, which
+ * is new for every navigation and the same for both effect runs.
+ */
+const arrivals = new Map<string, Promise<Landing>>();
+
+async function resolve(
+  scanned: string,
+  userId: string,
+  locale: Locale,
+): Promise<Landing> {
+  const decoded = decodeLink(scanned);
+  if (decoded === null) return { kind: 'malformed' };
+
+  /* The exercise this code starts, and — for a deck card — the card. Checked
+     BEFORE anything is started, so a mistyped or foreign code writes
+     nothing. */
+  let exercise: Exercise | null;
+  let via: StartedVia;
+  let cardCode: string | undefined;
+  if (decoded.kind === 'card') {
+    const card = await getCardByCode(decoded.code, locale);
+    if (card === null) return { kind: 'unknown', code: decoded.code };
+    exercise = await getExercise(FREE_REIN, locale);
+    via = 'deck-card';
+    cardCode = card.code;
+  } else {
+    exercise = await getExerciseByCode(decoded.code, locale);
+    via = 'exercise-card';
+  }
+  if (exercise === null) return { kind: 'unknown', code: decoded.code };
+
+  /* D10 and D12: the goal last chosen in the library if this exercise serves
+     it, else its first goal in the sheet's order. The intro may change it. */
+  const goals = await getGoals(locale);
+  const goalId = goalForPrintedStart(exercise, goals, readCachedGoal(goals));
+
+  const request: Request = { exercise, goalId, via, cardCode };
+  const result = await startSession({ userId, exercise, goalId, replacing: null, via });
+  if (result.kind === 'started') {
+    return { kind: 'started', path: introPath(result.session.id, via, cardCode) };
+  }
+
+  const runningName = result.session === null
+    ? null
+    : (await getExercise(result.session.exerciseId, locale))?.name ?? null;
+  return { kind: 'running', request, session: result.session, runningName };
+}
 
 export function ScanLink() {
   const t = useT();
   const { locale } = useLocale();
   const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { userId } = useAuth();
 
   const scanned = params.code ?? '';
+  const arrival = `${location.key}:${userId ?? '-'}:${scanned}:${locale}`;
 
-  const { data, loading, error } = useAsync<Landing>(async () => {
-    const code = decodeScan(scanned);
-    if (code === null) return { kind: 'malformed' };
-
-    /* BOTH READS AT ONCE. Whether the card exists and whether a session is
-       running are independent questions, and the answer to this route needs
-       both — so asking them in series would make the common path twice as
-       slow for no reason. */
-    const [card, active] = await Promise.all([
-      getCardByCode(code, locale),
-      readActiveSession(),
-    ]);
-
-    /* The card is checked BEFORE the session is considered, so a mistyped or
-       foreign code is never held for later and never written to anything. */
-    if (card === null) return { kind: 'unknown', code };
-
-    if (active === null) {
-      holdCode(code);
-      return { kind: 'no-session', code };
+  const { data, loading, error } = useAsync<Landing>(() => {
+    if (userId === null) return Promise.resolve({ kind: 'waiting' });
+    let pending = arrivals.get(arrival);
+    if (pending === undefined) {
+      pending = resolve(scanned, userId, locale);
+      arrivals.set(arrival, pending);
     }
+    return pending;
+  }, `scan:${arrival}`);
 
-    /* The row, for its exercise — the deep link knows a card and a session,
-       and nothing yet about whether this exercise uses the deck. */
-    const row = await readSession(active.id);
-    if (row === null) {
-      /* Read back as gone between one request and the next. Treat it as
-         nothing running, which is what it now is. */
-      holdCode(code);
-      return { kind: 'no-session', code };
-    }
+  const [replacing, setReplacing] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
 
-    const exercise = await getExercise(row.exerciseId, locale);
-    if (exercise === null) {
-      throw new Error(`[musie] session ${row.id} names an exercise that is not there`);
-    }
-    /* THE KIND, NOT `needsCards` — 2026-10-11. The two say the same thing
-       and are held equal by a check constraint, but one of them is the
-       answer and the other is a column kept alive for the other worktrees
-       (see `exercises_cards_match_kind`). A scanned card means nothing to an
-       exercise that has no scan step. */
-    if (exercise.kind !== 'card_based') {
-      return { kind: 'cardless', sessionId: row.id, step: row.step };
-    }
+  if (loading || data?.kind === 'waiting') return <p className="musie-note">{t('scan.working')}</p>;
 
-    /* THE SAME FUNCTION THE TYPED CODE CALLS. Not a second implementation of
-       "find the pairing and write both columns" — lib/scan.ts exists so that
-       a scanned card and a typed one are one act. */
-    const outcome = await scanCardInto(row.id, code, locale);
-    if (outcome.kind !== 'applied') {
-      /* Unreachable in practice: the card was just read back successfully, so
-         it is neither malformed nor unknown. Narrowed rather than cast — the
-         day the outcome set grows, this is where it shows up. */
-      return outcome.kind === 'malformed' ? { kind: 'malformed' } : { kind: 'unknown', code };
-    }
-
-    /* THE DECK IS EVIDENTLY IN THEIR HANDS. See the header: the scan wins, and
-       the column that decides the run's shape has to agree with the card that
-       was just written to it. */
-    if (row.digitalCards) await saveDigitalCards(row.id, false);
-
-    /* THE STEP, WRITTEN BEFORE THE REDIRECT. Awaited rather than fired off:
-       the session screen reads the row the moment it mounts, and a step still
-       saying `intro` when it does is a session that refuses `listen` and
-       redirects back to where it was. */
-    await saveStep(row.id, 'listen');
-
-    return { kind: 'applied', sessionId: row.id };
-  }, `scan:${scanned}:${locale}`);
-
-  if (loading) return <p className="musie-note">{t('scan.working')}</p>;
-
-  if (error !== null || data === null) {
+  if (error !== null || data === null || failed) {
     return (
       <Message
         variant="error"
@@ -168,42 +168,52 @@ export function ScanLink() {
     );
   }
 
-  /* THE HAPPY PATH RENDERS NOTHING. The card is written, the step is written,
-     and the listen step is what the person came for — the card they scanned is
-     the one thing they already know, so a screen naming it back at them is a
-     tap they have to spend to leave. Going back one step is where changing it
-     lives. */
-  if (data.kind === 'applied') {
-    return <Navigate to={`/session/${encodeURIComponent(data.sessionId)}/listen`} replace />;
-  }
+  /* THE HAPPY PATH RENDERS NOTHING. `replace`, so Back from the intro does not
+     land on a resolver that would start another run. */
+  if (data.kind === 'started') return <Navigate to={data.path} replace />;
 
-  if (data.kind === 'cardless') {
+  if (data.kind === 'running') {
+    const { request, session } = data;
+    const leave = () => navigate(
+      session === null ? '/exercises' : `/session/${encodeURIComponent(session.id)}/${session.step}`,
+      { replace: true },
+    );
     return (
-      <ContentBox
-        headingLevel={1}
-        headline={t('scan.cardless.title')}
-        text={t('scan.cardless.text')}
-        outline="dashed"
-      >
-        <Button
-          variant="secondary"
-          render={<Link to={`/session/${encodeURIComponent(data.sessionId)}/${data.step}`} />}
-        >
-          {t('scan.cardless.action')}
-        </Button>
-      </ContentBox>
+      <SessionRunningLightbox
+        name={request.exercise.name}
+        runningName={data.runningName}
+        session={session}
+        starting={replacing}
+        onEndAndStart={() => {
+          if (userId === null || replacing) return;
+          setReplacing(true);
+          void startSession({
+            userId, exercise: request.exercise, goalId: request.goalId, replacing: session, via: request.via,
+          }).then((result) => {
+            if (result.kind === 'started') {
+              navigate(introPath(result.session.id, request.via, request.cardCode), { replace: true });
+              return;
+            }
+            /* Refused again: something else started a run in between. The
+               honest answer is the generic failure, not a loop of dialogs. */
+            setFailed(true);
+          }, (thrown: unknown) => {
+            console.error('[musie] could not start the scanned exercise:', thrown);
+            setFailed(true);
+          }).finally(() => setReplacing(false));
+        }}
+        /* D15: no screen behind this route, so closing is continuing. */
+        onClose={leave}
+      />
     );
   }
 
-  /* The three that end at the library. Two are a mistake and one is simply
-     early, so they differ in what they SAY and not in where they go — the one
-     thing to do next is the same in all three. */
+  /* The two that end at the library. Both are a mistake, so they differ in
+     what they SAY and not in where they go. */
   const [headline, text] =
     data.kind === 'malformed'
       ? [t('scan.malformed.title'), t('scan.malformed.text')]
-      : data.kind === 'unknown'
-        ? [t('scan.unknown.title'), t('scan.unknown.text', { code: data.code })]
-        : [t('scan.noSession.title', { code: data.code }), t('scan.noSession.text')];
+      : [t('scan.unknown.title'), t('scan.unknown.text', { code: data.code })];
 
   return (
     <ContentBox headingLevel={1} headline={headline} text={text} outline="dashed">

@@ -171,11 +171,12 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      heading carries a screen-reader status word — "Warning: A session is
      already running" — and the dialog that replaced it drew the same sentence
      twice, as its own hidden title and again as the box's headline. Both are
-     gone: one heading, one name, and it NAMES THE RUNNING EXERCISE, which is
-     the half a hardcoded English string would fail in the German run. */
+     gone: one heading, one name. Since 2026-11-23 the title is the dialog's
+     own — „Neue Übung starten?" — and the running exercise is named in the
+     sentence and in the button that continues it. */
   await expect(
     page.getByRole('heading', {
-      name: label(locale, 'exercises.running.headline', { name }),
+      name: label(locale, 'exercises.running.dialogTitle'),
       exact: true,
     }),
   ).toBeVisible({ timeout: 15_000 });
@@ -195,7 +196,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      which is the half of it that a hardcoded English label would fail. */
   await expect(
     page.getByRole('button', {
-      name: label(locale, 'exercises.endAndStart', { name: other }),
+      name: label(locale, 'exercises.running.start', { name: other }),
       exact: true,
     }),
   ).toBeVisible();
@@ -220,7 +221,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
   await refusedCard.click();
   await expect(
     page.getByRole('heading', {
-      name: label(locale, 'exercises.running.headline', { name }),
+      name: label(locale, 'exercises.running.dialogTitle'),
       exact: true,
     }),
     'tapping the same card a second time did nothing',
@@ -228,7 +229,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
 
   /* The refusal offers the way back, and the way back is where we were. */
   await page
-    .getByRole('link', { name: label(locale, 'exercises.goToSession'), exact: true })
+    .getByRole('link', { name: label(locale, 'exercises.running.continue', { name }), exact: true })
     .click();
   await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/${STOPPED_AT}$`));
 
@@ -428,7 +429,7 @@ test('the library ends the running session and starts the one that was asked for
 
   await expect(
     page.getByRole('heading', {
-      name: label(locale, 'exercises.running.headline', { name }),
+      name: label(locale, 'exercises.running.dialogTitle'),
       exact: true,
     }),
   ).toBeVisible({ timeout: 15_000 });
@@ -439,7 +440,7 @@ test('the library ends the running session and starts the one that was asked for
      forgot to say which exercise it means. */
   await page
     .getByRole('button', {
-      name: label(locale, 'exercises.endAndStart', { name: other }),
+      name: label(locale, 'exercises.running.start', { name: other }),
       exact: true,
     })
     .click();

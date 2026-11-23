@@ -80,8 +80,9 @@ import { timeOfDay } from '../lib/greeting';
 import { stepMessageKey } from '../routeHandle';
 import { useAuth } from '../lib/authContext';
 import { analyticsReady, posthog } from '../lib/posthog';
-import { posthogLog } from '../lib/posthogLogs';
-import { createSession, endSession, useActiveSession } from '../lib/session';
+import { endSession, useActiveSession } from '../lib/session';
+import { startSession } from '../lib/startSession';
+import { introPath } from '../lib/startedVia';
 import type { ActiveSession } from '../lib/session';
 import { useExercises, useGoals } from '../lib/useContent';
 import { fromRoot } from '../lib/assets';
@@ -459,8 +460,9 @@ export function Exercises() {
    * Start it, with the running session's fate already decided by the caller.
    *
    * THE ORDER IS END THEN CREATE and it is not reversible: creating first is
-   * what the database refuses. Lifted from /exercises, which is the only other
-   * caller of this sequence — see the note at the top of that file.
+   * what the database refuses. The sequence is `lib/startSession.ts`'s since
+   * 2026-11-23, when `/s/:code` became its second caller (PRD „Übungskarten
+   * mit QR-Code").
    */
   const start = React.useCallback(async (exercise: Exercise, replacing: ActiveSession | null) => {
     /* NO USER, NO SESSION — and it says so. `sessions.user_id` is not null, so
@@ -470,11 +472,6 @@ export function Exercises() {
     setFailed(false);
     setBusy(true);
     try {
-      if (replacing !== null) {
-        /* `abandoned`, not `finished`: the diary already calls a run that
-           stopped before its reflection abandoned. */
-        await endSession(replacing.id, 'abandoned', new Date().toISOString());
-      }
       /* THE GOAL AS IT WAS WHEN THE CARD WAS PRESSED, and it is now always a
          real one. `goalIdFor(choice)` stood here to turn the `NO_GOAL`
          sentinel back into null; there is no sentinel, so the id goes
@@ -487,19 +484,19 @@ export function Exercises() {
          landed — cannot reach here anyway, because the pile is not dealt
          until `settled`. A `?? ''` would invent a goal; null says honestly
          that none was known. */
-      const result = await createSession(userId, exercise.id, choice);
+      const result = await startSession({ userId, exercise, goalId: choice, replacing, via: 'library' });
       if (result.kind === 'started') {
-        if (analyticsReady()) {
-          posthog.capture('session_started', { exercise_kind: exercise.kind });
-        }
-        posthogLog.sessionStarted(exercise.kind);
         /* The one path that does NOT clear `busy`: the deck is about to
            unmount, and dropping busy first would bring the card back for a
            frame on the way out. */
-        navigate(`/session/${encodeURIComponent(result.session.id)}/intro`);
+        navigate(introPath(result.session.id, 'library'));
         return;
       }
       /* ── PRESSING THE ONE THAT IS ALREADY RUNNING IS NOT A CHOICE ────────
+         HERE, and only here (V4, Ben 2026-11-23): after a scanned card the
+         dialog asks even for the same exercise, because a QR code is a
+         deliberate request to start fresh. A second press on the pile is not.
+
          It is the same exercise, so there is nothing to decide between: the
          dialog would have offered to "end Mindful Break and start Mindful
          Break instead", which is a sentence, not a question. Found by pressing

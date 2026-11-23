@@ -62,10 +62,11 @@ const GRID_PATH = join(CONTENT, 'grid.json');
 
 const LOCALES = ['de', 'en'];
 
-/** Which exercise's pairings `deck.json` records. Both card exercises carry
- *  identical ones — the projection writes them from the card's ACTIVATION
- *  piece (2026-11-20) — so `plays` is that piece, twice. A card's relax piece
- *  is in `grid.json`: four readers parse this file and none of them needs it. */
+/** Which exercises `deck.json`'s `plays` names. Both card exercises play the
+ *  card's ACTIVATION piece there — read from the card itself since
+ *  2026-11-23, when `exercise_tracks`, the projection it came through, was
+ *  dropped — so `plays` is that piece, twice. A card's relax piece is in
+ *  `grid.json`: four readers parse this file and none of them needs it. */
 const DECK_EXERCISES = ['free-rein', 'mindfulness-cards'];
 
 /* ═══ WHERE TO READ FROM ════════════════════════════════════════════════════ */
@@ -123,15 +124,20 @@ async function main() {
     return data;
   };
 
-  const [cards, cardI18n, tracks, cells, artworks, artworkI18n, pairings] = await Promise.all([
+  const [cards, cardI18n, tracks, cells, artworks, artworkI18n] = await Promise.all([
     read('cards'),
     read('card_i18n'),
     read('tracks'),
     read('grid_cells'),
     read('artworks'),
     read('artwork_i18n'),
-    read('exercise_tracks'),
   ]);
+
+  /* What the dropped projection held: a card's activation piece, unless the
+     piece is retired. */
+  const live = new Set(tracks.filter((track) => track.archived_at === null).map((track) => track.id));
+  const activation = (card) =>
+    card.activation_track_id !== null && live.has(card.activation_track_id) ? card.activation_track_id : undefined;
 
   /* ── deck.json, in exactly the shape it has always had ──────────────────── */
 
@@ -153,10 +159,7 @@ async function main() {
         imageAlt: byLocale(cardI18n, 'card_id', card.id, 'image_alt'),
         plays: Object.fromEntries(
           DECK_EXERCISES
-            .map((exercise) => [
-              exercise,
-              pairings.find((p) => p.card_id === card.id && p.exercise_id === exercise)?.track_id,
-            ])
+            .map((exercise) => [exercise, activation(card)])
             .filter(([, trackId]) => trackId !== undefined),
         ),
       })),

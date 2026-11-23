@@ -1,235 +1,308 @@
 /**
- * `/s/:code` — the deep link a paper card's QR code carries. E.0's done-when.
+ * `/s/:code` — the link a printed card's QR code carries. Since 2026-11-23 it
+ * STARTS a run (PRD „Übungskarten mit QR-Code"), and these walks are the
+ * PRD's acceptance: the three ways in, the dialog, and a scan while signed
+ * out.
  *
- * ── WHY THIS WALK EXISTS SEPARATELY FROM THE TYPED ONE ─────────────────────
- * `session.spec.ts` types a code into the field, which proves E.1. This proves
- * E.0, and they are not the same act: the deep link arrives from OUTSIDE the
- * app, with no session in progress on screen and no step to be on. Everything
- * between the URL and the row — decoding the payload, finding the running
- * session, refusing to write to an exercise that draws no cards, and replacing
- * itself with the scan step — happens in `ScanLink` and is reachable no other
- * way.
+ *   · an EXERCISE card (`EX-02`) opens its exercise on the intro, which asks
+ *     „Was brauchst du gerade?" — and the answer decides the music;
+ *   · a DECK card (`MC-04`) starts Freie Bahn with that card's picture, and
+ *     „Weiter" goes straight to the music;
+ *   · something running: the dialog, even for the same exercise, with
+ *     starting the new one as the primary answer — after a scan and in the
+ *     library alike.
  *
- * ── AND IT PROVES THE DOMAIN IS NOT NEEDED, WHICH IS THE POINT OF E.0 ──────
- * `page.goto('/s/MC-01')` is RELATIVE. It resolves against Playwright's
- * `baseURL`, which is the local dev server — so this walk passes on localhost
- * with no domain configured anywhere, which is precisely the claim E.0 makes
- * and the reason the decoder never compares a host. The day a domain exists,
- * nothing here changes.
+ * ── A FULL NAVIGATION, NOT A CLICK ────────────────────────────────────────
+ * The camera app hands the URL to the browser cold, so every scan here is a
+ * `page.goto`. `page.goto('/s/EX-02')` is RELATIVE and resolves against the
+ * dev server: a card printed for musie.org decodes anywhere, because the
+ * decoder never compares a host.
  *
- * Run twice, once per locale, like every other walk: the three states that
- * render copy do so from the catalogue, and a hardcoded English string would
- * be invisible in the English run.
+ * ── THE MUSIC IS READ FROM THE DATABASE, NOT FROM deck.json ───────────────
+ * A card's two pieces live on `cards` and are edited at /maintenance
+ * (CLAUDE.md 4.1); the walk asks the row which piece the goal should have
+ * played and holds the session to it.
+ *
+ * Run twice, once per locale: every string is a catalogue key or content read
+ * in the run's locale, so an English string in the German run fails.
  */
 import { expect, test } from '@playwright/test';
-import { card, label, reachTheLibrary, service, startExercise, withLocale } from './support';
+import type { Page } from '@playwright/test';
+import { enterCode, label, service, signIn, stack, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
-/**
- * MC-01, and the recording `exercise_tracks` pairs it with.
- *
- * A different card from the one `session.spec.ts` types (MC-08), deliberately:
- * between them the two walks prove the pairing is looked up per card rather
- * than defaulted, which a single card used by both could not tell apart from a
- * hardcoded answer.
- */
-/* Read from deck.json by `card()` rather than retyped — support.ts says why.
-   The literal that used to be here went stale in the 2026-09-24 deck repair. */
-const CARD = card('MC-01');
+const FREE_REIN = 'free-rein';
 
-test('a deep link puts its card on the running session', async ({ page }, testInfo) => {
+/** The session id in the address. */
+function sessionIdOf(page: Page): string {
+  const id = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
+  if (id === undefined) throw new Error(`no session id in ${page.url()}`);
+  return id;
+}
+
+/** An exercise's name in the run's locale — content, not a catalogue key. */
+async function exerciseName(id: string, locale: Locale): Promise<string> {
+  const { data, error } = await service()
+    .from('exercise_i18n').select('name').eq('exercise_id', id).eq('locale', locale).single();
+  if (error !== null || data === null) throw new Error(`no ${locale} name for ${id}`);
+  return data.name as string;
+}
+
+/** A goal's label in the run's locale, by its music mode. */
+async function goalLabel(mode: 'relax' | 'activate' | 'random', locale: Locale): Promise<{ id: string; label: string }> {
+  const { data, error } = await service()
+    .from('goals').select('id, goal_i18n(locale, label)').eq('music_mode', mode).eq('retired', false).single();
+  if (error !== null || data === null) throw new Error(`no goal for ${mode}`);
+  const text = (data.goal_i18n as { locale: string; label: string }[]).find((row) => row.locale === locale);
+  if (text === undefined) throw new Error(`no ${locale} label for ${data.id as string}`);
+  return { id: data.id as string, label: text.label };
+}
+
+/** A card's id, picture and activation piece. */
+async function cardRow(code: string): Promise<{ id: string; image: string | null; activation: string | null }> {
+  const { data, error } = await service()
+    .from('cards').select('id, image_url, activation_track_id').eq('code', code).single();
+  if (error !== null || data === null) throw new Error(`no card ${code}`);
+  return { id: data.id as string, image: data.image_url as string | null, activation: data.activation_track_id as string | null };
+}
+
+async function sessionRow(id: string) {
+  const { data, error } = await service()
+    .from('sessions').select('exercise_id, status, step, goal_id, card_id, track_id, music_mode, ended_at').eq('id', id).single();
+  if (error !== null || data === null) throw new Error(`no session ${id}`);
+  return data as {
+    exercise_id: string; status: string; step: string; goal_id: string | null; card_id: string | null;
+    track_id: string | null; music_mode: string | null; ended_at: string | null;
+  };
+}
+
+const continueButton = (page: Page, locale: Locale) =>
+  page.getByRole('button', { name: label(locale, 'common.continue'), exact: true });
+
+const goalQuestion = (page: Page, locale: Locale) =>
+  page.getByRole('radiogroup', { name: label(locale, 'exercises.goal.question') });
+
+test('an exercise card opens its exercise on the intro, and the answer there decides the music', async ({ page }, testInfo) => {
   const locale = testInfo.project.name as Locale;
   test.setTimeout(120_000);
-
   await withLocale(page, locale);
-  await reachTheLibrary(page, locale);
+  await signIn(page, locale);
 
-  /* Start the one implemented exercise, exactly as the other walks do. The
-     deep link needs something RUNNING to write to — that is the whole
-     difference between its happy path and its commonest unhappy one. */
-  await startExercise(page, locale);
+  await page.goto('/s/EX-02');
+  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro\?via=exercise-card$/, { timeout: 15_000 });
+  const id = sessionIdOf(page);
 
-  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
-  const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
-  expect(sessionId).toBeTruthy();
+  /* THE QUESTION, with an answer already chosen — the first goal in the
+     sheet's order, since this account never chose one in the library (D10). */
+  const question = goalQuestion(page, locale);
+  await expect(question).toBeVisible({ timeout: 15_000 });
+  await expect(question.getByRole('radio')).toHaveCount(3);
+  const relax = await goalLabel('relax', locale);
+  await expect(question.getByRole('radio', { name: relax.label })).toBeChecked();
+  expect((await sessionRow(id)).goal_id).toBe(relax.id);
 
-  /* ── THE SCAN, AS A PHONE'S CAMERA APP WOULD DELIVER IT ─────────────────
-     A full navigation, not a click: the camera app hands the URL to the
-     browser cold, so the app boots at this route with no in-memory state. A
-     version of ScanLink that relied on anything the session screens had
-     already loaded would pass a click and fail this. */
-  await page.goto(`/s/${CARD.code}`);
+  /* AN EXERCISE CARD KEEPS THE INTRO AS IT IS: the cards switch is there. */
+  await expect(page.getByRole('switch', { name: label(locale, 'session.intro.cardsPresent') })).toBeVisible();
 
-  /* It resolves and replaces itself — ONTO THE LISTEN STEP since 2026-09-24.
-     A scan that lands is a finished scan step, so the link goes to the
-     recording rather than to a screen naming the card back at somebody who is
-     holding it. `replace`, so Back does not land on a resolver that would
-     resolve all over again — asserted below.
+  /* CHANGE IT, and the change is what plays. */
+  const recharge = await goalLabel('activate', locale);
+  await question.getByRole('radio', { name: recharge.label }).click();
+  await continueButton(page, locale).click();
+  await expect(page).toHaveURL(new RegExp(`/session/${id}/scan$`), { timeout: 15_000 });
+  await expect.poll(async () => (await sessionRow(id)).goal_id, { timeout: 10_000 }).toBe(recharge.id);
 
-     THE SESSION WAS STANDING ON `intro` when the link arrived, which is the
-     case this assertion is really about: `listen` is unreachable from `intro`
-     by the reachability rule, so a resolver that redirected without writing
-     the step would be bounced straight back here and this would fail. */
-  /* `listen(\?|$)`, NOT `listen$` — the listen step writes its own
-     `?overview` token on arrival (`lib/digitalCards.ts`, and the infographic
-     work that introduced it), by `replace`, so the address this lands on
-     carries it a frame later. Anchored on `listen$` this walk failed on
-     `main` for a reason that had nothing to do with the deep link. */
-  await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/listen(\\?|$)`), {
-    timeout: 15_000,
-  });
+  /* The scan step names the in-app scanner only (A9). */
+  await expect(page.getByText(/Kamera-App|camera app/)).toHaveCount(0);
 
-  /* ── THE ROW ────────────────────────────────────────────────────────────
-     By identity. The deep link chose the card, so "some card" would not be an
-     assertion — and `card_id` and `track_id` are written in ONE update, so a
-     pairing read from the wrong row fails here rather than on screen. */
-  const db = service();
-  const { data: session } = await db
-    .from('sessions')
-    .select('id, card_id, track_id, step, status')
-    .eq('id', sessionId)
-    .single();
-
-  expect(session).toBeTruthy();
-  expect(session!.card_id).toBe(CARD.id);
-  expect(session!.track_id).toBe(CARD.track);
-  /* Still running, and STANDING WHERE THE PERSON IS. The row is not
-     bookkeeping here: it is what makes `listen` reachable at all, and a
-     version that navigated without writing it would show the right URL for one
-     frame and then redirect. Asserting the column is what tells those apart. */
-  expect(session!.step).toBe('listen');
-  expect(session!.status).toBe('started');
-
-  /* THE ONE LOCALE-SPECIFIC ASSERTION, for the same reason as every other
-     walk: a run that fell back to English satisfies everything above. */
-  await expect(page.locator('html')).toHaveAttribute('lang', locale);
+  const card = await cardRow('MC-01');
+  await enterCode(page, locale, 'MC-01');
+  await expect(page).toHaveURL(new RegExp(`/session/${id}/listen`), { timeout: 15_000 });
+  const row = await sessionRow(id);
+  expect(row.card_id).toBe(card.id);
+  expect(row.music_mode).toBe('activate');
+  expect(row.track_id).toBe(card.activation);
 });
 
-test('a deep link with nothing running holds the card and offers the library', async ({ page }, testInfo) => {
+test('a deck card starts Freie Bahn with its picture, and „Weiter“ goes straight to the music', async ({ page }, testInfo) => {
   const locale = testInfo.project.name as Locale;
   test.setTimeout(120_000);
-
   await withLocale(page, locale);
+  await signIn(page, locale);
 
-  /* COUNTED BEFORE, because the walk above this one deliberately leaves a
-     session holding MC-01 and `workers: 1` means it has already run. Asking
-     "are there no sessions with this card" would therefore find that one and
-     fail for a reason that has nothing to do with this test. What is actually
-     being claimed is that THIS visit created nothing, which is a delta. */
-  const db = service();
-  const before = (await db.from('sessions').select('id')).data?.length ?? 0;
+  const card = await cardRow('MC-04');
+  await page.goto('/s/mc-04');
+  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro\?via=deck-card&card=MC-04$/, { timeout: 15_000 });
+  const id = sessionIdOf(page);
 
-  /* Far enough to be a known visitor, and no further. THIS IS THE COMMONEST
-     REAL CASE, not an edge: somebody holding the deck scans a card before
-     choosing an exercise, because the card is the thing in their hand. It is
-     therefore not dressed as an error — it says what was scanned and offers
-     the one thing to do next. */
-  await reachTheLibrary(page, locale);
+  /* FREIE BAHN, with the card's picture where the exercise's stands — and the
+     card not written yet: that happens on „Weiter", once the goal is final
+     (D11). */
+  const row0 = await sessionRow(id);
+  expect(row0.exercise_id).toBe(FREE_REIN);
+  expect(row0.card_id).toBeNull();
+  if (card.image !== null) {
+    await expect(page.locator('img.musie-intro__image'))
+      .toHaveAttribute('src', new RegExp(`${card.image.replace(/^\//, '')}$`), { timeout: 15_000 });
+  }
 
-  await page.goto(`/s/${CARD.code}`);
+  /* NO SWITCH AND NO STACK (D23): the card is already chosen. */
+  await expect(goalQuestion(page, locale)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('switch')).toHaveCount(0);
 
-  /* The code appears in the headline, interpolated — which is also what proves
-     the decoder ran rather than the route merely rendering. */
-  await expect(
-    page.getByText(label(locale, 'scan.noSession.title', { code: CARD.code }), { exact: true }),
-  ).toBeVisible({ timeout: 15_000 });
+  /* „Energie sammeln" plays the card's activation piece. */
+  const recharge = await goalLabel('activate', locale);
+  await goalQuestion(page, locale).getByRole('radio', { name: recharge.label }).click();
+  await continueButton(page, locale).click();
 
-  await page
-    .getByRole('link', { name: label(locale, 'scan.chooseExercise'), exact: true })
+  await expect(page).toHaveURL(new RegExp(`/session/${id}/listen(\\?|$)`), { timeout: 15_000 });
+  const row = await sessionRow(id);
+  expect(row.step).toBe('listen');
+  expect(row.goal_id).toBe(recharge.id);
+  expect(row.card_id).toBe(card.id);
+  expect(row.music_mode).toBe('activate');
+  expect(row.track_id).toBe(card.activation);
+
+  /* A RELOAD PLAYS THE SAME: the piece is stored, not re-decided. */
+  await page.reload();
+  await expect(page).toHaveURL(new RegExp(`/session/${id}/listen(\\?|$)`), { timeout: 15_000 });
+  expect((await sessionRow(id)).track_id).toBe(card.activation);
+});
+
+test('a scan while something runs asks first — even for the same exercise', async ({ page }, testInfo) => {
+  const locale = testInfo.project.name as Locale;
+  test.setTimeout(120_000);
+  await withLocale(page, locale);
+  await signIn(page, locale);
+  const freeRein = await exerciseName(FREE_REIN, locale);
+  const mindfulBreak = await exerciseName('mindfulness-cards', locale);
+
+  await page.goto('/s/EX-02');
+  await expect(page).toHaveURL(/\/intro\?via=exercise-card$/, { timeout: 15_000 });
+  const first = sessionIdOf(page);
+
+  /* THE SAME CARD AGAIN: the dialog, with its own title. */
+  await page.goto('/s/EX-02');
+  const dialog = page.getByRole('dialog', { name: label(locale, 'exercises.running.dialogTitle') });
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await expect(dialog.getByText(label(locale, 'exercises.running.replace', { name: freeRein, running: freeRein })))
+    .toBeVisible();
+
+  /* SECONDARY: back into the running one, at its step. */
+  await dialog.getByRole('button', { name: label(locale, 'exercises.running.continue', { name: freeRein }), exact: true })
     .click();
-  await expect(page).toHaveURL(/\/exercises$/);
+  await expect(page).toHaveURL(new RegExp(`/session/${first}/intro$`), { timeout: 15_000 });
+  expect((await sessionRow(first)).status).toBe('started');
 
-  /* NOTHING WAS WRITTEN. There was no session to write to, and a resolver that
-     created one to have somewhere to put the card would be inventing a session
-     nobody asked for — which is the failure this asserts against, because it
-     would look entirely correct on screen. */
-  const after = (await db.from('sessions').select('id')).data?.length ?? 0;
-  expect(after).toBe(before);
+  /* A DECK CARD while it runs, and PRIMARY: the old one ends, the new one
+     starts with the card. */
+  await page.goto('/s/MC-04');
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog.getByRole('button', { name: label(locale, 'exercises.running.start', { name: freeRein }), exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/intro\?via=deck-card&card=MC-04$/, { timeout: 15_000 });
+  const second = sessionIdOf(page);
+  expect(second).not.toBe(first);
+  const ended = await sessionRow(first);
+  expect(ended.status).toBe('abandoned');
+  expect(ended.ended_at).not.toBeNull();
+
+  /* THE X CONTINUES (D15): there is no screen behind the link. */
+  await page.goto('/s/EX-01');
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await expect(dialog.getByRole('button', { name: label(locale, 'exercises.running.start', { name: mindfulBreak }), exact: true }))
+    .toBeVisible();
+  await dialog.getByRole('button', { name: label(locale, 'common.closeLabel'), exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/session/${second}/intro`), { timeout: 15_000 });
+  expect((await sessionRow(second)).status).toBe('started');
 });
 
-/**
- * A DEEP LINK INTO A DIGITAL SESSION ENDS THE DIGITAL RUN.
- *
- * Ben, 2026-10-13, when the two could disagree: *Scan gewinnt*. Somebody turns
- * the switch off because the deck is not to hand, then finds it — and the
- * printed code is proof of that, where the switch was only an answer given
- * before they went looking.
- *
- * WHAT MAKES IT MORE THAN A COLUMN. `sessions.digital_cards` decides which
- * steps the run HAS (`20261014113500_view_and_select_are_steps.sql`), so a row
- * left saying `true` would put this person on `listen` under a rail naming
- * *Auswählen* — a step they never walked, offering the five cards the
- * deterministic deal picked, which need not include the one in their hand.
- * Asserted on the rail as well as on the row, because the rail is the part
- * they would see.
- *
- * Only a walk can reach it: `ScanLink` is a resolver with no screen, and the
- * disagreement is between a column it writes and a step list computed
- * somewhere else entirely.
- */
-test('a deep link into a digital session turns the mode off', async ({ page }, testInfo) => {
+test('the library asks with the same dialog, and its card exercises ask nothing on the intro', async ({ page }, testInfo) => {
+  const locale = testInfo.project.name as Locale;
+  test.setTimeout(150_000);
+  await withLocale(page, locale);
+  await signIn(page, locale);
+  const mindfulBreak = await exerciseName('mindfulness-cards', locale);
+  const freeRein = await exerciseName(FREE_REIN, locale);
+
+  /* FROM THE LIBRARY, NO QUESTION: the goal was chosen there (D6). */
+  await page.goto('/exercises');
+  await startExercise(page, locale);
+  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
+  const first = sessionIdOf(page);
+  await expect(page.getByRole('switch', { name: label(locale, 'session.intro.cardsPresent') }))
+    .toBeVisible({ timeout: 15_000 });
+  await expect(goalQuestion(page, locale)).toHaveCount(0);
+
+  /* ANOTHER exercise from the library: the dialog, and its primary answer
+     starts the new one. No *Cancel* any more — the X closes. */
+  await page.goto('/exercises');
+  await startExercise(page, locale, freeRein);
+  const dialog = page.getByRole('dialog', { name: label(locale, 'exercises.running.dialogTitle') });
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await expect(dialog.getByText(label(locale, 'exercises.running.replace', { name: freeRein, running: mindfulBreak })))
+    .toBeVisible();
+  await expect(dialog.getByRole('button', { name: label(locale, 'common.cancel'), exact: true })).toHaveCount(0);
+  await dialog.getByRole('button', { name: label(locale, 'exercises.running.start', { name: freeRein }), exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
+  expect(sessionIdOf(page)).not.toBe(first);
+  expect((await sessionRow(first)).status).toBe('abandoned');
+});
+
+test('signed out, a scan waits behind the sign-in and then starts the exercise', async ({ page }, testInfo) => {
   const locale = testInfo.project.name as Locale;
   test.setTimeout(120_000);
-
   await withLocale(page, locale);
-  await reachTheLibrary(page, locale);
-  /* Named rather than taken by position: one Supabase stack, and a
-     maintenance UI that reorders this table is being built against it. */
-  await startExercise(page, locale, locale === 'de' ? 'Achtsame Pause' : 'Mindful Break');
+  const { email } = await signIn(page, locale, { inject: false });
 
-  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
-  const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
-  expect(sessionId).toBeTruthy();
+  await page.goto('/s/EX-01');
+  /* The gate opens on the access code; an existing account takes the other
+     door. The address stays /s/EX-01 throughout. */
+  await page.getByRole('button', { name: label(locale, 'auth.signUp.switch'), exact: true }).click();
+  await expect(page).toHaveURL(/\/s\/EX-01$/);
+  const address = page.getByRole('textbox', { name: label(locale, 'auth.email'), exact: true });
+  await expect(address).toBeVisible({ timeout: 15_000 });
+  await address.fill(email);
+  await page.getByRole('button', { name: label(locale, 'auth.submit'), exact: true }).click();
 
-  /* THE SWITCH OFF — the run is digital from here, and the rail says so. */
-  const cards = page.getByRole('switch', {
-    name: label(locale, 'session.intro.cardsPresent'),
-  });
-  await expect(cards).toBeVisible({ timeout: 15_000 });
-  await cards.click();
-  await expect(cards).not.toBeChecked();
+  /* The six digits, from the local stack's mail catcher. Its port is the
+     API's plus three, as `supabase/config.toml` lays them out. */
+  const api = new URL(stack().API_URL);
+  const mail = `http://${api.hostname}:${String(Number(api.port) + 3)}`;
+  let code: string | null = null;
+  await expect.poll(async () => {
+    const found = await fetch(`${mail}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`)
+      .then((response) => response.json()) as { messages?: { ID: string }[] };
+    const latest = found.messages?.[0];
+    if (latest === undefined) return null;
+    const message = await fetch(`${mail}/api/v1/message/${latest.ID}`)
+      .then((response) => response.json()) as { Text?: string; HTML?: string };
+    code = (/\b(\d{6})\b/.exec(`${message.Text ?? ''} ${message.HTML ?? ''}`) ?? [])[1] ?? null;
+    return code;
+  }, { timeout: 20_000 }).not.toBeNull();
 
-  const rail = page.getByRole('navigation', { name: label(locale, 'session.wizardLabel') });
-  await expect(
-    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.select')},`) }),
-  ).toBeVisible();
+  await page.keyboard.type(code ?? '');
+  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro\?via=exercise-card$/, { timeout: 20_000 });
+  expect((await sessionRow(sessionIdOf(page))).exercise_id).toBe('mindfulness-cards');
+});
 
-  /* ── AND THEN THE DECK TURNS UP ─────────────────────────────────────────
-     Cold, as a phone's camera app delivers it. The mode was never written to
-     the row before this point — `advance` writes it on the way out of
-     Einsteigen — so the loader has to read what the switch did, and this walk
-     would pass against a version that only looked at its own URL. */
-  await page.goto(`/s/${CARD.code}`);
-  /* `listen(\?|$)`, NOT `listen$` — the listen step writes its own
-     `?overview` token on arrival (`lib/digitalCards.ts`, and the infographic
-     work that introduced it), by `replace`, so the address this lands on
-     carries it a frame later. Anchored on `listen$` this walk failed on
-     `main` for a reason that had nothing to do with the deep link. */
-  await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/listen(\\?|$)`), {
-    timeout: 15_000,
-  });
+test('a code that names nothing says so, and starts nothing', async ({ page }, testInfo) => {
+  const locale = testInfo.project.name as Locale;
+  test.setTimeout(60_000);
+  await withLocale(page, locale);
+  const { userId } = await signIn(page, locale);
 
-  const db = service();
-  const { data: session } = await db
-    .from('sessions')
-    .select('card_id, track_id, step, digital_cards')
-    .eq('id', sessionId)
-    .single();
+  /* EX-03 is reserved for an exercise that is not built; EX-99 and MC-99 are
+     nobody's. */
+  for (const code of ['EX-03', 'EX-99', 'MC-99']) {
+    await page.goto(`/s/${code}`);
+    await expect(page.getByRole('heading', { name: label(locale, 'scan.unknown.title'), exact: true }))
+      .toBeVisible({ timeout: 15_000 });
+  }
+  await page.goto('/s/not-a-code');
+  await expect(page.getByRole('heading', { name: label(locale, 'scan.malformed.title'), exact: true }))
+    .toBeVisible({ timeout: 15_000 });
 
-  expect(session).toBeTruthy();
-  expect(session!.card_id).toBe(CARD.id);
-  expect(session!.track_id).toBe(CARD.track);
-  expect(session!.step).toBe('listen');
-  /* THE DECISION, on the row. */
-  expect(session!.digital_cards, 'the scan did not win').toBe(false);
-
-  /* THE RAIL THE PERSON IS LOOKING AT — the paper run's, four markers, naming
-     the step the scan actually finished. */
-  await expect(
-    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.scan')},`) }),
-  ).toBeVisible();
-  await expect(
-    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.select')},`) }),
-  ).toHaveCount(0);
-  await expect(rail.getByRole('button')).toHaveCount(4);
+  const { count } = await service().from('sessions').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+  expect(count).toBe(0);
 });

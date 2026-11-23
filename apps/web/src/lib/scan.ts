@@ -2,9 +2,10 @@
  * A scanned code, turned into a session that carries the card — E.0/E.1.
  *
  * `scanCode.ts` next door is the pure half: it says what a code IS. This is
- * the half that talks to the database, and it exists so that the deep link
- * (`/s/:code`) and the typed code (the scan step's field) perform exactly the
- * same act. Two call sites writing their own version of "look it up, find its
+ * the half that talks to the database, and it exists so that a deck card
+ * named on the scan step — read by the in-app camera or typed — and a deck
+ * card scanned with the phone's camera (`/s/:code`, written on the intro's
+ * „Weiter") perform exactly the same act. Two call sites writing their own version of "look it up, find its
  * track, write both" is how one of them ends up writing a card with no
  * recording.
  *
@@ -66,47 +67,4 @@ export async function scanCardInto(
   const { trackId, musicMode } = await saveCard(sessionId, card.id);
 
   return { kind: 'applied', card, trackId, musicMode };
-}
-
-/**
- * ── A CODE SCANNED BEFORE THERE WAS ANYWHERE TO PUT IT ────────────────────
- *
- * The deep link's awkward case, and it is the FIRST thing a new person does:
- * they have the deck in their hands, so they point the camera at a card before
- * they have started anything. There is no session, so there is nothing to
- * write the card to.
- *
- * The code is held rather than dropped, and then PRE-FILLED into the scan
- * step's field — not written to the session behind the person's back. The
- * difference matters: arriving at the scan step to find a card already drawn,
- * minutes later and after choosing an exercise, would be the app having
- * decided something on your behalf. Arriving to find the code you scanned
- * already typed in is the app having remembered.
- *
- * `sessionStorage`, not `localStorage`: a held code belongs to the tab that
- * did the scanning and to this visit. A code still sitting there next week is
- * not a memory, it is a surprise. Every access is wrapped — private mode
- * throws on the accessor itself, and the whole feature is a convenience, so
- * losing it silently is correct.
- */
-const HELD_CODE = 'musie-scanned-code';
-
-export function holdCode(code: string): void {
-  try {
-    window.sessionStorage.setItem(HELD_CODE, code);
-  } catch {
-    /* Private mode, or storage disabled. The person types the code instead. */
-  }
-}
-
-/** Read it once and forget it. Taking rather than peeking is what stops one
- *  scan pre-filling every session that follows it in this tab. */
-export function takeHeldCode(): string | null {
-  try {
-    const held = window.sessionStorage.getItem(HELD_CODE);
-    window.sessionStorage.removeItem(HELD_CODE);
-    return held;
-  } catch {
-    return null;
-  }
 }

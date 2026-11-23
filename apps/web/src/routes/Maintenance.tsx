@@ -338,8 +338,8 @@ export function Maintenance(): React.ReactElement {
    * reports.
    *
    * RE-READING THE WHOLE DECK after each write rather than patching state is
-   * deliberate. One write can move several rows — a cell change rewrites
-   * `exercise_tracks` and a card's `image_url` through the projection — so a
+   * deliberate. One write can move several rows — an artwork change rewrites
+   * a card's `image_url` and its alt text through the projection — so a
    * local patch would be a second, partial model of what the database did,
    * and the two would eventually disagree. Nine cards is a cheap read.
    */

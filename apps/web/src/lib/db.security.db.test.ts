@@ -156,16 +156,9 @@ describe('tracks · the column grant keeps title and artist off the client', () 
     expect(error?.code).toBe(INSUFFICIENT_PRIVILEGE);
   });
 
-  it('grants exercise_tracks whole, because it holds only ids', async () => {
-    const { data, error } = await alice.from('exercise_tracks').select('*').limit(1);
-    expect(error).toBeNull();
-    expect(Object.keys(data?.[0] ?? {}).sort()).toEqual([
-      'card_id',
-      'exercise_id',
-      'id',
-      'track_id',
-    ]);
-  });
+  /* `exercise_tracks` — granted whole, because it held only ids — was dropped
+     on 2026-11-23 (`20261123100000_exercise_cards.sql`): nothing read it once
+     the card carried its own two pieces. */
 });
 
 describe('content tables · readable, never writable', () => {

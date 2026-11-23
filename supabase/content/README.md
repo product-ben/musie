@@ -77,7 +77,7 @@ run the generator.
 | `image` | `cards.image_url` | A **web** path, or `null`. Still the shared `method-card.png` placeholder for all nine, which has never existed on disk. The printed deck does not read it: print masters live outside the repository in `~/Documents/musie-assets/cards/`, found by card id (`deck-pdf.mjs --masters` for another machine) |
 | `feeling` | `card_i18n.feeling` | Both locales, both required. A feeling written in one is a dropped translation (CLAUDE.md rule 6) |
 | `imageAlt` | `card_i18n.image_alt` | `null` in **both** locales, or written in both. Null in both is data — the source has no alt text; null in one is a translation somebody dropped |
-| `plays` | `exercise_tracks` | Exercise id → track id. The same card plays a different file in a different exercise, which is what the `tracks` / `exercise_tracks` split is for |
+| `plays` | `cards.activation_track_id` | Exercise id → track id: the card's activation piece, for both card exercises. It came through `exercise_tracks` until that projection was dropped on 2026-11-23; the card carries both its pieces, and the relax piece is in `grid.json` |
 
 ### Adding a card
 
@@ -201,9 +201,9 @@ The `cuts` half is the only place a cut is written by hand. The migration that
 lands them in the database is generated from it, the same way the deck's is.
 
 It owns `public.tracks` and `public.exercise_cuts`, and **nothing else**.
-`exercise_tracks` belongs to `deck.json` above: *the deck says which piece a
-card plays; this file says what the pieces are and how the exercises are
-rendered.* Neither generator writes a row the other owns, so neither can delete
+Which piece a card plays belongs to the card (`/maintenance`, and `deck.json`
+above as its snapshot): *the card says which piece it plays; this file says
+what the pieces are and how the exercises are rendered.* Neither generator writes a row the other owns, so neither can delete
 the other's work.
 
 ## The loop
