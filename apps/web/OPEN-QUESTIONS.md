@@ -13006,5 +13006,12 @@ What I need from Ben:
   5485), then merge. The migration drops two objects on hosted; both are
   unread there too.
 - **The goal glyphs** (`Waves`, `BatteryCharging`, `Flower2`) — keep or swap.
+- **Three goals clip on a phone — a component request, not an app fix.** At
+  393 px the `SegmentedControl` shows „Entspann…“, „Energie s…“, „Achtsamk…“:
+  three German labels do not fit, and the component clips them (its glyph and
+  accessible name stay whole, as designed). The two existing intro questions
+  have two options and fit. The fix belongs in the design system (rule 1) —
+  e.g. stacking the labels or wrapping to two lines when three options do not
+  fit — not in a screen.
 - **Print** with `pnpm deck:pdf` once merged; the QR codes are read back on
   every run. MC-10 is still „test“ with MC-06's picture in the snapshot (Lucia).
