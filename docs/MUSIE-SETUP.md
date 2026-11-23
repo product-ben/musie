@@ -346,3 +346,99 @@ true next step. It comes out at H.1, and both catalogue entries say so.
   rewritten to be true for both kinds of account, and **nothing renders them** —
   there is no privacy screen yet.
 - **The domain**, which fixes the QR codes permanently.
+
+---
+
+## 11 · Mail on `musie.org`
+
+Two halves that share the domain and nothing else. Neither lives in a file in
+this repo — both are dashboard settings, which is why they are written down
+here. Sending was decided on 2026-10-20, receiving on 2026-11-23.
+
+| | Service | Where it is changed |
+|---|---|---|
+| **Sending** — the sign-in codes | Resend, EU region (`eu-west-1`), from `hallo@musie.org` | The Resend dashboard, and the project's custom SMTP setting in Supabase (not read back for this section) |
+| **Receiving** — every address `@musie.org` | Cloudflare Email Routing. **Forwarding only:** it keeps no mailbox and sends nothing | Cloudflare → `musie.org` → **Email → Email Routing → Routing rules** |
+
+Resend keeps account data, logs and metadata in the **US**; the EU region
+changes routing, not storage. Accepted on 2026-10-20 for a twenty-person beta,
+to be revisited before the privacy copy is signed off.
+
+### The addresses
+
+| Address | Forwards to | State on 2026-11-23 |
+|---|---|---|
+| `hallo@musie.org` | not read back | The sender of the sign-in codes, and testers reply to it. Keep it |
+| `bl@musie.org` | `lipinskib@gmail.com` | Decided, not yet created or checked. The Impressum and the privacy page name it (`apps/web/src/i18n/`), so it must never stop receiving |
+| `lvd@musie.org` | `lucia.vondamnitz@gmail.com` | Decided, not yet created |
+| `hi@musie.org` | `lipinskib@gmail.com`, and from there to `lucia.vondamnitz@gmail.com` by a Gmail filter (below) | Decided, not yet created |
+
+**Every destination is verified once.** Cloudflare mails it a link, and nothing
+is forwarded there until somebody clicks it — Lucia clicks hers. Cloudflare
+compares strings, so `lipinskib@gmail.com` and `lipinskib@googlemail.com` are
+two destinations to it, although Google delivers both to one inbox. It is the
+same trap as the allowlist in `supabase/functions/content-admin/index.ts`.
+
+**On 2026-11-04 the root had no MX record at all**, so nothing sent to
+`hallo@` or `bl@` arrived, whatever the routing rules said. The DNS table below
+is what closed that.
+
+### Why `hi@` reaches Lucia through Ben's Gmail
+
+A routing rule forwards one address to **one** destination. Cloudflare's limits
+page, read on 2026-11-23: *"Each routing rule maps one email pattern to one
+destination address or one Worker. To forward a single email pattern to
+multiple destinations, use a Worker that calls `forward()` once per
+destination."* A second rule for the same address does not help either: only
+the first one in the list runs.
+
+| Way | Up | Down |
+|---|---|---|
+| `hi@` to Ben only | Nothing to set up | Lucia sees nothing unless Ben forwards it by hand |
+| **A Gmail filter in Ben's account — chosen** | No code, five minutes | Lives in one person's Gmail, not in any file |
+| An Email Worker | Everything stays in Cloudflare | Code that needs a home and a deploy |
+
+Setting it up, signed in to Gmail as `lipinskib@gmail.com`:
+
+1. **Settings → See all settings → Forwarding and POP/IMAP → Add a forwarding
+   address** → `lucia.vondamnitz@gmail.com`. Google mails Lucia a confirmation
+   link; until she clicks it the filter cannot forward. Leave *Forward a copy of
+   incoming mail* on that tab **off** — it would forward everything.
+2. In the search bar, **Show search options** → *To*: `hi@musie.org` →
+   **Create filter** → tick **Forward it to** → `lucia.vondamnitz@gmail.com` →
+   **Create filter**.
+
+What it costs:
+
+- **It is invisible.** Nothing in Cloudflare or in this repo shows that `hi@`
+  reaches Lucia; this paragraph is the only record. If the filter is deleted or
+  the account changes, her copy stops and nothing reports it.
+- **A mail that names `hi@` only in Bcc may slip past the filter**, which reads
+  the To and Cc headers. Ben still gets it.
+
+### Replying
+
+Replies go out from the personal Gmail addresses. **Sending as `@musie.org` is
+not set up**, and of the two ways laid out on 2026-11-23 neither was chosen:
+
+- Gmail's *Send mail as* over Resend's SMTP (`smtp.resend.com`): free, but every
+  reply then travels through the US-logged provider above and shares its free
+  limit of 100 mails a day with the sign-in codes.
+- Real mailboxes at a mail provider: a few euros per person a month, a separate
+  inbox each. The root MX moves to the provider, and Email Routing ends.
+
+### DNS, read back by `dig` against `kara.ns.cloudflare.com` on 2026-11-23
+
+| Name | Record | For |
+|---|---|---|
+| `musie.org` | MX `route1`, `route2`, `route3.mx.cloudflare.net` | Email Routing |
+| `musie.org` | TXT `v=spf1 include:_spf.mx.cloudflare.net ~all` | Email Routing |
+| `send.musie.org` | CNAME `send.forge.rmta.net` | Resend |
+| `rsend.musie.org` | CNAME `rsend-euw1.forge.rmta.net` | Resend |
+| `resend._domainkey.musie.org` | TXT, the DKIM key | Resend |
+| `_dmarc.musie.org` | TXT `v=DMARC1; p=none;` | Both |
+
+The root also carries the Worker's proxied A/AAAA record (`wrangler.jsonc`), and
+the two do not collide: different record types on one name. **Moving to a mail
+provider later changes the root's MX and SPF only.** Resend lives on names of
+its own and is untouched.
