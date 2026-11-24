@@ -196,7 +196,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      which is the half of it that a hardcoded English label would fail. */
   await expect(
     page.getByRole('button', {
-      name: label(locale, 'exercises.running.start', { name: other }),
+      name: label(locale, 'exercises.running.start'),
       exact: true,
     }),
   ).toBeVisible();
@@ -229,7 +229,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
 
   /* The refusal offers the way back, and the way back is where we were. */
   await page
-    .getByRole('link', { name: label(locale, 'exercises.running.continue', { name }), exact: true })
+    .getByRole('button', { name: label(locale, 'exercises.running.continue'), exact: true })
     .click();
   await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/${STOPPED_AT}$`));
 
@@ -440,7 +440,7 @@ test('the library ends the running session and starts the one that was asked for
      forgot to say which exercise it means. */
   await page
     .getByRole('button', {
-      name: label(locale, 'exercises.running.start', { name: other }),
+      name: label(locale, 'exercises.running.start'),
       exact: true,
     })
     .click();

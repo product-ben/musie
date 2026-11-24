@@ -1487,12 +1487,25 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
                 icon: STEP_ICON[step],
               }))}
               current={state.step}
-              completed={[...state.completed]}
+              /* AFTER A DECK CARD THE SCAN IS ALREADY DONE (Ben, 2026-11-24):
+                 the card is in the person's hand, so the rail checks
+                 „Scannen“ off while they are still on the intro. Display
+                 only — the card is written on „Weiter“ (D11), and pressing
+                 the checked step does what „Weiter“ does. */
+              completed={deckStart && state.step === 'intro'
+                ? [...state.completed, 'scan']
+                : [...state.completed]}
               skipped={skipped}
               /* The rail proposes; the URL disposes. Navigating rather than
                  dispatching keeps one path into a step, so a rail tap and a
                  pasted URL behave identically. */
-              onStepChange={(next) => go(next as StepId)}
+              onStepChange={(next) => {
+                if (deckStart && state.step === 'intro' && next !== 'intro') {
+                  void leaveIntro();
+                  return;
+                }
+                go(next as StepId);
+              }}
             />
         }
         actions={actions}

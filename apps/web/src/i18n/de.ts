@@ -350,15 +350,15 @@ export const de: Messages = {
      einer gescannten Karte, und der Dialog hat einen eigenen Titel: Ben wollte
      „Neue Übung starten?“ statt „… läuft noch“, das als Überschrift des
      Hinweises über dem Stapel bleibt. Weil der Titel die laufende Übung nicht
-     mehr nennt, nennt der Satz beide — und sagt, was das Beenden kostet.
-     „Fortsetzen“ statt „Bei … bleiben“, weil ein Name wie „Achtsame Pause“ im
-     Dativ seine Form ändert und ein Platzhalter das nicht kann. */
+     mehr nennt, nennt der Satz beide — und sagt, was das Beenden kostet. */
   'exercises.running.dialogTitle': 'Neue Übung starten?',
   'exercises.running.replace': 'Wenn du {name} startest, wird {running} beendet. Eine beendete Session lässt sich nicht wieder aufnehmen.',
   /* Die laufende Übung ließ sich nicht benennen (keine Zeile im Katalog). */
   'exercises.running.replaceUnknown': 'Wenn du {name} startest, wird die laufende Session beendet. Eine beendete Session lässt sich nicht wieder aufnehmen.',
-  'exercises.running.start': '{name} starten',
-  'exercises.running.continue': '{name} fortsetzen',
+  /* Die beiden Antworten nennen keine Übung mehr (Ben, 2026-11-24): Das tut
+     der Satz darüber. */
+  'exercises.running.start': 'Neue Übung starten',
+  'exercises.running.continue': 'Zurück zur aktuellen Übung',
   /* DIESELBEN WORTE WIE IM MENÜ (`menu.continueSession`), mit Absicht: zwei
      Türen zu einer laufenden Session, die sie verschieden benennen, sind zwei
      Türen, die man getrennt lernen muss. Zwei Schlüssel statt einem, weil es
@@ -549,7 +549,18 @@ export const de: Messages = {
   /* ── DIGITALE KARTEN ─────────────────────────────────────────────────────
      Siehe `en.ts` für die Begründungen. Register: §1 du und Imperativ
      Singular, §2 Satzanfang groß, §3 Verb zuerst, §7 Gedankenstrich. */
-  'session.intro.cardsPresent': 'Die analogen Karten liegen vor mir.',
+  /* Die Frage statt des Schalters (Ben, 2026-11-24, aus dem Nutzertest):
+     „Die analogen Karten liegen vor mir.“ war nicht klar. */
+  'session.intro.cards.legend': 'Wie möchtest du die Übung machen?',
+  'session.intro.cards.paper': 'Mit den physischen Bildkarten',
+  'session.intro.cards.digital': 'Komplett digital',
+  /* Unter „Was brauchst du gerade?“, zum gewählten Ziel (Ben, 2026-11-24).
+     Beim dritten steht „hilft, Achtsamkeit zu stärken“ statt Bens „beim
+     Achtsamkeit stärken hilft“: Ein Nominal-„beim“ verlangt „beim Stärken der
+     Achtsamkeit“, und das liest sich schwerer. */
+  'session.intro.goalHint.relax': 'Musie wählt für diese Übung Musik aus, die dir beim Entspannen hilft.',
+  'session.intro.goalHint.wakeUp': 'Musie wählt für diese Übung Musik aus, die dir beim Aktivieren hilft.',
+  'session.intro.goalHint.mindfulness': 'Musie wählt für diese Übung Musik aus, die dir hilft, Achtsamkeit zu stärken.',
   /* Bens Satz, auf den Standard gebracht (§7, §8): 'Bildschirmen' statt
      'Biuldschirmen', 'optimale' klein, 'Größe' mit ß, und das Komma vor dem
      Relativsatz. */

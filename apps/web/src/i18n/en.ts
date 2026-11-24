@@ -475,8 +475,10 @@ export const en = {
   'exercises.running.replace': 'Starting {name} ends {running}. A session you end can’t be picked up again.',
   /* The running exercise could not be named (no catalogue row for it). */
   'exercises.running.replaceUnknown': 'Starting {name} ends the session that is running. A session you end can’t be picked up again.',
-  'exercises.running.start': 'Start {name}',
-  'exercises.running.continue': 'Continue {name}',
+  /* The two answers name no exercise (Ben, 2026-11-24): the sentence above
+     them does. */
+  'exercises.running.start': 'Start new exercise',
+  'exercises.running.continue': 'Back to the current exercise',
   /* THE SAME WORDS THE DRAWER USES (`menu.continueSession`), deliberately: two
      doors to one running session that name it differently are two doors people
      have to learn separately. Two keys rather than one because they are
@@ -728,10 +730,18 @@ export const en = {
      the exercise, which is what keeps it out of the content tables. The
      exercise's own words are the thing being replaced. */
 
-  /* The switch, and it is named after the OBJECT rather than after the mode.
-     The next exercise that asks for a physical object adds its own key beside
-     this one; nothing here has to be true of a thing nobody has designed. */
-  'session.intro.cardsPresent': 'I have the physical cards in front of me.',
+  /* THE QUESTION, NOT A SWITCH — Ben, 2026-11-24, from user testing: „Die
+     analogen Karten liegen vor mir" was not clear to people. Asked the way the
+     intro's other questions are asked, with the physical deck as the default
+     answer, whichever way the run was started. */
+  'session.intro.cards.legend': 'How would you like to do the exercise?',
+  'session.intro.cards.paper': 'With the physical picture cards',
+  'session.intro.cards.digital': 'Fully digital',
+  /* Under „What do you need right now?", for the goal that is chosen (Ben,
+     2026-11-24): what the answer does to the music. */
+  'session.intro.goalHint.relax': 'Musie picks music for this exercise that helps you relax.',
+  'session.intro.goalHint.wakeUp': 'Musie picks music for this exercise that helps you recharge.',
+  'session.intro.goalHint.mindfulness': 'Musie picks music for this exercise that helps you strengthen your mindfulness.',
 
   /* ── A SMALL SCREEN, SAID ONCE AND WITHOUT A GATE ────────────────────────
      Only in digital mode, and only below 850px — the width is a CSS decision

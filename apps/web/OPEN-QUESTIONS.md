@@ -13015,3 +13015,29 @@ What I need from Ben:
   fit — not in a screen.
 - **Print** with `pnpm deck:pdf` once merged; the QR codes are read back on
   every run. MC-10 is still „test“ with MC-06's picture in the snapshot (Lucia).
+
+### Follow-up, 2026-11-24 — Ben's review on localhost
+
+What I did:
+- **„Was brauchst du gerade?“ explains itself**: under the control, the chosen
+  goal's sentence — „Musie wählt für diese Übung Musik aus, die dir beim
+  Entspannen hilft.“ / „… beim Aktivieren hilft.“ / „…, die dir hilft,
+  Achtsamkeit zu stärken.“ The third is Ben's sentence with the grammar
+  straightened („beim Achtsamkeit stärken“ needs „beim Stärken der
+  Achtsamkeit“). It is `SegmentedOption.description`, the component's own
+  slot, so there is nothing new in the layout.
+- **The cards switch is a question now**, wherever the run was started:
+  „Wie möchtest du die Übung machen?“ — „Mit den physischen Bildkarten“
+  (default) or „Komplett digital“, a `SegmentedControl` in the switch's old
+  place. User testing found „Die analogen Karten liegen vor mir.“ unclear.
+  After a deck card it stays hidden (D23).
+- **After a deck card the rail shows „Scannen“ as done** while still on the
+  intro. Display only; pressing it does what „Weiter“ does.
+- **The dialog's buttons name no exercise**: „Zurück zur aktuellen Übung“
+  (secondary) and „Neue Übung starten“ (primary; Ben wrote „Starten“, German
+  UI writing keeps the verb lower case).
+
+What I need from Ben:
+- **„Mit den physischen Bildkarten“ clips on a phone too** („Mit den
+  physisch…“), like the three goals above — same component request.
+

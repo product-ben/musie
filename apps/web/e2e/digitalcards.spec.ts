@@ -55,25 +55,26 @@ test('a digital session deals, chooses, and writes the same two columns', async 
      paper path is what a fresh session offers (section 3). A walk is the only
      place that can see "every time", because nothing is stored for a unit test
      to read back. */
-  const cards = page.getByRole('switch', {
-    name: label(locale, 'session.intro.cardsPresent'),
-  });
-  await expect(cards).toBeVisible({ timeout: 15_000 });
-  await expect(cards).toBeChecked();
+  /* A question since 2026-11-24, not a switch: the paper deck is the
+     default answer, „Komplett digital“ the other. */
+  const paper = page.getByRole('radio', { name: label(locale, 'session.intro.cards.paper'), exact: true });
+  const digitalAnswer = page.getByRole('radio', { name: label(locale, 'session.intro.cards.digital'), exact: true });
+  await expect(paper).toBeVisible({ timeout: 15_000 });
+  await expect(paper).toBeChecked();
 
   /* The paper path's own forward action, before the switch moves. */
   await expect(
     page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }),
   ).toBeVisible();
 
-  await cards.click();
+  await digitalAnswer.click();
 
   /* ── THE MODE IS THE ROW, NOT THE URL ───────────────────────────────────
      It was `?digitalcards` for a day. The step list depends on the mode now,
      so it is `sessions.digital_cards` — read back at the foot of this walk. The
      address does not change when the switch moves; the RAIL does. */
   await expect(page).toHaveURL(/\/intro$/);
-  await expect(cards).not.toBeChecked();
+  await expect(paper).not.toBeChecked();
 
   /* *Weiter* is REPLACED rather than joined while there is a hand to deal. */
   await expect(
@@ -294,7 +295,7 @@ test('a one-card digital session draws on arrival and looks before it listens', 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
 
-  await page.getByRole('switch', { name: label(locale, 'session.intro.cardsPresent') }).click();
+  await page.getByRole('radio', { name: label(locale, 'session.intro.cards.digital'), exact: true }).click();
 
   /* ── THE RAIL SAYS *ANSEHEN*, AND STILL HAS FOUR MARKERS ────────────────
      Ben, 2026-10-14: the two card exercises do different things at the second
@@ -397,11 +398,10 @@ test('the switch flipped back mid-run keeps the card and the rail', async ({ pag
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
 
-  const cards = page.getByRole('switch', {
-    name: label(locale, 'session.intro.cardsPresent'),
-  });
-  await expect(cards).toBeVisible({ timeout: 15_000 });
-  await cards.click();
+  const paper = page.getByRole('radio', { name: label(locale, 'session.intro.cards.paper'), exact: true });
+  const digitalAnswer = page.getByRole('radio', { name: label(locale, 'session.intro.cards.digital'), exact: true });
+  await expect(digitalAnswer).toBeVisible({ timeout: 15_000 });
+  await digitalAnswer.click();
 
   await page.getByRole('button', {
     name: label(locale, 'session.intro.deal', { count: String(DEALT) }),
@@ -438,9 +438,9 @@ test('the switch flipped back mid-run keeps the card and the rail', async ({ pag
   await rail.getByRole('button').first().click();
   await expect(page).toHaveURL(/\/intro$/);
 
-  await expect(cards).not.toBeChecked();
-  await cards.click();
-  await expect(cards).toBeChecked();
+  await expect(paper).not.toBeChecked();
+  await paper.click();
+  await expect(paper).toBeChecked();
 
   /* THE RAIL IS THE PAPER RAIL AGAIN, AND STILL FOUR. */
   await expect(

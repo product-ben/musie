@@ -41,12 +41,13 @@
  * `RadioGroupText` would be right past four options; neither question will
  * have four.
  */
-import { Armchair, BatteryCharging, BedSingle, Flower2, Layers, Moon, Sparkles, Sunrise, Waves } from 'lucide-react';
-import { SegmentedControl, Switch, WizardContent, WizardIntro } from '@musie/design-system';
+import { Armchair, BatteryCharging, BedSingle, Flower2, Layers, Moon, Smartphone, Sparkles, Sunrise, Waves } from 'lucide-react';
+import { SegmentedControl, WizardContent, WizardIntro } from '@musie/design-system';
 import { Markdown } from './Markdown';
 import { InstrumentIntro } from './InstrumentIntro';
 import type { InstrumentIntroProps } from './InstrumentIntro';
 import { useT } from '../i18n/localeContext';
+import type { MessageKey } from '../i18n';
 import type { Card, Exercise, Goal } from '../lib/content';
 import { fromRoot } from '../lib/assets';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
@@ -147,6 +148,17 @@ const GOAL_GLYPH: Readonly<Record<string, typeof Armchair>> = {
   relax: Waves,
   'wake-up': BatteryCharging,
   mindfulness: Flower2,
+};
+
+/**
+ * What each answer does to the music, under the control while it is chosen
+ * (Ben, 2026-11-24). Keyed by goal id like the glyphs; a goal added later
+ * shows no sentence until it is given one.
+ */
+const GOAL_HINT: Readonly<Record<string, MessageKey>> = {
+  relax: 'session.intro.goalHint.relax',
+  'wake-up': 'session.intro.goalHint.wakeUp',
+  mindfulness: 'session.intro.goalHint.mindfulness',
 };
 
 /**
@@ -266,20 +278,22 @@ export function SessionIntro({
       <WizardContent>
       {asksForCards && (
         <div className="musie-intro__cards">
-          {/* Rule 7: the label is passed. `Layers` / `Layers` would be one
-              glyph for two states, so the pair says what is switching — a pile
-              of cards on the table, or none. */}
-          {/* NO `reverse`. That prop pushes the label to the far edge of the
-              row — the settings-sheet layout — and this is not a settings row:
-              it is one control in a column of copy, and every other Switch in
-              the app (the music one on the listen sheet, the dark-mode one in
-              the menu) sits directly beside its own label. Ben, 2026-10-14. */}
-          <Switch
-            label={t('session.intro.cardsPresent')}
-            checked={cardsPresent}
-            onCheckedChange={(next) => onCardsPresentChange?.(next)}
-            onGlyph={Layers}
-            offGlyph={Layers}
+          {/* ── A QUESTION, NOT A SWITCH — Ben, 2026-11-24 ──────────────────
+              User testing: „Die analogen Karten liegen vor mir.“ was not
+              clear. It is asked now the way the intro's other questions are,
+              in the same component, in the switch's old place above the
+              paper instructions it governs — with the physical deck as the
+              default answer. `Layers` for the pile on the table, `Smartphone`
+              for the run on the screen. */}
+          <SegmentedControl
+            name="session-cards"
+            legend={t('session.intro.cards.legend')}
+            value={cardsPresent ? 'paper' : 'digital'}
+            onValueChange={(next) => onCardsPresentChange?.(next === 'paper')}
+            options={[
+              { value: 'paper', label: t('session.intro.cards.paper'), glyph: Layers },
+              { value: 'digital', label: t('session.intro.cards.digital'), glyph: Smartphone },
+            ]}
           />
 
           {/* NO LINE WHERE THE PAPER INSTRUCTION WAS. A one-card exercise in
@@ -357,11 +371,15 @@ export function SessionIntro({
               legend={t('exercises.goal.question')}
               value={goal}
               onValueChange={(next) => { if (goals.some((g) => g.id === next)) onGoalChange?.(next); }}
-              options={goals.map((option) => ({
-                value: option.id,
-                label: option.label,
-                glyph: GOAL_GLYPH[option.id] ?? Sparkles,
-              }))}
+              options={goals.map((option) => {
+                const hint = GOAL_HINT[option.id];
+                return {
+                  value: option.id,
+                  label: option.label,
+                  glyph: GOAL_GLYPH[option.id] ?? Sparkles,
+                  description: hint === undefined ? undefined : t(hint),
+                };
+              })}
             />
           )}
 

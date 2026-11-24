@@ -31,14 +31,17 @@ The PRD „Übungskarten mit QR-Code" changed what the phone's camera app does.
   started this way asks **„Was brauchst du gerade?"** there — the goal sheet's
   question and goals, with the goal last chosen in the library preselected —
   and the answer decides which of the card's two pieces plays. From the
-  library the question is not asked: the goal was chosen there.
+  library the question is not asked: the goal was chosen there. Under it, a
+  sentence says what the chosen answer does to the music.
 - **A deck card** starts **Freie Bahn** with that card. Its picture stands where
-  the exercise's would, the cards switch and the sentence about the stack are
-  not shown, and „Weiter" writes the card and goes straight to listening.
+  the exercise's would, the question „Wie möchtest du die Übung machen?" and
+  the sentence about the stack are not shown, the rail has „Scannen" checked
+  off already, and „Weiter" writes the card and goes straight to listening.
 - **Something already running** — even the same exercise — brings up the
-  dialog „Neue Übung starten?": starting the new one is the primary answer and
-  ends the old one; „… fortsetzen" goes back to it. The library shows the same
-  dialog, except that pressing the running exercise again simply continues it.
+  dialog „Neue Übung starten?": its sentence names both exercises; „Neue Übung
+  starten" is the primary answer and ends the old one; „Zurück zur aktuellen
+  Übung" goes back to it. The library shows the same dialog, except that
+  pressing the running exercise again simply continues it.
 
 Until that day a deck card was written into the running session, a scan with
 nothing running was held for the scan step, and a scan into a digital run

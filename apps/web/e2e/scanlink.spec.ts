@@ -101,8 +101,10 @@ test('an exercise card opens its exercise on the intro, and the answer there dec
   await expect(question.getByRole('radio', { name: relax.label })).toBeChecked();
   expect((await sessionRow(id)).goal_id).toBe(relax.id);
 
-  /* AN EXERCISE CARD KEEPS THE INTRO AS IT IS: the cards switch is there. */
-  await expect(page.getByRole('switch', { name: label(locale, 'session.intro.cardsPresent') })).toBeVisible();
+  /* AN EXERCISE CARD KEEPS THE INTRO AS IT IS: the cards question is there,
+     on the physical deck. And under the goal question, what it does. */
+  await expect(page.getByRole('radio', { name: label(locale, 'session.intro.cards.paper'), exact: true })).toBeChecked();
+  await expect(page.getByText(label(locale, 'session.intro.goalHint.relax'), { exact: true })).toBeVisible();
 
   /* CHANGE IT, and the change is what plays. */
   const recharge = await goalLabel('activate', locale);
@@ -145,9 +147,16 @@ test('a deck card starts Freie Bahn with its picture, and „Weiter“ goes stra
       .toHaveAttribute('src', new RegExp(`${card.image.replace(/^\//, '')}$`), { timeout: 15_000 });
   }
 
-  /* NO SWITCH AND NO STACK (D23): the card is already chosen. */
+  /* NO CARDS QUESTION AND NO STACK (D23): the card is already chosen — and
+     the rail has „Scannen“ checked off already (Ben, 2026-11-24). */
   await expect(goalQuestion(page, locale)).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole('switch')).toHaveCount(0);
+  await expect(page.getByRole('radiogroup', { name: label(locale, 'session.intro.cards.legend') })).toHaveCount(0);
+  const rail = page.getByRole('navigation', { name: label(locale, 'session.wizardLabel') });
+  /* „erledigt“ / „done“ is the design system's own word (`locale.ts`,
+     `wizardCompleted`), not a catalogue key of the app's. */
+  const done = locale === 'de' ? 'erledigt' : 'done';
+  await expect(rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.scan')}, ${done}`) }))
+    .toBeVisible();
 
   /* „Energie sammeln" plays the card's activation piece. */
   const recharge = await goalLabel('activate', locale);
@@ -188,7 +197,7 @@ test('a scan while something runs asks first — even for the same exercise', as
     .toBeVisible();
 
   /* SECONDARY: back into the running one, at its step. */
-  await dialog.getByRole('button', { name: label(locale, 'exercises.running.continue', { name: freeRein }), exact: true })
+  await dialog.getByRole('button', { name: label(locale, 'exercises.running.continue'), exact: true })
     .click();
   await expect(page).toHaveURL(new RegExp(`/session/${first}/intro$`), { timeout: 15_000 });
   expect((await sessionRow(first)).status).toBe('started');
@@ -197,7 +206,7 @@ test('a scan while something runs asks first — even for the same exercise', as
      starts with the card. */
   await page.goto('/s/MC-04');
   await expect(dialog).toBeVisible({ timeout: 15_000 });
-  await dialog.getByRole('button', { name: label(locale, 'exercises.running.start', { name: freeRein }), exact: true })
+  await dialog.getByRole('button', { name: label(locale, 'exercises.running.start'), exact: true })
     .click();
   await expect(page).toHaveURL(/\/intro\?via=deck-card&card=MC-04$/, { timeout: 15_000 });
   const second = sessionIdOf(page);
@@ -209,7 +218,8 @@ test('a scan while something runs asks first — even for the same exercise', as
   /* THE X CONTINUES (D15): there is no screen behind the link. */
   await page.goto('/s/EX-01');
   await expect(dialog).toBeVisible({ timeout: 15_000 });
-  await expect(dialog.getByRole('button', { name: label(locale, 'exercises.running.start', { name: mindfulBreak }), exact: true }))
+  /* The buttons name no exercise; the sentence names both. */
+  await expect(dialog.getByText(label(locale, 'exercises.running.replace', { name: mindfulBreak, running: freeRein })))
     .toBeVisible();
   await dialog.getByRole('button', { name: label(locale, 'common.closeLabel'), exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/session/${second}/intro`), { timeout: 15_000 });
@@ -229,8 +239,8 @@ test('the library asks with the same dialog, and its card exercises ask nothing 
   await startExercise(page, locale);
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
   const first = sessionIdOf(page);
-  await expect(page.getByRole('switch', { name: label(locale, 'session.intro.cardsPresent') }))
-    .toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('radio', { name: label(locale, 'session.intro.cards.paper'), exact: true }))
+    .toBeChecked({ timeout: 15_000 });
   await expect(goalQuestion(page, locale)).toHaveCount(0);
 
   /* ANOTHER exercise from the library: the dialog, and its primary answer
@@ -242,7 +252,7 @@ test('the library asks with the same dialog, and its card exercises ask nothing 
   await expect(dialog.getByText(label(locale, 'exercises.running.replace', { name: freeRein, running: mindfulBreak })))
     .toBeVisible();
   await expect(dialog.getByRole('button', { name: label(locale, 'common.cancel'), exact: true })).toHaveCount(0);
-  await dialog.getByRole('button', { name: label(locale, 'exercises.running.start', { name: freeRein }), exact: true })
+  await dialog.getByRole('button', { name: label(locale, 'exercises.running.start'), exact: true })
     .click();
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
   expect(sessionIdOf(page)).not.toBe(first);

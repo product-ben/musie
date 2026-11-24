@@ -26,6 +26,8 @@
  * the notice's „{name} läuft noch". The notice keeps that headline. With the
  * running exercise gone from the title, the sentence names both — and says
  * what ending costs: a session recorded `abandoned` cannot be picked up again.
+ * The buttons name neither since 2026-11-24 (Ben): „Neue Übung starten",
+ * „Zurück zur aktuellen Übung".
  *
  * ── NO CONTENT BOX, AND THAT IS THE FIX RATHER THAN A SHORTCUT ────────────
  * Every other lightbox in this app frames its content in a `ContentBox` and
@@ -105,9 +107,7 @@ export function SessionRunningLightbox({
                 <Link to={`/session/${encodeURIComponent(session.id)}/${session.step}`} />
               }
             >
-              {runningName === null
-                ? t('exercises.goToSession')
-                : t('exercises.running.continue', { name: runningName })}
+              {t('exercises.running.continue')}
             </Button>
           )}
           <Button
@@ -116,7 +116,7 @@ export function SessionRunningLightbox({
             loadingLabel={t('content.loading')}
             onClick={onEndAndStart}
           >
-            {t('exercises.running.start', { name })}
+            {t('exercises.running.start')}
           </Button>
         </ButtonGroup>
       </div>
