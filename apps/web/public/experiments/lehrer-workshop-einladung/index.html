@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Musie · Einladung zum Workshop für Lehrkräfte</title>
+<!--
+  Experiment (CLAUDE.md rule 10): the invitation to the teachers' pilot
+  workshop, Ben, 2026-11-24. A content page and nothing else: no script, no
+  analytics, no request to any third party. The only files it fetches are its
+  own two fonts and the app's logo.
+
+  NOT TIMESTAMPED, unlike the other experiments: this URL is sent to schools,
+  so it has to stay the same while the text changes. Edit this file in place.
+
+  Layer 1 values copied from packages/design-system/tokens/musy-foundations.css,
+  light theme only (the app's default). Fonts: the app's own Onest and Literata
+  (latin subset) in ./fonts/, SIL OFL 1.1. The logo is /assets/web/musy-logo.png,
+  the app's BRAND_MARK_SRC (apps/web/src/brand.ts), so it is not copied here.
+-->
+<style>
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('fonts/onest-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Literata';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('fonts/literata-latin.woff2') format('woff2');
+}
+
+/* Layer 1, light theme */
+:root {
+  color-scheme: light;
+  --surface: #F3EEE4;               /* sand-2 */
+  --surface-raised: #FAF7F1;        /* sand-1 */
+  --on-surface: #1A1F1C;            /* sand-12 */
+  --on-surface-muted: #62645E;      /* sand-11 */
+  --border-subtle: #CFCEC2;         /* sand-6 */
+  --primary: #2B5340;               /* green-9 */
+  --primary-hover: #22442F;         /* green-10 */
+  --primary-on: #F3EEE4;            /* sand-2 */
+  --primary-subtle: #E3E7DE;        /* green-3 */
+  --primary-subtle-hover: #D5DBD0;  /* green-4 */
+  --primary-edge: #678271;          /* green-edge */
+  --elevation-1: 0 1px 2px rgb(32 44 36 / 0.10), 0 1px 3px -1px rgb(32 44 36 / 0.06);
+
+  --font-display: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+
+  --display-lg: clamp(32px, calc(27.496px + 1.1461vw), 44px);
+  --heading-lg: clamp(26px, calc(22.997px + 0.7641vw), 34px);
+  --heading-sm: clamp(19px, calc(18.249px + 0.1910vw), 21px);
+  --body-lg: clamp(19px, calc(18.625px + 0.0955vw), 20px);
+  --body-md: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --body-sm: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --label-lg: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --label-md: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+
+  --gutter: var(--sp-4);
+  --measure: 40rem;
+}
+@media (min-width: 768px)  { :root { --gutter: var(--sp-5); } }
+@media (min-width: 1024px) { :root { --gutter: var(--sp-6); } }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-text);
+  font-size: var(--body-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+p, li, dd { text-wrap: pretty; }
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  hyphens: manual;
+  text-wrap: balance;
+}
+strong { font-weight: 600; }
+
+.page {
+  max-inline-size: calc(var(--measure) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding: var(--sp-8) var(--gutter) var(--sp-9);
+}
+
+/* ── HEADER: the splash lockup, mark over name ─────────────────────────── */
+.masthead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  text-align: center;
+}
+.masthead__mark { display: block; block-size: 96px; inline-size: auto; }
+.masthead h1 {
+  font-size: var(--display-lg);
+  line-height: 1.1;
+  letter-spacing: -0.014em;
+}
+.lead {
+  margin-block-start: var(--sp-2);
+  font-size: var(--body-lg);
+  max-inline-size: 34em;
+}
+
+/* ── SECTIONS ──────────────────────────────────────────────────────────── */
+section { margin-block-start: var(--sp-8); }
+section > * + * { margin-block-start: var(--sp-4); }
+h2 {
+  font-size: var(--heading-lg);
+  line-height: 1.2;
+  letter-spacing: -0.008em;
+  padding-block-start: var(--sp-6);
+  border-block-start: 1px solid var(--border-subtle);
+}
+.sub { margin-block-start: var(--sp-7); }
+.sub > * + * { margin-block-start: var(--sp-4); }
+h3 {
+  font-size: var(--heading-sm);
+  line-height: 1.3;
+}
+.muted { color: var(--on-surface-muted); }
+.small { font-size: var(--body-sm); }
+
+/* Ziele — term over description, hairline between */
+.terms > div {
+  padding-block: var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.terms > div:first-child { padding-block-start: 0; }
+.terms dt {
+  font-family: var(--font-display);
+  font-size: var(--label-lg);
+  font-weight: 500;
+  line-height: 1.434;
+}
+.terms dd { color: var(--on-surface-muted); }
+
+/* So läuft eine Übung ab — numbered steps */
+.steps { counter-reset: step; }
+.steps > li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  column-gap: var(--sp-4);
+  padding-block-end: var(--sp-5);
+  position: relative;
+}
+.steps > li:last-child { padding-block-end: 0; }
+.steps > li::before {
+  content: counter(step);
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-on);
+  font-family: var(--font-display);
+  font-size: var(--label-md);
+  font-weight: 500;
+  line-height: 1;
+}
+/* the thread between the numbers */
+.steps > li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  inset-block: 40px 8px;
+  inset-inline-start: 15.5px;
+  border-inline-start: 1px solid var(--primary-edge);
+}
+.steps__title {
+  font-family: var(--font-display);
+  font-size: var(--label-lg);
+  font-weight: 500;
+  line-height: 1.434;
+  padding-block-start: 2px;
+}
+.steps__text { margin-block-start: var(--sp-1); }
+
+.note {
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-card);
+  background: var(--primary-subtle);
+}
+
+/* Übungsformen — four tiles */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--sp-3);
+}
+.tile {
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-card);
+  background: var(--surface-raised);
+  box-shadow: var(--elevation-1);
+}
+.tile__title {
+  font-family: var(--font-display);
+  font-size: var(--label-lg);
+  font-weight: 500;
+  line-height: 1.434;
+}
+.tile__text {
+  margin-block-start: var(--sp-1);
+  font-size: var(--body-sm);
+  color: var(--on-surface-muted);
+}
+
+/* Ihr Aufwand — a checklist */
+.checks > li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: var(--sp-3);
+  align-items: start;
+}
+.checks > li + li { margin-block-start: var(--sp-3); }
+.checks svg {
+  inline-size: 24px;
+  block-size: 24px;
+  margin-block-start: 2px;
+  color: var(--primary);
+}
+
+/* Beispiele — three links, stacked at every width: side by side, "Body Scan"
+   wraps at the measure and the three tiles stop matching */
+.examples {
+  display: grid;
+  gap: var(--sp-3);
+}
+.example {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: 64px;
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-card);
+  background: var(--surface-raised);
+  box-shadow: var(--elevation-1);
+  color: var(--on-surface);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: var(--label-lg);
+  font-weight: 500;
+  line-height: 1.434;
+  transition: background-color 120ms ease;
+}
+.example:hover { background: var(--primary-subtle); }
+.example:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+.example__emoji { font-size: 1.5em; line-height: 1; }
+.example__name { flex: 1; }
+.example__arrow { color: var(--primary); }
+
+/* Ablauf des Pilotprojekts */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-2);
+}
+.chips li {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  background: var(--surface-raised);
+  font-family: var(--font-display);
+  font-size: var(--label-md);
+  line-height: 1.4;
+}
+.when {
+  margin-block-start: var(--sp-3);
+  font-size: var(--body-sm);
+  color: var(--on-surface-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .example { transition: none; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="masthead">
+    <img class="masthead__mark" src="/assets/web/musy-logo.png" alt="" width="192" height="192">
+    <h1>Musie</h1>
+    <p class="lead">Der Schulalltag ist laut, voll und schnell. Für Schüler:innen und Lehrkräfte ist es schwer, wirklich zur Ruhe zu kommen. Musie schafft dafür einen festen Platz im Unterricht: digital, sofort einsetzbar, mit Musik.</p>
+  </header>
+
+  <section aria-labelledby="was">
+    <h2 id="was">Was ist Musie?</h2>
+    <p>Musie ist eine musiktherapeutisch entwickelte Web-App, die im Unterricht eingesetzt werden kann. Sie läuft direkt im Browser, ohne Installation und ohne Vorbereitung.</p>
+
+    <div class="sub">
+      <h3>Ziele</h3>
+      <dl class="terms">
+        <div><dt>Sozial-emotionales Lernen</dt><dd>Gefühle wahrnehmen, benennen und darüber sprechen</dd></div>
+        <div><dt>Selbstregulation</dt><dd>zur Ruhe kommen, Spannung abbauen, Fokus finden</dd></div>
+        <div><dt>Achtsamkeit</dt><dd>im Moment ankommen, Wahrnehmung schärfen, Ruhe als Ressource erleben</dd></div>
+        <div><dt>Klassenklima</dt><dd>gemeinsames Erleben stärkt das Miteinander</dd></div>
+        <div><dt>Strukturierte Übergänge</dt><dd>Ankommen nach der Pause, Stundeneinstieg, Durchatmen vor Prüfungen</dd></div>
+      </dl>
+      <p>Anschlussfähig an Gesundheitsförderung, soziales Lernen und Persönlichkeitsbildung.</p>
+    </div>
+
+    <div class="sub">
+      <h3>So läuft eine Übung ab</h3>
+      <ol class="steps">
+        <li>
+          <span class="steps__title">Vorbereiten</span>
+          <p class="steps__text">Die Lehrkraft wählt eine Übung aus. Eine kurze Einführung zeigt, worum es geht, Anpassungen an die Klasse sind optional.</p>
+        </li>
+        <li>
+          <span class="steps__title">Erleben</span>
+          <p class="steps__text">Die Klasse führt die Übung gemeinsam durch, die App leitet an.</p>
+        </li>
+        <li>
+          <span class="steps__title">Nachspüren &amp; Austauschen</span>
+          <p class="steps__text">Gesprächsimpulse helfen bei der Reflexion.</p>
+        </li>
+        <li>
+          <span class="steps__title">Sichtbar machen</span>
+          <p class="steps__text">Die Eindrücke der Klasse werden zusammengefasst und visualisiert.</p>
+        </li>
+      </ol>
+      <p class="note">Mitmachen ist immer freiwillig. Augen offen ist okay, einfach still dabei sein auch.</p>
+      <p class="small muted">Musie ist ein pädagogisches Angebot und ersetzt keine Therapie. Bitte wenden Sie es nur im Rahmen des Settings an.</p>
+    </div>
+
+    <div class="sub">
+      <h3>Übungsformen</h3>
+      <p>Musie verbindet rezeptive und aktive Zugänge:</p>
+      <ul class="tiles">
+        <li class="tile"><div class="tile__title">Rezeptiv</div><p class="tile__text">Musik hören, Klangreisen, Musikkarten</p></li>
+        <li class="tile"><div class="tile__title">Hören &amp; Spüren</div><p class="tile__text">Körperwahrnehmung, Atem-Pad</p></li>
+        <li class="tile"><div class="tile__title">Hören, Sehen &amp; Spüren</div><p class="tile__text">Musik und Bild verbinden</p></li>
+        <li class="tile"><div class="tile__title">Aktiv</div><p class="tile__text">gemeinsames Improvisieren mit einfachen Mitteln</p></li>
+      </ul>
+      <p>Je nach Situation dauern die Übungen 5 bis 30 Minuten.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="aufwand">
+    <h2 id="aufwand">Ihr Aufwand</h2>
+    <ul class="checks">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Keine Vorbereitung, keine Fortbildung, kein musikalisches Vorwissen</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Starten über Beamer oder Lautsprecher, ein Gerät genügt</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Die App führt durch jeden Schritt, Sie begleiten die Klasse</span></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="wer">
+    <h2 id="wer">Wer steckt dahinter?</h2>
+    <p>Musie wird von einem Team aus Musiktherapie und Produktdesign entwickelt.</p>
+  </section>
+
+  <section aria-labelledby="testen">
+    <h2 id="testen">Testen Sie vorab Beispiele für Übungen</h2>
+    <ul class="examples">
+      <li><a class="example" href="/experiments/reflexion/harfe/"><span class="example__emoji" aria-hidden="true">🎶</span><span class="example__name">Harfe</span><span class="example__arrow" aria-hidden="true">→</span></a></li>
+      <li><a class="example" href="/experiments/reflexion/body-scan/"><span class="example__emoji" aria-hidden="true">🧘</span><span class="example__name">Body Scan</span><span class="example__arrow" aria-hidden="true">→</span></a></li>
+      <li><a class="example" href="/experiments/reflexion/freie-bahn/"><span class="example__emoji" aria-hidden="true">🌅</span><span class="example__name">Freie Bahn</span><span class="example__arrow" aria-hidden="true">→</span></a></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="pilot">
+    <h2 id="pilot">Ablauf des Pilotprojekts</h2>
+    <ol class="steps">
+      <li>
+        <span class="steps__title">Auftakt-Workshop</span>
+        <div class="steps__text">
+          <p>Wir stellen den aktuellen Prototyp vor und probieren die Übungen gemeinsam aus.</p>
+          <ul class="chips">
+            <li>kostenfrei</li>
+            <li>3–5 Lehrkräfte</li>
+            <li>ca. 90 Minuten</li>
+          </ul>
+          <p class="when">Termin nach Ihrem Wunsch, am besten zwischen dem 30.11. und dem 2.12.2026</p>
+        </div>
+      </li>
+      <li>
+        <span class="steps__title">Testphase</span>
+        <p class="steps__text">Mindestens drei Einsätze mit der Klasse bis Weihnachten</p>
+      </li>
+      <li>
+        <span class="steps__title">Feedback</span>
+      </li>
+    </ol>
+  </section>
+
+</main>
+</body>
+</html>
