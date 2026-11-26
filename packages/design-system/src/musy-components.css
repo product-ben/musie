@@ -3262,16 +3262,21 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    No edge anywhere, as §15 since 2026-11-16 — the escapes are in BORDERLESS
    SURFACES at the end of the file, where the track is listed beside §15's.
 
-   NOTHING THAT MOVES IS ON A TIMER. The thumb follows the finger and must
-   not lag it (§21's rule), the indicator and the current value have to stay
-   glued to the thumb, so none of the three transitions its position. Only
-   colour and opacity fade, on --motion-toggle, as §15's segments do.      */
+   HELD, NOTHING MOVES ON A TIMER. The thumb follows the finger and must not
+   lag it (§21's rule). LET GO, it glides onto its step (Ben, 2026-11-26:
+   stufenlos, einrasten in 30-Sekunden-Schritten) — and the indicator and
+   the current value glide with it on the same timing, or they would come
+   unglued. Colour and opacity fade on --motion-toggle, as §15's do.       */
 
 .musy-slider {
   /* The chosen segment's ink: the current value and the grip. */
   --musy-slider-ink: var(--interactive-primary-on-subtle);
   /* The thumb is the target, so it is the lane's own height, square. */
   --musy-slider-thumb: var(--target-primary);
+  /* The glide onto a step: fast, and decelerating INTO place — the entrance
+     easing, because the thumb is arriving somewhere. Reduced motion takes
+     the duration to 1ms in Layer 1, so the snap is then a jump. */
+  --musy-slider-settle: var(--motion-duration-fast) var(--motion-ease-entrance);
   min-inline-size: 0;
 }
 .musy-slider--accent { --musy-slider-ink: var(--interactive-accent-on-subtle); }
@@ -3421,8 +3426,8 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 
 /* THE CURRENT VALUE, under the thumb's centre. The same arithmetic base-ui
    places an edge-aligned thumb with: half a thumb in, plus the travel — the
-   scale less one thumb — times the fraction Slider.tsx publishes. No
-   transition on the position: it follows the finger (§21's rule). */
+   scale less one thumb — times the fraction Slider.tsx publishes. Its
+   position glides only with the thumb's, below. */
 .musy-slider__current {
   position: absolute;
   inset-block-start: 0;
@@ -3439,15 +3444,41 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 
 /* WHILE IT IS BEING MOVED it sits in a sunken pill — the track's own fill —
    so the figure that is changing is the one that looks different (Ben,
-   2026-11-26). A drag is base-ui's `[data-dragging]`. Keyboard focus counts
-   too: the arrow keys move the thumb in single presses with no drag to mark,
-   and focus is the whole time they can. A rule of its own for the `:has()`,
-   for the reason the thumb's focus ring has one. */
-.musy-slider[data-dragging] .musy-slider__current {
+   2026-11-26). Held is Slider.tsx's `[data-held]`, from the press to the
+   release — not base-ui's `[data-dragging]`, which waits for a few moves and
+   so misses a press that does not travel. Keyboard focus counts too: the
+   arrow keys move the thumb in single presses with nothing held to mark, and
+   focus is the whole time they can. A rule of its own for the `:has()`, for
+   the reason the thumb's focus ring has one. */
+.musy-slider[data-held] .musy-slider__current {
   background-color: var(--surface-sunken);
 }
 .musy-slider:has(.musy-slider__thumb :focus-visible) .musy-slider__current {
   background-color: var(--surface-sunken);
+}
+
+/* ── THE GLIDE ONTO A STEP ────────────────────────────────────────────────
+   Let go, the thumb travels from where the finger left it to the nearest
+   step; a key moves it a step the same way. The three things placed along
+   the lane travel together, on one timing, or the raised part and the figure
+   would part from the thumb mid-glide. base-ui writes `inset-inline-start`
+   on the thumb and `width` on the indicator; the figure's own position is
+   the rule above.
+
+   TWO CONDITIONS, BOTH IN SLIDER.TSX. `[data-held]` switches it off while
+   the finger has the thumb, so the thumb never trails it. `[data-engaged]`
+   switches it on only after the first touch or key — base-ui places an
+   edge-aligned thumb by measuring it after the first render, and with the
+   glide armed from the start every slider would slide in from 0 on mount. */
+.musy-slider[data-engaged]:not([data-held]) .musy-slider__thumb {
+  transition: inset-inline-start var(--musy-slider-settle);
+}
+.musy-slider[data-engaged]:not([data-held]) .musy-slider__indicator {
+  transition: width var(--musy-slider-settle);
+}
+.musy-slider[data-engaged]:not([data-held]) .musy-slider__current {
+  transition: inset-inline-start var(--musy-slider-settle),
+              background-color var(--motion-toggle);
 }
 
 /* ── DISABLED — §15's swap: the disabled fill still lifts the chosen part off
@@ -3480,7 +3511,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   .musy-slider__indicator,
   .musy-slider__thumb { background-color: Highlight; }
   .musy-slider__thumb { color: HighlightText; }
-  .musy-slider[data-dragging] .musy-slider__current { outline: var(--border-width-hairline) var(--border-style-solid) CanvasText; }
+  .musy-slider[data-held] .musy-slider__current { outline: var(--border-width-hairline) var(--border-style-solid) CanvasText; }
   .musy-slider[data-disabled] .musy-slider__indicator,
   .musy-slider[data-disabled] .musy-slider__thumb { background-color: GrayText; }
 }

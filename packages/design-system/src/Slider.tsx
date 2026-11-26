@@ -37,14 +37,40 @@
  * is what base-ui gives it) and the thumb, filled the same, carries the raised
  * part the rest of the way — one shape, two elements, no seam.
  *
+ * ── IT MOVES FREELY AND SETTLES ON A STEP ─────────────────────────────────
+ * Ben, 2026-11-26: „stufenlos bewegen, aber immer in 30-Sekunden-Schritten
+ * einrasten“. The thumb follows the finger without steps; on release it
+ * glides onto the nearest step. `step` is therefore not base-ui's step: the
+ * base-ui slider runs on a fine one (a thousandth of the range, below a pixel
+ * at any width this will meet) and THIS component owns the steps —
+ *
+ *   · the VALUE is always on a step. `onValueChange` reports the step the
+ *     thumb would settle on, and only when that changes; `onValueCommitted`
+ *     the step it settled on. The raw position never leaves the component;
+ *   · the FIGURE under the thumb shows that step during the drag too — what
+ *     you will get, not where your finger happens to be;
+ *   · the KEYS move from step to step. base-ui's own handler would move by
+ *     the fine step, so a capture handler on the root takes the keys first
+ *     and marks them handled (base-ui skips an event already
+ *     `defaultPrevented`);
+ *   · `max` is a step of its own when the range is not a multiple: 1:30 to
+ *     8:12 in 30s steps ends …7:30, 8:00, 8:12, and the arrow keys walk
+ *     exactly that.
+ *
+ * The glide is a CSS transition, switched off while the thumb is held and
+ * switched on only once the person has moved it — base-ui places an
+ * edge-aligned thumb after measuring it, and with the transition on from the
+ * first render every slider would slide in from the start on mount.
+ *
  * ── THE VALUE STANDS UNDER THE THUMB ──────────────────────────────────────
  * Ben, 2026-11-26, the same day: the current value moved out of the label row
  * into the row under the track, on the min's and max's line, and it FOLLOWS
  * THE THUMB rather than standing still between them. At rest it is a bare
  * figure like the two ends; while the slider is being moved it sits in a
  * sunken pill, so the figure that is changing is the one that looks
- * different. "Being moved" is a drag, and keyboard focus on the thumb — the
- * arrow keys move it in single presses, with no drag to mark.
+ * different. "Being moved" is the thumb held — from the press to the release
+ * — and keyboard focus on the thumb: the arrow keys move it in single
+ * presses, with nothing held to mark.
  *
  * It is placed by the same arithmetic base-ui places an edge-aligned thumb
  * with — half a thumb in, plus the travel times the fraction — so the CSS
@@ -97,23 +123,29 @@ export interface SliderProps {
   /** The highest value. Drawn at the end of the track via `formatValue`. */
   max: number;
   /**
-   * The granularity of a value: dragging snaps to multiples of it, counted
-   * from `min`, and an arrow key moves by it. `1` by default. `max` stays
-   * reachable when `max − min` is not a multiple — dragging to the end and
-   * End both land on it.
+   * The steps a value settles on, counted from `min`. The thumb moves freely
+   * while it is held and glides onto the nearest step when let go; an arrow
+   * key moves one step. `max` is a step of its own when `max − min` is not a
+   * multiple. `1` by default.
    */
   step?: number;
-  /** What Page Up / Page Down and Shift + arrow move by. base-ui's 10 by default. */
+  /**
+   * What Page Up / Page Down and Shift + arrow move by, in the value's units
+   * — rounded to whole steps, and never less than one. Four steps by default.
+   */
   largeStep?: number;
-  /** Controlled value. */
+  /** Controlled value. Drawn on the nearest step if it is not on one. */
   value?: number;
   /** Uncontrolled starting value. `min` when neither is given. */
   defaultValue?: number;
-  /** Fires on every change — each step of a drag. */
+  /**
+   * Fires with the step the value would settle on, each time that step
+   * changes — during a drag as well as on a key.
+   */
   onValueChange?: (value: number) => void;
   /**
-   * Fires once a change is settled — the drag released, the key pressed.
-   * Where a change costs something (a write, a request), listen here.
+   * Fires with the step the value settled on — the thumb let go, the key
+   * pressed. Where a change costs something (a write, a request), listen here.
    */
   onValueCommitted?: (value: number) => void;
   /**
@@ -142,8 +174,34 @@ export interface SliderProps {
   className?: string;
 }
 
-/** Do two boxes share any horizontal extent? Direction-blind, so RTL holds. */
-const overlapsInline = (a: DOMRect, b: DOMRect) => a.left < b.right && a.right > b.left;
+/**
+ * The steps, as indices: `min` is step 0, each `step` above it the next, and
+ * `max` the last — its own step when the range is not a multiple, so the
+ * steps of 1:30…8:12 by 30 s end 7:30, 8:00, 8:12. Index arithmetic rather
+ * than a list, so a fine `step` over a wide range costs nothing.
+ */
+function stepGrid(min: number, max: number, step: number) {
+  const span = Math.max(0, max - min);
+  const size = step > 0 ? step : span || 1;
+  /* The highest index ON the grid; the epsilon forgives float noise in
+     `span / size` that would otherwise drop the last whole step. */
+  const lastWhole = Math.floor(span / size + 1e-9);
+  const maxIsOwn = span - lastWhole * size > 1e-9;
+  const last = lastWhole + (maxIsOwn ? 1 : 0);
+  const at = (i: number) => (i >= last ? max : min + i * size);
+  /** The step nearest to `v`. */
+  const nearest = (v: number) => {
+    const c = Math.min(max, Math.max(min, v));
+    const k = Math.min(lastWhole, Math.max(0, Math.round((c - min) / size)));
+    if (maxIsOwn && Math.abs(max - c) < Math.abs(at(k) - c)) return last;
+    return k;
+  };
+  return { size, last, at, nearest };
+}
+
+/** Do two spans share any horizontal extent? Direction-blind, so RTL holds. */
+const overlapsInline = (a: { left: number; right: number }, b: { left: number; right: number }) =>
+  a.left < b.right && a.right > b.left;
 
 export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
   function Slider({
@@ -155,36 +213,103 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
       console.warn(`Slider "${label}": max (${max}) must be greater than min (${min}).`);
     }
 
-    /* WHERE THE VALUE STANDS follows the value, and the value is `value` when
-       the slider is controlled. Uncontrolled, base-ui holds its own and this
-       mirrors it from `onValueChange` — the one piece of state here, the same
-       bargain SegmentedControl makes for its description. */
-    const [ownValue, setOwnValue] = React.useState(defaultValue ?? min);
-    const current = value ?? ownValue;
-    const fraction = max > min ? Math.min(1, Math.max(0, (current - min) / (max - min))) : 0;
+    const grid = stepGrid(min, max, step);
+    const snap = (v: number) => grid.at(grid.nearest(v));
+    /* base-ui's own step: a thousandth of the range — below a pixel on any
+       track narrower than 1000px, which is "stufenlos" to a finger. */
+    const fineStep = max > min ? (max - min) / 1000 : 1;
 
-    /* WHICH END IS COVERED. The only measurement in the component: the CSS
-       already places the current value, but how wide three formatted strings
-       come out is the font's business. Re-measured when the value moves and
-       when the row is resized. */
+    /* THE SETTLED VALUE is `value` when the slider is controlled, and our own
+       otherwise — always on a step. THE HELD POSITION is where the finger has
+       the thumb, set only between press and release. base-ui is always
+       given the held position if there is one, and the settled value if not,
+       so letting go is what moves the thumb onto its step. */
+    const [ownValue, setOwnValue] = React.useState(() => snap(defaultValue ?? min));
+    const settled = value !== undefined ? snap(value) : ownValue;
+    const [held, setHeld] = React.useState<number | null>(null);
+    const position = held ?? settled;
+    const shown = snap(position);
+    const fraction = max > min ? Math.min(1, Math.max(0, (position - min) / (max - min))) : 0;
+
+    /* The last step reported, so `onValueChange` fires when the step under
+       the finger changes and not on every pixel of a drag. */
+    const reportedRef = React.useRef(settled);
+    React.useEffect(() => {
+      /* A controlled value changed from outside is the new baseline. */
+      if (held === null) reportedRef.current = settled;
+    }, [settled, held]);
+    const report = (next: number) => {
+      if (next === reportedRef.current) return;
+      reportedRef.current = next;
+      onValueChange?.(next);
+    };
+    const settle = (next: number) => {
+      setHeld(null);
+      setOwnValue(next);
+      report(next);
+      onValueCommitted?.(next);
+    };
+
+    /* THE GLIDE IS ARMED BY THE FIRST TOUCH. See the header: on from the
+       first render, it would slide every thumb in from the start on mount. */
+    const [engaged, setEngaged] = React.useState(false);
+
+    /* THE KEYS, step to step. Captured on the root so they arrive before
+       base-ui's handler on the input, and marked handled so it stands down. */
+    const onKeyDownCapture = (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (disabled || event.defaultPrevented) return;
+      if (!(event.target instanceof HTMLInputElement) || event.target.type !== 'range') return;
+      const rtl = getComputedStyle(event.currentTarget).direction === 'rtl';
+      const pageSteps = Math.max(1, Math.round((largeStep ?? grid.size * 4) / grid.size));
+      const by = event.shiftKey ? pageSteps : 1;
+      const from = grid.nearest(settled);
+      let to: number | null = null;
+      switch (event.key) {
+        case 'ArrowUp': to = from + by; break;
+        case 'ArrowDown': to = from - by; break;
+        case 'ArrowRight': to = from + (rtl ? -by : by); break;
+        case 'ArrowLeft': to = from + (rtl ? by : -by); break;
+        case 'PageUp': to = from + pageSteps; break;
+        case 'PageDown': to = from - pageSteps; break;
+        case 'Home': to = 0; break;
+        case 'End': to = grid.last; break;
+        default: return;
+      }
+      event.preventDefault();
+      setEngaged(true);
+      settle(grid.at(Math.min(grid.last, Math.max(0, to))));
+    };
+
+    /* WHICH END IS COVERED — the one measurement in the component. The CSS
+       already places the current value; how wide three formatted strings come
+       out is the font's business. Computed from where the figure is GOING,
+       not where it is drawn: mid-glide its box is still on its way, and
+       measured there an end would stay lit under the figure that has just
+       settled on it. Re-measured when the value moves and on resize. */
     const scaleRef = React.useRef<HTMLDivElement>(null);
     const minRef = React.useRef<HTMLSpanElement>(null);
     const maxRef = React.useRef<HTMLSpanElement>(null);
     const currentRef = React.useRef<HTMLOutputElement>(null);
+    const thumbRef = React.useRef<HTMLDivElement>(null);
     const [covered, setCovered] = React.useState({ min: false, max: false });
 
     const minText = formatValue(min);
     const maxText = formatValue(max);
-    const currentText = formatValue(current);
+    const shownText = formatValue(shown);
 
     React.useLayoutEffect(() => {
       const scale = scaleRef.current;
       const measure = () => {
-        const cur = currentRef.current?.getBoundingClientRect();
+        const cur = currentRef.current;
+        const thumb = thumbRef.current;
         const lo = minRef.current?.getBoundingClientRect();
         const hi = maxRef.current?.getBoundingClientRect();
-        if (!cur || !lo || !hi) return;
-        const next = { min: overlapsInline(cur, lo), max: overlapsInline(cur, hi) };
+        if (!scale || !cur || !thumb || !lo || !hi) return;
+        const box = scale.getBoundingClientRect();
+        const along = thumb.offsetWidth / 2 + (box.width - thumb.offsetWidth) * fraction;
+        const centre = getComputedStyle(scale).direction === 'rtl' ? box.right - along : box.left + along;
+        const figure = { left: centre - cur.offsetWidth / 2, right: centre + cur.offsetWidth / 2 };
+        const next = { min: overlapsInline(figure, lo), max: overlapsInline(figure, hi) };
         setCovered((prev) => (prev.min === next.min && prev.max === next.max ? prev : next));
       };
       measure();
@@ -192,22 +317,30 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
       const observer = new ResizeObserver(measure);
       observer.observe(scale);
       return () => observer.disconnect();
-    }, [fraction, minText, maxText, currentText, minLabel, maxLabel]);
+    }, [fraction, minText, maxText, shownText, minLabel, maxLabel]);
 
     return (
       <BaseSlider.Root
         ref={ref}
         min={min}
         max={max}
-        step={step}
-        largeStep={largeStep}
-        value={value}
-        defaultValue={defaultValue}
-        onValueChange={(next) => {
-          setOwnValue(next);
-          onValueChange?.(next);
+        step={fineStep}
+        value={position}
+        onValueChange={(next, details) => {
+          /* A press or a drag holds the thumb where the finger is. Anything
+             else that reaches here — a form's own input event — settles. */
+          if (details.reason === 'drag' || details.reason === 'track-press') {
+            setEngaged(true);
+            setHeld(next);
+            report(snap(next));
+          } else {
+            settle(snap(next));
+          }
         }}
-        onValueCommitted={(next) => onValueCommitted?.(next)}
+        /* base-ui commits on every release, moved or not — so a held
+           position is always let go of here. */
+        onValueCommitted={(next) => settle(snap(next))}
+        onKeyDownCapture={onKeyDownCapture}
         disabled={disabled}
         name={name}
         thumbAlignment="edge"
@@ -216,6 +349,8 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
           accent !== 'primary' ? `musy-slider--${accent}` : '',
           className ?? '',
         ].filter(Boolean).join(' ')}
+        data-held={held !== null ? '' : undefined}
+        data-engaged={engaged ? '' : undefined}
         style={{ '--musy-slider-fraction': fraction } as React.CSSProperties}
       >
         {/* THE SEGMENTED CONTROL'S LEGEND, BY CLASS. Not a copy of its
@@ -240,9 +375,12 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
           <BaseSlider.Control className="musy-slider__control">
             <BaseSlider.Track className="musy-slider__lane">
               <BaseSlider.Indicator className="musy-slider__indicator" />
+              {/* Heard as the STEP, like the figure: mid-drag the raw
+                  position is not a value anybody will get. */}
               <BaseSlider.Thumb
+                ref={thumbRef}
                 className="musy-slider__thumb"
-                getAriaValueText={(_formatted, v) => (valueText ?? formatValue)(v)}
+                getAriaValueText={(_formatted, v) => (valueText ?? formatValue)(snap(v))}
               />
             </BaseSlider.Track>
           </BaseSlider.Control>
@@ -265,7 +403,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
               {maxText}
             </span>
             <BaseSlider.Value ref={currentRef} className="musy-slider__current">
-              {() => currentText}
+              {() => shownText}
             </BaseSlider.Value>
           </div>
         </div>

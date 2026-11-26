@@ -4667,3 +4667,28 @@ Why: Ben's instruction; keyboard focus is my reading of „bewegt" for a
 keyboard user.
 What I need from Ben: nothing — unless the pill should NOT show on keyboard
 focus.
+
+## Slider — moves freely, settles on 30 s steps — RESOLVED
+Where: `src/Slider.tsx` (`stepGrid`, the held position, `onKeyDownCapture`),
+`src/musy-components.css` §15a (THE GLIDE ONTO A STEP)
+What I checked: Ben, 2026-11-26: „Lass probieren das Bewegen stufenlos zu
+machen, aber immer in 30 sek steps einzurasten". base-ui has one `step` for
+drag and keys alike, so a step of 30 makes the drag jump and a fine step
+makes the keys crawl. Read base-ui 1.7: it commits on EVERY release, moved
+or not (`SliderControl` `handleTouchEnd`), and its thumb's key handler
+returns early on an event already `defaultPrevented`.
+What I did: base-ui runs on a fine step (a thousandth of the range) and the
+component owns the steps. Held, the thumb follows the finger (measured: to
+0.1px at every 5px of a drag); the figure and the screen reader say the step
+it would settle on; on release it glides onto that step — thumb, raised part
+and figure together (measured mid-glide: 0.0px apart). Keys are taken in a
+capture handler: one step per arrow, four per Page/Shift, and `max` is a step
+of its own (8:12 → 8:00 → 7:30). `onValueChange` reports steps only, when
+the step changes. The glide is armed by the first touch, so nothing slides
+in on mount, and Layer 1's reduced motion makes it a jump. The pill now
+follows the component's own held state from press to release, not base-ui's
+`[data-dragging]`, which waits a few moves and missed a press on the track.
+Why: Ben's instruction; showing the step rather than the raw position during
+the drag is my call — it is the value the person will get.
+What I need from Ben: whether the figure should count every second during
+the drag instead of the 30 s steps.

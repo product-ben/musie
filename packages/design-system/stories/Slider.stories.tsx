@@ -65,6 +65,13 @@ const meta = {
           'sits in a sunken pill. An end value it covers fades out; at the minimum',
           'the two are the same figure in the same place. Drag the thumb to see it.',
           '',
+          '**It moves freely and settles on a step** (Ben, 2026-11-26). The thumb',
+          'follows the finger without steps; let go, it glides onto the nearest',
+          'step. The value is always on a step: `onValueChange` reports the step the',
+          'thumb would settle on, the figure shows it during the drag, and the arrow',
+          'keys move step to step. `max` is a step of its own when the range is not',
+          'a multiple — 7:30, 8:00, 8:12.',
+          '',
           '**The thumb sits inside the track** (`thumbAlignment="edge"`). At the',
           'minimum the raised part is exactly one segment\'s square.',
           '',
@@ -93,7 +100,7 @@ const meta = {
     label: 'Wie lange möchtest du üben?',
     min: MIN,
     max: MAX,
-    step: 15,
+    step: 30,
     defaultValue: 270,
     formatValue: clock,
     valueText: spoken,
@@ -104,12 +111,12 @@ const meta = {
     labelStep: { control: 'inline-radio', options: ['label-lg', 'label-md'], description: 'The label’s type step. label-lg by default, as the segmented control’s legend; label-md as one field among several.' },
     min: { control: 'number', description: 'The lowest value. Drawn at the start of the track via formatValue.' },
     max: { control: 'number', description: 'The highest value. Drawn at the end of the track via formatValue.' },
-    step: { control: 'number', description: 'The granularity of a value: dragging snaps to multiples of it, counted from min. 1 by default.' },
-    largeStep: { control: 'number', description: 'What Page Up / Page Down and Shift + arrow move by. base-ui’s 10 by default.' },
+    step: { control: 'number', description: 'The steps a value settles on, counted from min. The thumb moves freely while held and glides onto the nearest step when let go. 1 by default.' },
+    largeStep: { control: 'number', description: 'What Page Up / Page Down and Shift + arrow move by, rounded to whole steps. Four steps by default.' },
     value: { control: false, description: 'Controlled value.' },
     defaultValue: { control: 'number', description: 'Uncontrolled starting value. `min` when neither is given.' },
-    onValueChange: { action: 'valueChange', description: 'Fires on every change — each step of a drag.' },
-    onValueCommitted: { action: 'valueCommitted', description: 'Fires once a change is settled — the drag released, the key pressed.' },
+    onValueChange: { action: 'valueChange', description: 'Fires with the step the value would settle on, each time that step changes.' },
+    onValueCommitted: { action: 'valueCommitted', description: 'Fires with the step the value settled on — the thumb let go, the key pressed.' },
     formatValue: { control: false, description: 'How a value is DRAWN: the current value under the thumb, and both ends. Required.' },
     valueText: { control: false, description: 'How a value is HEARD (aria-valuetext). Falls back to formatValue.' },
     minLabel: { control: 'text', description: 'A word drawn before the minimum’s value at the start of the track. Optional.' },
@@ -128,7 +135,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The exercise length: 1:30 to the length of the piece, in steps of 15 s. */
+/**
+ * The exercise length: 1:30 to the length of the piece. Drag it: the thumb
+ * moves freely, the figure counts in 30 s steps, and on release the thumb
+ * glides onto the step the figure showed. 8:12 is a step of its own.
+ */
 export const Default: Story = {};
 
 /** Both accent families. Only the current value's and the grip's ink changes. */
