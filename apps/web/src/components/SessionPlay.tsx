@@ -65,12 +65,18 @@ export interface SessionPlayProps {
   motion: boolean;
   clock: ClockState;
   onClock: (state: ClockState) => void;
+  /**
+   * How long the timer runs, in seconds — the length chosen on Einsteigen
+   * (2026-11-26, `lib/exerciseLength.ts`). Was `exercise.listenGateSeconds`
+   * read here directly; it is passed now because the run decides it.
+   */
+  timerSeconds: number;
   /** *Weiter zum Reflektieren*, from the sheet's foot — the same press as the row's. */
   onAdvance: () => void;
 }
 
 export function SessionPlay({
-  exercise, instrument, mode, vibration, motion, clock, onClock, onAdvance,
+  exercise, instrument, mode, vibration, motion, clock, onClock, timerSeconds, onAdvance,
 }: SessionPlayProps) {
   const t = useT();
   const navigate = useNavigate();
@@ -144,7 +150,7 @@ export function SessionPlay({
           stage={immersive ? (
             <InstrumentStage
               definition={definition}
-              durationSeconds={exercise.listenGateSeconds}
+              durationSeconds={timerSeconds}
               mode={mode}
               vibration={vibration}
               motion={motion}

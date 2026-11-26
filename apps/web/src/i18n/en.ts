@@ -743,6 +743,25 @@ export const en = {
   'session.intro.goalHint.wakeUp': 'Musie picks music for this exercise that helps you recharge.',
   'session.intro.goalHint.mindfulness': 'Musie picks music for this exercise that helps you strengthen your mindfulness.',
 
+  /* ── HOW LONG THIS RUN IS — Ben, 2026-11-26 ────────────────────────────
+     The last setting on Einsteigen for a card or instrument exercise
+     (`lib/exerciseLength.ts`). The label asks about the EXERCISE rather than
+     about practising: on an instrument „practise" reads as homework. The
+     figures under the slider are written by the code (M:SS); these are what a
+     screen reader hears instead, because "1:30" is announced as a time of
+     day. One/other by hand — a single second cannot occur on half-minute
+     steps. */
+  'session.intro.length.label': 'How long should the exercise last?',
+  'session.intro.length.minutes': '{minutes} minutes',
+  'session.intro.length.oneMinute': '1 minute',
+  'session.intro.length.minutesSeconds': '{minutes} minutes {seconds} seconds',
+  'session.intro.length.oneMinuteSeconds': '1 minute {seconds} seconds',
+  /* The intro sentence's `{nextMinutes}` — the phrase and not only the
+     number, because the minimum is one minute and „the next 1 minutes" is
+     not English. One/other by hand. */
+  'session.intro.nextMinutes': 'the next {minutes} minutes',
+  'session.intro.nextMinute': 'the next minute',
+
   /* ── A SMALL SCREEN, SAID ONCE AND WITHOUT A GATE ────────────────────────
      Only in digital mode, and only below 850px — the width is a CSS decision
      and lives in `shell.css`, because what fits on a screen is not something a

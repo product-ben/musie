@@ -4611,3 +4611,84 @@ class and keep heading-sm; Ben named the segmented control. The hidden
 legends (language, reflect mode, diary filter, exercises view) have no
 heading above them.
 What I need from Ben: nothing.
+
+# Slider — the exercise length (2026-11-26)
+
+## Slider — which primitives: the segmented control's or the music player's? — RESOLVED
+Where: `src/Slider.tsx`, `src/musy-components.css` §15a, `stories/Slider.stories.tsx`
+What I checked: the brief — „a Slider (based on base ui) … the same label as
+the segmented control … follow the same design primitives". Two readings: the
+thin rail §21 already draws for its scrubber, or §15's sunken track and
+raised chosen segment. Asked Ben with three sketches (segment track, thin
+rail, a sliding segment carrying the value); he chose the segment track.
+What I did: the label is the legend's own class and step; the track is
+`.musy-seg__track`'s declarations; indicator + thumb are the chosen segment's
+raised fill, joined into one pill (the indicator is rounded at its start only
+— rounded at both ends it left a notch either side of the thumb, measured in
+Storybook). Ends are label-md, muted, each centred under the thumb's resting
+place. `formatValue` is required and `valueText` optional, so every drawn and
+spoken string is the caller's. No `size`, no `guided`: a 24px drag control is
+what §21's header argues against, and nothing calls `guided`.
+Why: Ben's choice, and one class for the label is the only way it cannot
+drift from the segmented control's.
+What I need from Ben: nothing — the integration into the card and instrument
+intros is the next step and was out of this one's scope.
+
+## MusicPlayer — the scrubber's thumb never draws a focus ring
+Where: `src/musy-components.css` §21, `.musy-mplayer__thumb:focus-visible`
+What I checked: measured in Storybook (`components-musicplayer--default`):
+tabbing onto the scrubber focuses base-ui's `<input type="range">` INSIDE the
+thumb, which matches `:focus-visible`; the thumb itself never does, and its
+computed outline is `none`. The input is visually hidden, so a keyboard user
+sees no focus at all on the only drag control the player has (2.4.7).
+What I did: nothing in §21 — out of this change's scope. The Slider draws its
+ring with `.musy-slider__thumb:has(:focus-visible)`, in a rule of its own
+rather than in §0's list, because one unparseable selector voids a whole list.
+Why: the same one-line fix applies there, but it changes a shipped component
+and belongs in its own commit.
+What I need from Ben: nothing, just flagging — a one-line fix whenever §21 is
+next touched.
+
+## Slider — the current value moves under the thumb, in a pill while moving — RESOLVED
+Where: `src/Slider.tsx`, `src/musy-components.css` §15a (`.musy-slider__current`)
+What I checked: Ben, 2026-11-26: „Zeig die aktuelle Zahl bitte unter dem
+slider, aligned mit den min und max werten. Wenn der slider bewegt wird, kommt
+die zahl in eine sunken pill. ansonsten steht die einfach so da." Asked
+whether it follows the thumb or stands in the middle; he chose „folgt dem
+Regler".
+What I did: the value left the label row. It stands on the min/max line,
+placed by CSS with base-ui's own edge-alignment arithmetic (measured: centred
+under the thumb to 0.1px at every position tried, one baseline with both
+ends). The pill is the track's sunken fill, on `[data-dragging]` and on
+keyboard focus — arrow keys move the thumb with no drag to mark. An end the
+value covers fades out (measured in a layout effect, the one thing CSS cannot
+know); at the minimum the two are the same figure in the same place.
+Why: Ben's instruction; keyboard focus is my reading of „bewegt" for a
+keyboard user.
+What I need from Ben: nothing — unless the pill should NOT show on keyboard
+focus.
+
+## Slider — moves freely, settles on 30 s steps — RESOLVED
+Where: `src/Slider.tsx` (`stepGrid`, the held position, `onKeyDownCapture`),
+`src/musy-components.css` §15a (THE GLIDE ONTO A STEP)
+What I checked: Ben, 2026-11-26: „Lass probieren das Bewegen stufenlos zu
+machen, aber immer in 30 sek steps einzurasten". base-ui has one `step` for
+drag and keys alike, so a step of 30 makes the drag jump and a fine step
+makes the keys crawl. Read base-ui 1.7: it commits on EVERY release, moved
+or not (`SliderControl` `handleTouchEnd`), and its thumb's key handler
+returns early on an event already `defaultPrevented`.
+What I did: base-ui runs on a fine step (a thousandth of the range) and the
+component owns the steps. Held, the thumb follows the finger (measured: to
+0.1px at every 5px of a drag); the figure and the screen reader say the step
+it would settle on; on release it glides onto that step — thumb, raised part
+and figure together (measured mid-glide: 0.0px apart). Keys are taken in a
+capture handler: one step per arrow, four per Page/Shift, and `max` is a step
+of its own (8:12 → 8:00 → 7:30). `onValueChange` reports steps only, when
+the step changes. The glide is armed by the first touch, so nothing slides
+in on mount, and Layer 1's reduced motion makes it a jump. The pill now
+follows the component's own held state from press to release, not base-ui's
+`[data-dragging]`, which waits a few moves and missed a press on the track.
+Why: Ben's instruction; showing the step rather than the raw position during
+the drag is my call — it is the value the person will get.
+What I need from Ben: whether the figure should count every second during
+the drag instead of the 30 s steps.

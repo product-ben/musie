@@ -35,6 +35,14 @@
  * soothing ending while the other one is bringing the person back into the
  * now"* — so the question asks about the ending, which no goal is phrased as.
  *
+ * ── HOW LONG THE RUN IS, LAST — Ben, 2026-11-26 ──────────────────────────
+ * A card or instrument exercise asks, below every other setting, how long
+ * this run should be: a `Slider` from 1:00 to 10:00 in half minutes,
+ * starting at 2:00
+ * (`lib/exerciseLength.ts`). It is the last thing on the screen because it is
+ * the last thing to decide — what the run is comes first, how long it lasts
+ * after. The intro sentence's `{minutes}` follows it as it moves.
+ *
  * ── WHY A SEGMENTED CONTROL ───────────────────────────────────────────────
  * Two options, both visible, one tap, no scrolling — and the component
  * requires a glyph per option, which is what survives a clipped German label.
@@ -42,7 +50,7 @@
  * have four.
  */
 import { Armchair, BatteryCharging, BedSingle, Flower2, Layers, Moon, Smartphone, Sparkles, Sunrise, Waves } from 'lucide-react';
-import { SegmentedControl, WizardContent, WizardIntro } from '@musie/design-system';
+import { SegmentedControl, Slider, WizardContent, WizardIntro } from '@musie/design-system';
 import { Markdown } from './Markdown';
 import { InstrumentIntro } from './InstrumentIntro';
 import type { InstrumentIntroProps } from './InstrumentIntro';
@@ -52,6 +60,9 @@ import type { Card, Exercise, Goal } from '../lib/content';
 import { fromRoot } from '../lib/assets';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
+import {
+  LENGTH_MAX_SECONDS, LENGTH_MIN_SECONDS, LENGTH_STEP_SECONDS, lengthClock, spokenLength,
+} from '../lib/exerciseLength';
 import { headingAndLead, withoutHeadingAndLead } from '../lib/markdown';
 import { useIntroImageFit } from '../lib/useIntroImageFit';
 
@@ -128,6 +139,14 @@ export interface SessionIntroProps {
    * every exercise without cards has today.
    */
   leadOnly?: boolean;
+  /**
+   * ── HOW LONG THIS RUN IS — 2026-11-26 ───────────────────────────────────
+   * The chosen length in seconds and what to do when it moves. Absent for a
+   * kind that does not ask — every kind but the card and instrument
+   * exercises — exactly like the questions above. Reported on each step of a
+   * drag, so the `{minutes}` in the intro sentence follows the thumb.
+   */
+  length?: { seconds: number; onChange: (seconds: number) => void };
 }
 
 /** The glyph per option. A `Record`, so a third posture fails the typecheck
@@ -181,7 +200,7 @@ const ENDING_GLYPH: Record<Ending, typeof Armchair> = {
 export function SessionIntro({
   exercise, durationSeconds, posture, ending, onPostureChange, onEndingChange,
   cardsPresent, onCardsPresentChange, instrumentSettings,
-  goal, goals, onGoalChange, scannedCard, leadOnly = false,
+  goal, goals, onGoalChange, scannedCard, leadOnly = false, length,
 }: SessionIntroProps) {
   const t = useT();
   /* The picture's width on a tablet follows the copy's height (Ben,
@@ -204,9 +223,20 @@ export function SessionIntro({
      is better than writing a zero into a sentence — and it is visible rather
      than silent, so a missing duration shows up as `{minutes}` on screen the
      first time somebody looks, instead of as a confident wrong number. */
-  const md = durationSeconds === null || durationSeconds === undefined
+  const minutes = durationSeconds === null || durationSeconds === undefined
+    ? null
+    : Math.ceil(durationSeconds / 60);
+  /* `{nextMinutes}` (2026-11-26) is the whole phrase, from the catalogue —
+     „die nächste Minute" at one, „die nächsten 5 Minuten" above. The card and
+     instrument intros use it, because their length starts at one minute;
+     `{minutes}` stays the bare number for the recordings that never do. */
+  const md = minutes === null
     ? exercise.introMd
-    : exercise.introMd.replaceAll('{minutes}', String(Math.ceil(durationSeconds / 60)));
+    : exercise.introMd
+      .replaceAll('{minutes}', String(minutes))
+      .replaceAll('{nextMinutes}', minutes === 1
+        ? t('session.intro.nextMinute')
+        : t('session.intro.nextMinutes', { minutes: String(minutes) }));
 
   /* ONE FLAG, read off the prop that carries the answer — the same shape the
      two questions above use, and for the same reason. */
@@ -389,6 +419,27 @@ export function SessionIntro({
           reasons. */}
       {exercise.instrument !== null && instrumentSettings !== undefined && (
         <InstrumentIntro instrument={exercise.instrument} {...instrumentSettings} />
+      )}
+
+      {/* ── HOW LONG THIS RUN IS — the last setting (Ben, 2026-11-26) ──────
+          Rule 7: the label and both ways of putting a length — drawn and
+          heard — are passed. M:SS is drawn; a screen reader hears minutes
+          and seconds in words, because "1:30" is read as a time of day. */}
+      {length !== undefined && (
+        <Slider
+          name="session-length"
+          label={t('session.intro.length.label')}
+          min={LENGTH_MIN_SECONDS}
+          max={LENGTH_MAX_SECONDS}
+          step={LENGTH_STEP_SECONDS}
+          value={length.seconds}
+          onValueChange={length.onChange}
+          formatValue={lengthClock}
+          valueText={(seconds) => {
+            const said = spokenLength(seconds);
+            return t(said.key, said.params);
+          }}
+        />
       )}
       </WizardContent>
     </>

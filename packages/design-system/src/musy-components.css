@@ -3246,6 +3246,272 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 
 
 
+/* ═══ 15a · SLIDER ═════════════════════════════════════════════════════════
+   One value on a range, set by dragging. Built from §15's primitives rather
+   than §21's thin rail — Ben, 2026-11-26: the slider sits under segmented
+   controls in the session intro, so it is drawn as their sibling.
+
+     §15 SEGMENTED CONTROL          15a SLIDER
+     the legend (label-lg)          the label — the SAME class, see Slider.tsx
+     .musy-seg__track               .musy-slider__track: sunken, --sp-1, pill
+     a segment, --target-primary    the lane, --target-primary
+     the chosen segment             indicator + thumb: raised, primary ink
+     an unchosen segment's word     the values under the track: label-md
+     the track's sunken fill        the current value's pill, while moving
+
+   No edge anywhere, as §15 since 2026-11-16 — the escapes are in BORDERLESS
+   SURFACES at the end of the file, where the track is listed beside §15's.
+
+   HELD, NOTHING MOVES ON A TIMER. The thumb follows the finger and must not
+   lag it (§21's rule). LET GO, it glides onto its step (Ben, 2026-11-26:
+   stufenlos, einrasten in 30-Sekunden-Schritten) — and the indicator and
+   the current value glide with it on the same timing, or they would come
+   unglued. Colour and opacity fade on --motion-toggle, as §15's do.       */
+
+.musy-slider {
+  /* The chosen segment's ink: the current value and the thumb's glyph. */
+  --musy-slider-ink: var(--interactive-primary-on-subtle);
+  /* The thumb is the target, so it is the lane's own height, square. */
+  --musy-slider-thumb: var(--target-primary);
+  /* The glide onto a step: fast, and decelerating INTO place — the entrance
+     easing, because the thumb is arriving somewhere. Reduced motion takes
+     the duration to 1ms in Layer 1, so the snap is then a jump. */
+  --musy-slider-settle: var(--motion-duration-fast) var(--motion-ease-entrance);
+  min-inline-size: 0;
+}
+.musy-slider--accent { --musy-slider-ink: var(--interactive-accent-on-subtle); }
+
+/* THE LABEL needs no rule here: it is the legend, class and step, and the
+   legend's own `margin-block-end` is its gap to the track — as in §15. */
+
+/* ── THE TRACK — `.musy-seg__track`, declaration for declaration ─────────── */
+.musy-slider__track {
+  box-sizing: border-box;
+  inline-size: 100%;
+  padding: var(--sp-1);
+  border: var(--border-width-hairline) var(--border-style-solid) transparent;
+  border-radius: var(--radius-control);
+  background-color: var(--surface-sunken);
+}
+
+/* base-ui's Control: what a press or a drag lands on, and the box an
+   edge-aligned thumb is measured against. `touch-action: none` because
+   base-ui starts a drag on touchstart — a vertical swipe begun here would
+   both scroll the page and move the value. §21 makes the same call. */
+.musy-slider__control {
+  display: flex;
+  align-items: center;
+  block-size: var(--target-primary);
+  touch-action: none;
+  user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* base-ui's Track: the positioned box the thumb and the indicator are placed
+   in. The Control's size exactly, so the measuring box and the placing box
+   are one. */
+.musy-slider__lane {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* ── THE CHOSEN PART ───────────────────────────────────────────────────────
+   The indicator and the thumb are filled alike, so together they read as ONE
+   raised segment from the start of the lane to the thumb's far edge. base-ui
+   sizes the indicator to the thumb's CENTRE; the thumb covers the rest. At
+   the minimum the indicator is wholly under the thumb, and the raised part is
+   exactly one segment's square.
+
+   base-ui writes the geometry inline — the indicator's position, width and
+   height; the thumb's position, offset and translate — so nothing here
+   repeats it. */
+.musy-slider__indicator {
+  box-sizing: border-box;
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
+  /* ROUNDED AT THE START ONLY. Its trailing end sits under the thumb's
+     centre, and rounded there it curved away a thumb's radius too early: the
+     union of the two dipped into a notch above and below the thumb's leading
+     edge. Measured, not guessed — and at the minimum, where the indicator is
+     half a thumb wide, four full radii clamped to a quarter of the height and
+     its corners stood out past the thumb's circle. Square at the end, the
+     two start radii resolve to half the height — exactly the thumb's own
+     leading half. */
+  border-start-start-radius: var(--radius-control);
+  border-end-start-radius: var(--radius-control);
+  background-color: var(--surface-raised);
+}
+
+.musy-slider__thumb {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: var(--musy-slider-thumb);
+  block-size: var(--musy-slider-thumb);
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
+  border-radius: var(--radius-control);
+  background-color: var(--surface-raised);
+  color: var(--musy-slider-ink);
+}
+/* THE GLYPH. An eighth note by default (`Slider.glyph`), at `md` — the glyph
+   a `primary` segment carries — in the chosen segment's ink, which the Icon
+   takes from `color` above. It replaced a drawn grip bar (Ben, 2026-11-26):
+   the note says what the slider sets, and a thumb with a glyph on it still
+   reads as the thing to take hold of. Never shrunk by the grid. */
+.musy-slider__thumb > .musy-icon { flex: none; }
+/* The focusable element is base-ui's <input type="range"> INSIDE the thumb,
+   so the ring is drawn on the thumb when it holds focus. A rule of its own,
+   not a line in §0's list: one selector a browser cannot parse voids the
+   whole list it sits in, and that list is every focus ring in the system. */
+.musy-slider__thumb:has(:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ── THE VALUES UNDER THE TRACK ────────────────────────────────────────────
+   One line: the minimum at the start, the maximum at the end, and the current
+   value under the thumb (Ben, 2026-11-26). All three label-md from
+   `[data-type-step]` — an unchosen segment's word — with tabular figures, so
+   a drag changing a digit does not jostle the figure sideways.
+
+   THE ROW IS INSET BY THE TRACK'S CHROME, so the scale inside it is the
+   lane's width exactly: a fraction of the scale is then a fraction of the
+   thumb's travel, and the current value can be placed by arithmetic alone. */
+.musy-slider__values {
+  margin-block-start: var(--sp-2);
+  padding-inline: calc(var(--sp-1) + var(--border-width-hairline));
+  font-variant-numeric: tabular-nums;
+}
+.musy-slider__scale {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-gap-related);
+}
+
+/* ALL THREE CARRY THE PILL'S PADDING, the two ends included, at rest
+   included. The pill then only fills a box that was already there: the
+   figure does not jump when it appears, and the three stay on one baseline
+   because they are one shape of box. */
+.musy-slider__end,
+.musy-slider__current {
+  box-sizing: border-box;
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-2);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+/* The ends: muted, and each at least a thumb wide and centred, so a bare
+   value sits under the thumb's resting place at its end — which is also
+   exactly where the current value stands when it reaches that end. A word
+   before the value makes the end wider than the thumb; it then starts at the
+   thumb's edge instead, which still reads as belonging to that end. */
+.musy-slider__end {
+  min-inline-size: var(--musy-slider-thumb);
+  text-align: center;
+  color: var(--on-surface-muted);
+  transition: opacity var(--motion-toggle);
+}
+/* Covered by the current value — measured in Slider.tsx, the one thing CSS
+   cannot know. Faded, not removed: the end is still true, and still read. */
+.musy-slider__end[data-covered] { opacity: 0; }
+
+/* THE CURRENT VALUE, under the thumb's centre. The same arithmetic base-ui
+   places an edge-aligned thumb with: half a thumb in, plus the travel — the
+   scale less one thumb — times the fraction Slider.tsx publishes. Its
+   position glides only with the thumb's, below. */
+.musy-slider__current {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: calc(
+    var(--musy-slider-thumb) / 2
+    + (100% - var(--musy-slider-thumb)) * var(--musy-slider-fraction, 0)
+  );
+  translate: -50% 0;
+  color: var(--musy-slider-ink);
+  background-color: transparent;
+  transition: background-color var(--motion-toggle);
+}
+.musy-slider__current:dir(rtl) { translate: 50% 0; }
+
+/* WHILE IT IS BEING MOVED it sits in a sunken pill — the track's own fill —
+   so the figure that is changing is the one that looks different (Ben,
+   2026-11-26). Held is Slider.tsx's `[data-held]`, from the press to the
+   release — not base-ui's `[data-dragging]`, which waits for a few moves and
+   so misses a press that does not travel. Keyboard focus counts too: the
+   arrow keys move the thumb in single presses with nothing held to mark, and
+   focus is the whole time they can. A rule of its own for the `:has()`, for
+   the reason the thumb's focus ring has one. */
+.musy-slider[data-held] .musy-slider__current {
+  background-color: var(--surface-sunken);
+}
+.musy-slider:has(.musy-slider__thumb :focus-visible) .musy-slider__current {
+  background-color: var(--surface-sunken);
+}
+
+/* ── THE GLIDE ONTO A STEP ────────────────────────────────────────────────
+   Let go, the thumb travels from where the finger left it to the nearest
+   step; a key moves it a step the same way. The three things placed along
+   the lane travel together, on one timing, or the raised part and the figure
+   would part from the thumb mid-glide. base-ui writes `inset-inline-start`
+   on the thumb and `width` on the indicator; the figure's own position is
+   the rule above.
+
+   TWO CONDITIONS, BOTH IN SLIDER.TSX. `[data-held]` switches it off while
+   the finger has the thumb, so the thumb never trails it. `[data-engaged]`
+   switches it on only after the first touch or key — base-ui places an
+   edge-aligned thumb by measuring it after the first render, and with the
+   glide armed from the start every slider would slide in from 0 on mount. */
+.musy-slider[data-engaged]:not([data-held]) .musy-slider__thumb {
+  transition: inset-inline-start var(--musy-slider-settle);
+}
+.musy-slider[data-engaged]:not([data-held]) .musy-slider__indicator {
+  transition: width var(--musy-slider-settle);
+}
+.musy-slider[data-engaged]:not([data-held]) .musy-slider__current {
+  transition: inset-inline-start var(--musy-slider-settle),
+              background-color var(--motion-toggle);
+}
+
+/* ── DISABLED — §15's swap: the disabled fill still lifts the chosen part off
+   the sunken track, and the disabled ink says the rest. */
+.musy-slider[data-disabled] { --musy-slider-ink: var(--on-surface-disabled); }
+.musy-slider[data-disabled] .musy-slider__control { cursor: not-allowed; }
+.musy-slider[data-disabled] .musy-slider__indicator,
+.musy-slider[data-disabled] .musy-slider__thumb {
+  background-color: var(--interactive-primary-disabled);
+}
+.musy-slider[data-disabled] .musy-slider__end { color: var(--on-surface-disabled); }
+
+/* The chosen segment's contrast escape (LIGHTER SELECTION BOUNDARIES): its
+   edge comes back strong and thick. Indicator and thumb both take it, so the
+   thumb shows as a ring at the end of the raised part — which marks the
+   handle, rather than being a seam to hide. */
+@media (prefers-contrast: more) {
+  .musy-slider__indicator,
+  .musy-slider__thumb {
+    border-color: var(--border-strong);
+    border-width: var(--border-width-thick);
+  }
+}
+
+/* Forced colours discard the raised fill, so the chosen part takes Highlight
+   — §21's escape for its played portion — and the glyph HighlightText. The
+   current value's pill is a fill too; while moving it keeps its shape as an
+   outline instead. */
+@media (forced-colors: active) {
+  .musy-slider__indicator,
+  .musy-slider__thumb { background-color: Highlight; }
+  .musy-slider__thumb { color: HighlightText; }  /* the glyph */
+  .musy-slider[data-held] .musy-slider__current { outline: var(--border-width-hairline) var(--border-style-solid) CanvasText; }
+  .musy-slider[data-disabled] .musy-slider__indicator,
+  .musy-slider[data-disabled] .musy-slider__thumb { background-color: GrayText; }
+}
+
+
+
 /* ═══ 23 · TOAST ═══════════════════════════════════════════════════════════
    Confirms an action that has already happened and offers the one way back,
    without moving the content the user is reading. §10 Message is in-flow and
@@ -9141,7 +9407,8 @@ html[data-musy-scroll-snap='y'] {
    them in the file.
 
    GONE · ContentBox (default, sunken, and the framed box's outer edge) ·
-   SegmentedControl's track, and a disabled chosen segment · Button and
+   SegmentedControl's track, and a disabled chosen segment · Slider's track,
+   born without one (2026-11-26) · Button and
    IconButton `primary`, and so TrackButton and RecordButton `primary` ·
    RecordButton in EVERY variant · Carousel cards and the badge ring ·
    Lightbox · MusicPlayer: frame, rail and the thumb's ring · RadioImage cells
@@ -9175,6 +9442,7 @@ html[data-musy-scroll-snap='y'] {
 @media (prefers-contrast: more) {
   .musy-box:not(.musy-box--plain),
   .musy-seg__track,
+  .musy-slider__track,
   .musy-seg__option[data-disabled][data-checked],
   .musy-carousel__card,
   .musy-lightbox__popup,
@@ -9195,7 +9463,8 @@ html[data-musy-scroll-snap='y'] {
 }
 
 @media (forced-colors: active) {
-  .musy-seg__track, .musy-carousel__card, .musy-carousel__badge, .musy-toast,
+  .musy-seg__track, .musy-slider__track,
+  .musy-carousel__card, .musy-carousel__badge, .musy-toast,
   .musy-wizard__panel, .musy-mplayer, .musy-mplayer__track,
   .musy-rimage__cell {
     border-color: CanvasText;
