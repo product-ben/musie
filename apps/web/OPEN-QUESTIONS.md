@@ -13187,3 +13187,62 @@ stored on an earlier visit (all six figures) and preferred it to `START`.
 - `settings.test.ts` holds it: both old kinds of stored state give way, a
   current one is kept, a link wins, and the page opens with Frage und Antwort
   and Pendel only.
+
+## Experiment „Vollbild“: the focus sheet in the browser's real fullscreen (2026-11-26)
+
+Where: `apps/web/experiments/vollbild/**`, `apps/web/package.json` (`build`,
+`typecheck`, `experiment:vollbild:dev`). Live after merge at
+`/experiments/vollbild/`.
+
+What I checked: Ben asked how YouTube's mobile site hides the browser bars and
+whether musie could. On Android (and iPad, desktop) it is the Fullscreen API —
+`requestFullscreen()` on an element, so the site's own controls stay. On an
+iPhone the API does not exist (WebKit bug 206854, open since 2020; nothing in
+the Safari 27 beta notes): a page can only send a `<video>` to the system
+player, and musie has no video. Then: „mach mal ein experiment … zuerst nur den
+listen?overview step, dann drückt man den Button und öffnet das focus sheet als
+immersives sheet auf vollbild.“
+
+What I did:
+- **The Reflexion shape**: a Vite build that mounts the app's REAL
+  `SessionListen` — overview, transport, and the `Sheet` it opens on `?focus` —
+  inside the session's `WizardPanel`. Four shims (`lib/audio`, `lib/session`,
+  `lib/reveal`, and the throwing `lib/supabase`); `apps/web/src` is untouched.
+- **The run is Freie Bahn, digital, MC-01 and „Aura“** — Reflexion's
+  `freie-bahn` run, so the sheet carries the picture, the clock and the
+  transport. Length 2:00, the app's starting length for a card exercise. The
+  audio is Reflexion's file, fetched whole (musie.org has no `Range`).
+- **Into fullscreen on the press**: a capturing click handler on the wrapper
+  sees the tap on `.musie-listen__transport` before the step navigates, and
+  requests fullscreen on `<html>` inside the gesture. `<html>` and not the
+  sheet, because the sheet is a portalled base-ui Dialog and a fullscreened
+  popup would hide everything portalled beside it.
+- **Out with the sheet**: X, Escape, scrim, browser Back and „Beginne zu
+  reflektieren“ all take `?focus` off the address; the falling edge leaves
+  fullscreen. **Leaving fullscreen does not close the sheet** — on Android
+  the first Back gesture ends fullscreen, the second closes the sheet. Kept as
+  the browser's order so it can be judged; it is a decision, not an accident.
+- **A status line in the empty header band** says what the browser can do
+  (fullscreen available / on / not available — the iPhone case / opened from
+  the home screen), so a phone reports it itself.
+- **Not built:** PostHog and a consent card (nothing is measured — Ben tries it
+  himself), the Back button and rail taps (there is no other step; `back` is
+  null), orientation lock, English, dark mode.
+
+Verified: in Chromium at 393×852 (dev server and the built `dist/`, served by
+a server without `Range`): press → `?focus`, `document.fullscreenElement` is
+`<html>`, sheet open; X, browser Back and the way on each leave both; with the
+API removed (as on an iPhone) the line says so and the sheet opens as in the
+app; the piece played and opened the gate. `pnpm check` green, `pnpm --filter
+web build` green. **Not verified on a real phone** — Playwright's WebKit is
+not iOS Safari, and no emulator shows Android's real bars.
+
+What I need from Ben:
+- **Try it on the phones that matter**: an Android phone (the bars should go)
+  and an iPhone (the line should say it cannot, and the sheet open as today).
+  Watch the moment of the switch: the sheet grows out of the button while the
+  viewport grows under it.
+- **Then decide among the three ways** from the investigation: fullscreen
+  where the browser offers it (Android, iPad), the home-screen web app (the
+  only way on an iPhone, but a QR scan from the camera opens Safari, not the
+  app), or nothing.

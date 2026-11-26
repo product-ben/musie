@@ -1,0 +1,22 @@
+/* Experiment-only styles (CLAUDE.md rule 10: L14 does not bind here, but
+   Layer 1 tokens anyway).
+
+   THE STATUS LINE SITS WHERE THE APP'S HEADER WOULD. `.musie-app` pads its
+   top by the header band whether or not a header is drawn, and the listen
+   step's three views are sized from the viewport minus that band — so the
+   band stays, and the line that says what this browser can do lives in it,
+   visible on the first screen. At the foot of the step it would be two full
+   screens down. Type and colour are `.musie-session__context`'s. */
+.musie-vollbild-status {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  margin: 0;
+  padding: var(--sp-4) var(--gutter);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+}
