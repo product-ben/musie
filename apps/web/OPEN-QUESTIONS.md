@@ -13169,3 +13169,21 @@ Ben sent a third link to make the default:
 - **`START` is that link**; the test holds it to the link. A browser that kept
   an older state (localStorage) reopens on that state, not on `START`, until
   the link is opened.
+
+### Follow-up, 2026-11-26 — a new START reaches browsers that had visited before
+
+Ben, with the third link live on musie.org: by default only „Frage und
+Antwort“ and „Pendel“ should be ticked. A fresh browser already showed exactly
+that; his did not, because the page reopened on the state his browser had
+stored on an earlier visit (all six figures) and preferred it to `START`.
+
+- **A stored state now remembers the START it was made under**
+  (`duett-start` beside `duett-settings`). If `START` has changed since — or
+  the state was stored before this key existed, which is every browser today —
+  the page opens on the new `START`. A state stored under the current `START`
+  still survives a reload, and a link still opens on what it says.
+- **What it costs:** anyone who had tuned the panel on an earlier visit loses
+  that once, the next time `START` changes. A link they kept still restores it.
+- `settings.test.ts` holds it: both old kinds of stored state give way, a
+  current one is kept, a link wins, and the page opens with Frage und Antwort
+  and Pendel only.
