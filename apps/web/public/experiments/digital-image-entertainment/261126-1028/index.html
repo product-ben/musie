@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Mit dem Bild spielen</title>
+<!--
+  Musie-Experiment unter /experiments (CLAUDE.md Regel 10: Ausnahme von den strengen Regeln).
+
+  Ben, 2026-11-26: Nutzertests zeigen, dass das reine Anschauen des Bildes bei Freie Bahn langweilt;
+  die Harfe (Interaktion) und der Bodyscan (Führung) kamen gut an. Hier Effekte, bei denen sich die
+  Farbe des Bildes selbst verändert, während Musik läuft – eine Seite je Effekt.
+
+  Runde 1 (261126-0948): Verwischen, Weiches Bild (Wasser/Weich), Sand, Aufdecken (Nebel/Kohle).
+  Runde 2: eine Option je Effekt; „Weich“ heißt „Morphen“; Sand glatt und rund; nur Nebel; zehn neue.
+  Runde 3: Bens Bewertung als farbiger Punkt; gruppiert danach, ob sich die Änderung wieder zurückbaut;
+  „Atmen“ als eigener Abschnitt; Frost wegföhnen neu; Änderungen an Sand, Verrühren, Aquarell,
+  Pinselstriche, Farbe läuft, Farbströme und Wachsen lassen (je im Kopf der Seite beschrieben).
+  Runde 4: Frost ohne Muster, ohne Wackeln, ohne Flimmern, mit immer weichen Rändern; Wachsen füllt Flächen;
+  Atmen ohne Ring; neue Bewertungen.
+  Die Bewertung steht nur hier, nicht auf den Seiten: die sehen später Testpersonen.
+
+  Kein PostHog, nichts nach Supabase: die Seiten messen nichts und schreiben nichts. Online seit Runde 4,
+  damit Ben sie auf dem Handy ausprobieren kann.
+  Bilder: /assets/web/cards/mc-01…09.webp (Standard: mc-01, die blaue Sonne aus Reflexion 01).
+  Musik: „Aura“ aus Reflexion 01, /experiments/reflexion/media/aura.mp3.
+  Gemeinsam: shell.css, shell.js (Karte, Musik, Zeiger) und gl.js (WebGL 2).
+
+  Lokal die Adresse mit …/index.html öffnen: der Vite-Entwicklungsserver liefert für einen Ordner sonst die App.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<style>
+:root { --sand-1: #FAF7F1; --sand-2: #F3EEE4; --sand-6: #CFCEC2; --sand-11: #62645E; --sand-12: #1A1F1C; --green-9: #2B5340; color-scheme: light;
+  --dot-gruen: #3E8E41; --dot-gelb: #E3B505; --dot-orange: #E8772E; --dot-blau: #2F6DB5; --dot-rot: #C8402F; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--sand-1); color: var(--sand-12); font-family: Onest, ui-sans-serif, system-ui, sans-serif; }
+main { max-width: 40rem; margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 24px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
+h1 { margin: 0; font-family: Literata, ui-serif, Georgia, serif; font-weight: 400; font-size: 1.5rem; line-height: 1.3; }
+h2 { margin: 28px 0 10px; font-family: Literata, ui-serif, Georgia, serif; font-weight: 400; font-size: 1.125rem; line-height: 1.3; }
+.lead { margin: 8px 0 0; color: var(--sand-11); line-height: 1.5; }
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+a { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; row-gap: 2px; padding: 14px 16px; border: 1px solid var(--sand-6); border-radius: 12px;
+  background: var(--sand-2); color: inherit; text-decoration: none; }
+a:focus-visible { outline: 3px solid var(--green-9); outline-offset: 2px; }
+a strong { font-weight: 500; }
+a span.line { grid-column: 1 / -1; color: var(--sand-11); font-size: .9375rem; line-height: 1.45; }
+.dot { align-self: center; width: 14px; height: 14px; border-radius: 50%; background: var(--c, transparent); border: 1.5px solid var(--c, var(--sand-11)); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Mit dem Bild spielen</h1>
+  <p class="lead">Sechzehn Arten, während der Musik mit der Farbe des Bildes selbst zu arbeiten. Jede Seite spielt „Aura“; „Andere Karte“ wechselt durch die neun Karten. Der Punkt ist Bens Bewertung.</p>
+
+  <h2>Änderung baut sich wieder zurück</h2>
+  <ul>
+    <li><a href="water.html"><strong>Wasser</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Berührung wirft Wellen, die das Bild brechen und langsam auslaufen.</span></a></li>
+    <li><a href="morph.html"><strong>Morphen</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Das Bild gibt nach wie ein weiches Material und findet von selbst zurück.</span></a></li>
+    <li><a href="sand.html"><strong>Sand</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Der Finger zieht Furchen, die breiter werden, je länger er bleibt; die Körner rieseln rasch zurück.</span></a></li>
+    <li><a href="kaleidoscope.html"><strong>Kaleidoskop</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Eine Linse spiegelt das Bild sechsfach; lässt du los, ist es wieder da.</span></a></li>
+    <li><a href="stir.html"><strong>Farbe verrühren</strong><span class="dot" style="--c: var(--dot-gelb)" role="img" aria-label="Bewertung: gelb"></span><span class="line">Die Farben verwirbeln unter dem Finger und bauen sich stufenlos zum Original ab.</span></a></li>
+    <li><a href="frost.html"><strong>Frost wegföhnen</strong><span class="dot" style="--c: var(--dot-gelb)" role="img" aria-label="Bewertung: gelb"></span><span class="line">Das Bild ist zugefroren; wo die warme Luft hinkommt, taut das Eis – und friert langsam wieder zu.</span></a></li>
+  </ul>
+
+  <h2>Persistente Änderung des Bildes</h2>
+  <ul>
+    <li><a href="smear.html"><strong>Verwischen</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Der Finger nimmt die Farbe auf und zieht sie mit, wie auf einem nassen Gemälde.</span></a></li>
+    <li><a href="fog.html"><strong>Nebel aufdecken</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Das Bild liegt im Nebel. Wo du verweilst, kommt es zum Vorschein.</span></a></li>
+    <li><a href="marble.html"><strong>Marmorieren</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Linien durch die Farbe ziehen wie beim Ebru; ein Tippen setzt einen Tropfen.</span></a></li>
+    <li><a href="drip.html"><strong>Farbe läuft</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Die Farbe wird nass und läuft in dicken Rinnsalen in die Richtung, in die du das Handy neigst.</span></a></li>
+    <li><a href="watercolor.html"><strong>Aquarell-Blüten</strong><span class="dot" style="--c: var(--dot-orange)" role="img" aria-label="Bewertung: orange"></span><span class="line">Ein Tropfen je Berührung löst die Farbe; ziehst du den Finger, formst du seinen Rand.</span></a></li>
+    <li><a href="brushstrokes.html"><strong>Pinselstriche</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Unter dem Finger malt sich das Bild ruhig noch einmal, Strich für Strich.</span></a></li>
+    <li><a href="pixelsort.html"><strong>Farbströme</strong><span class="dot" style="--c: var(--dot-blau)" role="img" aria-label="Bewertung: blau"></span><span class="line">In einem weichen Kreis unter dem Finger ordnen sich die Farben von dunkel nach hell.</span></a></li>
+    <li><a href="grow.html"><strong>Wachsen lassen</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Aus einem Keim wächst ein Muster an den Linien des Bildes entlang und füllt seine Flächen.</span></a></li>
+    <li><a href="layers.html"><strong>Farbschichten</strong><span class="dot" style="--c: var(--dot-rot)" role="img" aria-label="Bewertung: rot"></span><span class="line">Das Bild zerfällt in fünf Farbflächen, die du einzeln verschiebst oder ausblendest.</span></a></li>
+  </ul>
+
+  <h2>Atmen</h2>
+  <ul>
+    <li><a href="breathe.html"><strong>Das Bild atmet</strong><span class="dot" style="--c: var(--dot-gruen)" role="img" aria-label="Bewertung: grün"></span><span class="line">Es wölbt sich, während du einatmest, und sinkt beim Ausatmen zurück.</span></a></li>
+  </ul>
+</main>
+</body>
+</html>

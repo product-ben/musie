@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Verwischen</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Verwischen: der Finger nimmt die Farbe
+     unter sich auf und zieht sie mit, wie auf einem nassen Gemälde. Unverändert aus 261126-0948. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Verwische die Farben, während du zuhörst.</h1>
+  <p class="hint">Die Farbe ist noch nass. Fahr mit dem Finger durch das Bild und nimm sie mit.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script>
+/* Der klassische Wischfinger: jeder Finger trägt einen kleinen Vorrat Farbe. Bei jedem Tupfer legt
+   er einen Teil davon ab (STRENGTH) und nimmt etwas von dem auf, was jetzt unter ihm liegt (PICKUP).
+   Die Maske ist körnig: weil sie mit dem Finger wandert, zieht jedes Korn eine eigene Schliere. */
+const STRENGTH = 0.7;
+const PICKUP = 0.1;
+const SPACING = 0.2;   // Abstand der Tupfer, Anteil des Radius
+const GRAIN = 4;       // Korngröße der Schlieren in Gerätepixeln
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const ctx = canvas.getContext('2d');
+const mask = document.createElement('canvas');
+const tip = document.createElement('canvas');
+let R = 0;
+let D = 0;
+let pristine = null;
+const strokes = new Map();
+
+function pickUp(brush, x, y) {
+  const b = brush.getContext('2d');
+  b.clearRect(0, 0, D, D);
+  b.drawImage(canvas, x - R, y - R, D, D, 0, 0, D, D);
+}
+
+function dab(brush, x, y) {
+  const t = tip.getContext('2d');
+  t.globalCompositeOperation = 'copy';
+  t.drawImage(brush, 0, 0);
+  t.globalCompositeOperation = 'destination-in';
+  t.drawImage(mask, 0, 0);
+  t.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = STRENGTH;
+  ctx.drawImage(tip, x - R, y - R);
+  ctx.globalAlpha = 1;
+  const b = brush.getContext('2d');
+  b.globalAlpha = PICKUP;
+  b.drawImage(canvas, x - R, y - R, D, D, 0, 0, D, D);
+  b.globalAlpha = 1;
+}
+
+const effect = {
+  setImage(im) {
+    const g = fit(im);
+    place(canvas, g);
+    canvas.width = Math.round(g.cssW * DPR);
+    canvas.height = Math.round(g.cssH * DPR);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(im, g.sx, g.sy, g.sw, g.sh, 0, 0, canvas.width, canvas.height);
+    pristine = makeCanvas(canvas.width, canvas.height);
+    pristine.getContext('2d').drawImage(canvas, 0, 0);
+    R = Math.round(Math.max(16, Math.min(g.cssW, g.cssH) * 0.055) * DPR);
+    D = R * 2;
+    for (const c of [mask, tip]) { c.width = D; c.height = D; }
+    const m = mask.getContext('2d');
+    const noise = makeCanvas(Math.max(4, D / GRAIN), Math.max(4, D / GRAIN));
+    const nc = noise.getContext('2d');
+    const px = nc.createImageData(noise.width, noise.height);
+    for (let i = 3; i < px.data.length; i += 4) px.data[i] = Math.round(255 * (0.3 + 0.7 * Math.random()));
+    nc.putImageData(px, 0, 0);
+    m.clearRect(0, 0, D, D);
+    m.imageSmoothingEnabled = true;
+    m.drawImage(noise, 0, 0, D, D);
+    const grad = m.createRadialGradient(R, R, 0, R, R, R);
+    grad.addColorStop(0, 'rgba(0,0,0,1)');
+    grad.addColorStop(0.55, 'rgba(0,0,0,0.75)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    m.globalCompositeOperation = 'destination-in';
+    m.fillStyle = grad;
+    m.fillRect(0, 0, D, D);
+    m.globalCompositeOperation = 'source-over';
+    strokes.clear();
+  },
+  reset() {
+    if (!pristine) return;
+    ctx.globalCompositeOperation = 'copy';
+    ctx.drawImage(pristine, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+  },
+};
+
+track(canvas, {
+  down(id, cx, cy) {
+    const x = cx * DPR;
+    const y = cy * DPR;
+    const brush = makeCanvas(D, D);
+    pickUp(brush, x, y);
+    strokes.set(id, { x, y, rest: 0, brush });
+  },
+  move(id, cx, cy) {
+    const s = strokes.get(id);
+    if (!s) return;
+    const x = cx * DPR;
+    const y = cy * DPR;
+    const dx = x - s.x;
+    const dy = y - s.y;
+    const dist = Math.hypot(dx, dy);
+    const step = Math.max(1, R * SPACING);
+    let t = step - s.rest;
+    while (t <= dist) {
+      dab(s.brush, s.x + (dx * t) / dist, s.y + (dy * t) / dist);
+      t += step;
+    }
+    s.rest = dist - (t - step);
+    s.x = x;
+    s.y = y;
+  },
+  up(id) { strokes.delete(id); },
+});
+
+boot(effect);
+</script>
+</body>
+</html>

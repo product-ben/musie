@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Kaleidoskop</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Kaleidoskop: unter dem Finger öffnet sich
+     eine Linse, in der das Bild sechsfach gespiegelt wird; wohin der Finger wandert, daraus speist sich das
+     Muster, und es dreht sich langsam. Lässt man los, schließt sich die Linse, und das Bild ist wieder da.
+     So gebaut: ein Shader. Das Bild bleibt außerhalb der Linse sichtbar, damit es erkennbar bleibt. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Sieh durch ein Kaleidoskop, während du zuhörst.</h1>
+  <p class="hint">Leg den Finger aufs Bild und fahr langsam umher. Lässt du los, ist das Bild wieder da.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script src="gl.js"></script>
+<script>
+const LENS = 0.4;        // Radius der Linse, Anteil der kürzeren Seite
+const SEGMENTS = 6;      // Spiegelungen
+const TURN = 0.22;       // Drehung in rad/s, solange die Linse offen ist
+const OPEN_TAU = 0.25;   // Sekunden zum Öffnen …
+const CLOSE_TAU = 0.7;   // … und zum Schließen
+const FOLLOW_TAU = 0.08; // wie weich die Linse dem Finger folgt
+
+const FS = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 outColor;
+${PICTURE_GLSL}
+uniform vec2 uSize; uniform vec2 uC; uniform float uR; uniform float uAmount; uniform float uAngle; uniform float uN;
+vec3 mirrored(vec2 uv) { return picture(1.0 - abs(1.0 - mod(uv, 2.0))); } // am Rand gespiegelt statt verschmiert
+void main() {
+  vec3 base = picture(vUv);
+  vec2 d = vUv * uSize - uC;
+  float r = length(d);
+  float seg = 6.28318530718 / uN;
+  float a = mod(atan(d.y, d.x), seg);
+  a = min(a, seg - a);                                  // jede zweite Scheibe gespiegelt
+  vec2 q = uC + vec2(cos(a + uAngle), sin(a + uAngle)) * r;
+  vec3 k = mirrored(q / uSize);
+  float m = uAmount * (1.0 - smoothstep(uR * 0.86, uR, r));
+  float rim = uAmount * exp(-pow((r - uR) / 6.0, 2.0)) * 0.2;
+  outColor = vec4(mix(base, k, m) * (1.0 - rim), 1.0);
+}`;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const gl = glContext(canvas);
+let prog; let quad; let imgTex;
+if (gl) {
+  prog = glProgram(gl, FS);
+  quad = glQuad(gl);
+  imgTex = glTexture(gl);
+}
+
+let g = null;
+let amount = 0; let angle = 0;
+let cx = 0; let cy = 0; let tx = 0; let ty = 0;
+const fingers = new Map();
+
+const effect = {
+  setImage(im) {
+    if (!gl) return;
+    g = fit(im);
+    glFit(gl, canvas, im, g, prog);
+    glImage(gl, imgTex, im);
+    gl.uniform2f(prog.u('uSize'), g.cssW, g.cssH);
+    gl.uniform1f(prog.u('uR'), LENS * Math.min(g.cssW, g.cssH));
+    gl.uniform1f(prog.u('uN'), SEGMENTS);
+    cx = tx = g.cssW / 2; cy = ty = g.cssH / 2;
+    fingers.clear();
+  },
+};
+
+track(canvas, {
+  down(id, x, y) {
+    if (fingers.size === 0) { cx = tx = x; cy = ty = y; }
+    fingers.set(id, true);
+    tx = x; ty = y;
+  },
+  move(id, x, y) { tx = x; ty = y; },
+  up(id) { fingers.delete(id); },
+});
+
+if (gl) {
+  loop((dt) => {
+    if (!g) return;
+    const open = fingers.size > 0;
+    amount += ((open ? 1 : 0) - amount) * (1 - Math.exp(-dt / (open ? OPEN_TAU : CLOSE_TAU)));
+    const k = 1 - Math.exp(-dt / FOLLOW_TAU);
+    cx += (tx - cx) * k; cy += (ty - cy) * k;
+    angle += TURN * dt * amount;
+    gl.useProgram(prog);
+    gl.uniform2f(prog.u('uC'), cx, cy);
+    gl.uniform1f(prog.u('uAmount'), amount);
+    gl.uniform1f(prog.u('uAngle'), angle);
+    glBind(gl, prog, 'uImg', 0, imgTex);
+    quad.draw();
+  });
+}
+
+boot(effect);
+</script>
+</body>
+</html>

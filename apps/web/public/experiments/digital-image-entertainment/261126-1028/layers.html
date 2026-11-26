@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Farbschichten</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Farbschichten verschieben: das Bild wird in
+     seine fünf Hauptfarben zerlegt, wie die Druckplatten eines Siebdrucks. Wo du hinfasst, greifst du die
+     Schicht dieser Farbe und verschiebst sie; unten blendest du Schichten aus.
+     So gebaut: k-Means auf einer Stichprobe der Pixel ergibt die fünf Farben. Jedes Pixel gehört weich zu
+     ihnen (Gewichte, die sich zu 1 summieren), jede Schicht trägt die Originalfarben mit ihrem Gewicht als
+     Deckkraft. Die Schichten werden in einem Canvas mit „lighter“ addiert – unverschoben ergibt das genau
+     das Bild. (CSS „plus-lighter“ über fünf Canvas-Elemente war der erste Versuch und überbelichtete.) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+<style>
+.swatches { display: flex; gap: 6px; flex-basis: 100%; }
+.swatches button { width: 44px; padding: 0; justify-content: center; border-width: 2px; }
+.swatches button[aria-pressed="false"] { opacity: .35; border-style: dashed; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nimm das Bild auseinander, während du zuhörst.</h1>
+  <p class="hint">Es besteht aus fünf Farbschichten. Greif eine Farbe und verschieb sie, oder blende sie unten aus.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <div class="swatches" id="swatches" role="group" aria-label="Farbschichten"></div>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script>
+const K = 5;               // Anzahl der Farbschichten
+const SAMPLE = 6000;       // Pixel für die Farbsuche
+const ROUNDS = 12;         // Durchgänge der Farbsuche
+const SOFTNESS = 500;      // wie weich ein Pixel zwischen zwei Farben aufgeteilt wird (Abstand², 0…255²)
+const REGION = 10;         // die Zuordnung geschieht auf einem um diesen Faktor verkleinerten Bild: so wird
+                           // jede Schicht eine zusammenhängende Fläche statt feiner Körnung (Ben, 2026-11-26:
+                           // auf feinen Bildern ergab das Verschieben sonst nur Rauschen)
+const MAX_PIXELS = 1200000;
+
+const view = document.createElement('canvas');
+stage.append(view);
+const vctx = view.getContext('2d');
+let layers = [];           // { canvas, alpha: Uint8Array, ox, oy, colour, shown }
+let LW = 0; let LH = 0; let scale = 1; // Schichtpixel je CSS-Pixel
+let dirty = false;
+const fingers = new Map();
+
+function compose() {
+  vctx.globalCompositeOperation = 'source-over';
+  vctx.clearRect(0, 0, LW, LH);
+  // Schichten an ihrem Platz werden addiert (vormultipliziert: Σ Gewicht · Farbe = Farbe, also genau das Bild) …
+  vctx.globalCompositeOperation = 'lighter';
+  for (const l of layers) if (l.shown && !l.ox && !l.oy) vctx.drawImage(l.canvas, 0, 0);
+  // … verschobene liegen obenauf wie ein ausgeschnittenes Stück Papier
+  vctx.globalCompositeOperation = 'source-over';
+  for (const l of layers) if (l.shown && (l.ox || l.oy)) vctx.drawImage(l.canvas, l.ox * scale, l.oy * scale);
+}
+
+function kmeans(px, n) {
+  const pick = () => Math.floor(Math.random() * n) * 4;
+  const pts = new Float32Array(SAMPLE * 3);
+  for (let i = 0; i < SAMPLE; i++) { const o = pick(); pts[i * 3] = px[o]; pts[i * 3 + 1] = px[o + 1]; pts[i * 3 + 2] = px[o + 2]; }
+  const c = new Float32Array(K * 3);
+  // k-means++: jede neue Mitte weit weg von den bisherigen
+  c.set(pts.subarray(0, 3));
+  const d2 = new Float32Array(SAMPLE).fill(Infinity);
+  for (let k = 1; k < K; k++) {
+    let sum = 0;
+    for (let i = 0; i < SAMPLE; i++) {
+      const dr = pts[i * 3] - c[(k - 1) * 3]; const dg = pts[i * 3 + 1] - c[(k - 1) * 3 + 1]; const db = pts[i * 3 + 2] - c[(k - 1) * 3 + 2];
+      d2[i] = Math.min(d2[i], dr * dr + dg * dg + db * db); sum += d2[i];
+    }
+    let r = Math.random() * sum; let i = 0;
+    while (i < SAMPLE - 1 && (r -= d2[i]) > 0) i++;
+    c.set(pts.subarray(i * 3, i * 3 + 3), k * 3);
+  }
+  const acc = new Float32Array(K * 4);
+  for (let round = 0; round < ROUNDS; round++) {
+    acc.fill(0);
+    for (let i = 0; i < SAMPLE; i++) {
+      let best = 0; let bd = Infinity;
+      for (let k = 0; k < K; k++) {
+        const dr = pts[i * 3] - c[k * 3]; const dg = pts[i * 3 + 1] - c[k * 3 + 1]; const db = pts[i * 3 + 2] - c[k * 3 + 2];
+        const d = dr * dr + dg * dg + db * db;
+        if (d < bd) { bd = d; best = k; }
+      }
+      acc[best * 4] += pts[i * 3]; acc[best * 4 + 1] += pts[i * 3 + 1]; acc[best * 4 + 2] += pts[i * 3 + 2]; acc[best * 4 + 3]++;
+    }
+    for (let k = 0; k < K; k++) if (acc[k * 4 + 3]) for (let j = 0; j < 3; j++) c[k * 3 + j] = acc[k * 4 + j] / acc[k * 4 + 3];
+  }
+  // dunkel nach hell, damit die Knöpfe eine Reihenfolge haben
+  const order = [...Array(K).keys()].sort((a, b) => (c[a * 3] + c[a * 3 + 1] + c[a * 3 + 2]) - (c[b * 3] + c[b * 3 + 1] + c[b * 3 + 2]));
+  return order.map((k) => [c[k * 3], c[k * 3 + 1], c[k * 3 + 2]]);
+}
+
+function renderSwatches() {
+  const box = $('swatches');
+  box.innerHTML = '';
+  layers.forEach((l, k) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.layer = String(k);
+    b.setAttribute('aria-pressed', String(l.shown));
+    b.setAttribute('aria-label', `Farbschicht ${k + 1}`);
+    b.style.background = `rgb(${l.colour.map(Math.round).join(',')})`;
+    b.addEventListener('click', () => {
+      l.shown = !l.shown;
+      b.setAttribute('aria-pressed', String(l.shown));
+      dirty = true;
+    });
+    box.append(b);
+  });
+}
+
+const effect = {
+  setImage(im) {
+    const g = fit(im);
+    place(view, g);
+    scale = Math.min(DPR, Math.sqrt(MAX_PIXELS / (g.cssW * g.cssH)));
+    LW = Math.round(g.cssW * scale); LH = Math.round(g.cssH * scale);
+    const px = pictureCanvas(im, g, LW, LH).getContext('2d').getImageData(0, 0, LW, LH).data;
+    // dasselbe Bild, stark weichgezeichnet: daran entscheidet sich, zu welcher Schicht ein Pixel gehört
+    const small = pictureCanvas(im, g, LW / REGION, LH / REGION);
+    const soft = makeCanvas(LW, LH);
+    const sctx = soft.getContext('2d', { willReadFrequently: true });
+    sctx.imageSmoothingQuality = 'high';
+    sctx.drawImage(small, 0, 0, LW, LH);
+    const region = sctx.getImageData(0, 0, LW, LH).data;
+    const n = LW * LH;
+    const centres = kmeans(region, n);
+    const data = centres.map(() => new ImageData(LW, LH));
+    const alphas = centres.map(() => new Uint8Array(n));
+    const w = new Float32Array(K);
+    for (let i = 0; i < n; i++) {
+      const o = i * 4;
+      let dmin = Infinity;
+      for (let k = 0; k < K; k++) {
+        const dr = region[o] - centres[k][0]; const dg = region[o + 1] - centres[k][1]; const db = region[o + 2] - centres[k][2];
+        w[k] = dr * dr + dg * dg + db * db;
+        if (w[k] < dmin) dmin = w[k];
+      }
+      let sum = 0;
+      for (let k = 0; k < K; k++) { w[k] = Math.exp(-(w[k] - dmin) / SOFTNESS); sum += w[k]; }
+      for (let k = 0; k < K; k++) {
+        const a = Math.round((255 * w[k]) / sum);
+        const d = data[k].data;
+        d[o] = px[o]; d[o + 1] = px[o + 1]; d[o + 2] = px[o + 2]; d[o + 3] = a;
+        alphas[k][i] = a;
+      }
+    }
+    view.width = LW; view.height = LH;
+    layers = centres.map((colour, k) => {
+      const c = makeCanvas(LW, LH);
+      c.getContext('2d').putImageData(data[k], 0, 0);
+      return { canvas: c, alpha: alphas[k], ox: 0, oy: 0, colour, shown: true };
+    });
+    renderSwatches();
+    fingers.clear();
+    dirty = true;
+  },
+  reset() {
+    for (const l of layers) { l.ox = 0; l.oy = 0; l.shown = true; }
+    renderSwatches();
+    dirty = true;
+  },
+};
+
+/* Gegriffen wird die sichtbare Schicht, die an dieser Stelle am meisten Farbe hat. */
+function grab(x, y) {
+  let best = null; let ba = 0;
+  for (const l of layers) {
+    if (!l.shown) continue;
+    const lx = Math.round((x - l.ox) * scale); const ly = Math.round((y - l.oy) * scale);
+    if (lx < 0 || ly < 0 || lx >= LW || ly >= LH) continue;
+    const a = l.alpha[ly * LW + lx];
+    if (a > ba) { ba = a; best = l; }
+  }
+  return best;
+}
+
+track(view, {
+  down(id, x, y) { fingers.set(id, { x, y, layer: grab(x, y) }); },
+  move(id, x, y) {
+    const f = fingers.get(id);
+    if (!f) return;
+    if (f.layer) { f.layer.ox += x - f.x; f.layer.oy += y - f.y; dirty = true; }
+    f.x = x; f.y = y;
+  },
+  up(id) { fingers.delete(id); },
+});
+
+loop(() => { if (dirty) { compose(); dirty = false; } });
+
+boot(effect);
+</script>
+</body>
+</html>

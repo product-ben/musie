@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Farbe läuft</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Farbe läuft: ein Tippen macht die Farbe
+     dort nass, und sie läuft in Rinnsalen in die Richtung, in die das Handy geneigt ist. Am Rechner, ohne
+     Neigungssensor, nach unten.
+     So gebaut: Canvas 2D. Jedes Rinnsal ist ein kleiner Wischfinger wie bei „Verwischen“, den die
+     Schwerkraft zieht; es nimmt unterwegs Farbe auf, wird dünner und endet in einem Tropfen.
+     iOS fragt nach der Erlaubnis für die Bewegungssensoren (Knopf „Neigen erlauben“). Sensoren gibt es
+     nur auf https oder localhost – über die IP im WLAN läuft die Farbe darum nach unten. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Lass die Farbe laufen, während du zuhörst.</h1>
+  <p class="hint" id="hint">Tippe aufs Bild, um die Farbe nass zu machen – sie läuft nach unten.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="tilt" type="button" hidden>Neigen erlauben</button>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script>
+const WET_R = 0.05;       // wie groß die nasse Stelle eines Tippens ist (Anteil der kürzeren Seite)
+const DRIPS = 6;          // Rinnsale je Tippen
+const R_MIN = 4.4;        // Breite eines Rinnsals (Radius, CSS-Pixel) – doppelt so dick wie zuerst (Ben, 2026-11-26) …
+const R_MAX = 10;
+const RUN_MIN = 60;       // … und wie weit es läuft, bis es trocknet
+const RUN_MAX = 260;
+const ACCEL = 300;        // CSS-Pixel/s² bei voller Neigung
+const FRICTION = 2.4;     // Bremsen je Sekunde
+const STRENGTH = 0.85;
+const PICKUP = 0.05;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const ctx = canvas.getContext('2d');
+const tip = document.createElement('canvas');
+let pristine = null;
+let minSide = 0;
+const drips = [];
+const fingers = new Map();
+let gx = 0; let gy = 1;   // Schwerkraft, solange kein Sensor etwas sagt: nach unten
+
+/* ── Neigung ── */
+function onTilt(e) {
+  if (e.beta == null || e.gamma == null) return;
+  gx = Math.sin((e.gamma * Math.PI) / 180);
+  gy = Math.sin((e.beta * Math.PI) / 180);
+  $('hint').textContent = 'Tippe aufs Bild, um die Farbe nass zu machen, und neig das Handy – sie läuft in diese Richtung.';
+}
+const DOE = window.DeviceOrientationEvent;
+if (DOE && typeof DOE.requestPermission === 'function') {
+  $('tilt').hidden = false;
+  $('tilt').addEventListener('click', () => {
+    DOE.requestPermission().then((state) => {
+      if (state === 'granted') { window.addEventListener('deviceorientation', onTilt); $('tilt').hidden = true; }
+    }).catch(() => {});
+  });
+} else if (DOE) {
+  window.addEventListener('deviceorientation', onTilt);
+}
+
+/* ── Rinnsale ── */
+function makeDrip(x, y) { // Gerätepixel
+  const r = Math.round((R_MIN + Math.random() * (R_MAX - R_MIN)) * DPR);
+  const D = r * 2;
+  const brush = makeCanvas(D, D);
+  brush.getContext('2d').drawImage(canvas, x - r, y - r, D, D, 0, 0, D, D);
+  const mask = makeCanvas(D, D);
+  const m = mask.getContext('2d');
+  const grad = m.createRadialGradient(r, r, 0, r, r, r);
+  grad.addColorStop(0, 'rgba(0,0,0,1)');
+  grad.addColorStop(0.6, 'rgba(0,0,0,0.85)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  m.fillStyle = grad;
+  m.fillRect(0, 0, D, D);
+  const run = (RUN_MIN + Math.random() * (RUN_MAX - RUN_MIN)) * DPR;
+  drips.push({ x, y, vx: 0, vy: 0, r, D, brush, mask, run, left: run, gap: 0, wob: Math.random() * 10 });
+}
+
+function dab(d, x, y, scale) {
+  if (tip.width < d.D) { tip.width = d.D; tip.height = d.D; }
+  const t = tip.getContext('2d');
+  t.clearRect(0, 0, d.D, d.D);
+  t.drawImage(d.brush, 0, 0);
+  t.globalCompositeOperation = 'destination-in';
+  t.drawImage(d.mask, 0, 0);
+  t.globalCompositeOperation = 'source-over';
+  const s = d.r * scale;
+  ctx.globalAlpha = STRENGTH;
+  ctx.drawImage(tip, 0, 0, d.D, d.D, x - s, y - s, s * 2, s * 2);
+  ctx.globalAlpha = 1;
+  const b = d.brush.getContext('2d');
+  b.globalAlpha = PICKUP;
+  b.drawImage(canvas, x - d.r, y - d.r, d.D, d.D, 0, 0, d.D, d.D);
+  b.globalAlpha = 1;
+}
+
+function wet(x, y) { // Gerätepixel
+  const R = WET_R * minSide;
+  for (let k = 0; k < DRIPS; k++) {
+    const a = Math.random() * Math.PI * 2; const d = R * Math.sqrt(Math.random());
+    makeDrip(x + Math.cos(a) * d, y + Math.sin(a) * d);
+  }
+}
+
+const effect = {
+  setImage(im) {
+    const g = fit(im);
+    place(canvas, g);
+    canvas.width = Math.round(g.cssW * DPR); canvas.height = Math.round(g.cssH * DPR);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(im, g.sx, g.sy, g.sw, g.sh, 0, 0, canvas.width, canvas.height);
+    pristine = makeCanvas(canvas.width, canvas.height);
+    pristine.getContext('2d').drawImage(canvas, 0, 0);
+    minSide = Math.min(canvas.width, canvas.height);
+    drips.length = 0;
+    fingers.clear();
+  },
+  reset() { if (pristine) { drips.length = 0; ctx.drawImage(pristine, 0, 0); } },
+};
+
+track(canvas, {
+  down(id, cx, cy) {
+    fingers.set(id, { x: cx * DPR, y: cy * DPR, run: 0 });
+    wet(cx * DPR, cy * DPR);
+  },
+  move(id, cx, cy) {
+    const f = fingers.get(id);
+    if (!f) return;
+    const x = cx * DPR; const y = cy * DPR;
+    f.run += Math.hypot(x - f.x, y - f.y);
+    f.x = x; f.y = y;
+    if (f.run > WET_R * minSide * 1.5) { f.run = 0; wet(x, y); }
+  },
+  up(id) { fingers.delete(id); },
+});
+
+loop((dt, now) => {
+  for (let i = drips.length - 1; i >= 0; i--) {
+    const d = drips[i];
+    // Schwerkraft, Bremsen und ein leichtes Schlängeln quer zur Richtung
+    const sideways = Math.sin(now / 300 + d.wob) * 40 * DPR;
+    const gm = Math.hypot(gx, gy) || 1;
+    d.vx += (gx * ACCEL * DPR + (-gy / gm) * sideways) * dt;
+    d.vy += (gy * ACCEL * DPR + (gx / gm) * sideways) * dt;
+    const k = Math.exp(-FRICTION * dt);
+    d.vx *= k; d.vy *= k;
+    const dist = Math.hypot(d.vx, d.vy) * dt;
+    const step = Math.max(1, d.r * 0.35);
+    let travelled = 0;
+    while (d.gap + (dist - travelled) >= step && d.left > 0) {
+      const adv = step - d.gap;
+      travelled += adv;
+      d.gap = 0;
+      d.x += (d.vx * dt * adv) / (dist || 1);
+      d.y += (d.vy * dt * adv) / (dist || 1);
+      d.left -= adv;
+      dab(d, d.x, d.y, 0.45 + 0.55 * (d.left / d.run)); // wird dünner, je weiter es läuft
+    }
+    d.gap += dist - travelled;
+    if (d.left <= 0 || d.x < -50 || d.y < -50 || d.x > canvas.width + 50 || d.y > canvas.height + 50) {
+      dab(d, d.x, d.y, 0.9); // ein Tropfen am Ende
+      drips.splice(i, 1);
+    }
+  }
+});
+
+boot(effect);
+</script>
+</body>
+</html>

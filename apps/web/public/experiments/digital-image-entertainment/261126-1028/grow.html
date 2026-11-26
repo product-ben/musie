@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Wachsen lassen</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Wachsen lassen: ein Tippen setzt einen Keim,
+     und aus ihm wächst langsam ein Muster in den Farben des Bildes.
+     Ben, 2026-11-26: das Muster passte gar nicht zum Bild. Erst das Bild lesen, dann das Muster an seiner
+     Formgebung und seinen Linien ausrichten und daran entlang wachsen lassen.
+     So gebaut:
+     1. Das Bild lesen: je Zelle die Richtung der Linien (Strukturtensor der Helligkeit, geglättet), wie
+        deutlich sie dort ist (Kohärenz), und die Helligkeit.
+     2. Wachsen lassen nach Gray-Scott, aber mit gerichteter Diffusion: entlang der Linien breitet sich alles
+        schneller aus als quer zu ihnen (ALONG), um so stärker, je deutlicher die Linien sind. So läuft die
+        Wachstumsfront an den Linien entlang, und die Adern des Musters legen sich in ihre Richtung.
+     3. Nur auf den Linien kann es leben: wo das Bild sich von seiner Umgebung abhebt (lokaler Kontrast),
+        wächst es als Muster und zeichnet die Linien des Bildes nach (K_ON auf der Linie, K_OFF daneben).
+        In ruhigen, größeren Flächen – gemessen an der Struktur in einer weiten Umgebung (REGION_BLUR) –
+        füllt es einfach aus (K_FILL, langsamer ausgebreitet: FILL_D). Gemessen, nicht geraten: Gray-Scott
+        mit F = 0,0545 füllt bis k ≈ 0,058 aus und bildet ab k ≈ 0,062 Muster (Scan vom 2026-11-26) –
+        Ben, 2026-11-26: „auf Strukturen passt es gut, auf größeren Flächen sollte es einfach ausfüllen“.
+        (Davor verkümmerte es auf Flächen; ganz zu Anfang füllte es nach der Helligkeit dunkle Flächen voll.)
+     Auf der CPU auf einem Raster von CELL Pixeln; über das Bild gelegt in seinen eigenen, vertieften Farben. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Lass etwas wachsen, während du zuhörst.</h1>
+  <p class="hint">Tippe aufs Bild, um einen Keim zu setzen. Von dort wächst es an den Linien des Bildes entlang und füllt seine Flächen.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script src="gl.js"></script>
+<script>
+const CELL = 2;           // CSS-Pixel je Zelle
+const ITER = 4;           // Rechenschritte je Bild – bestimmt, wie schnell es wächst
+const FEED = 0.0545;      // Gray-Scott, „Korallenwachstum“ …
+const K_ON = 0.057;       // … Sterberate auf einer Linie des Bildes: hier wächst es kräftig …
+const K_OFF = 0.0645;     // … gleich daneben: hier verkümmert es – so entstehen Stränge entlang der Linien …
+const K_FILL = 0.057;     // … und in ruhigen Flächen: hier füllt es aus
+const FILL_D = 0.45;      // in Flächen breitet es sich langsamer aus (Anteil der Diffusion)
+const REGION_BLUR = 10;   // weite Umgebung, in der sich entscheidet, ob eine Stelle Fläche oder Struktur ist
+const STRUCTURE_REF = 0.012; // Struktur ist, was absolut kräftig ist (die Linien von Karte 1) ODER sich deutlich über den
+                             // Median des eigenen Bildes hebt (die Wellenkanten von Karte 4, MEDIAN_RISE). Gemessen an
+                             // den Karten: Karte 1 Median ≈ 0,017, p90 ≈ 0,039; Karte 4 Median ≈ 0,0037, p90 ≈ 0,010;
+                             // Karte 7 (gleichmäßige Textur) Median ≈ 0,005, p90 ≈ 0,0077 – dort ist nichts Struktur,
+                             // also füllt es aus.
+const MEDIAN_RISE = 1.6;     // ab so viel mal dem Median beginnt Struktur
+const CONTRAST_BLUR = 3;  // Umgebung für den lokalen Kontrast, in Glättungsdurchgängen
+const EDGE_CELLS = 5;     // so breit ist der Rand, an dem nichts wächst
+const DIFF_A = 0.2097;    // Diffusion im Mittel (5-Punkt-Stern, Zeitschritt 1)
+const DIFF_B = 0.105;
+const ALONG = 0.85;       // wie viel schneller es entlang der Linien wächst als quer: 1 ± ALONG · Kohärenz
+const TENSOR_BLUR = 6;    // Glättungsdurchgänge beim Lesen der Linien
+const SEED_R = 3;         // Größe eines Keims in Zellen
+const SEED_EVERY = 18;    // beim Ziehen: ein Keim je so viele CSS-Pixel
+
+const FS = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 outColor;
+${PICTURE_GLSL}
+uniform sampler2D uV; uniform vec2 uTexel;
+void main() {
+  vec3 c = picture(vUv);
+  float v = texture(uV, vUv).r;
+  float vl = texture(uV, vUv - vec2(uTexel.x, 0.0)).r; float vr = texture(uV, vUv + vec2(uTexel.x, 0.0)).r;
+  float vu = texture(uV, vUv - vec2(0.0, uTexel.y)).r; float vd = texture(uV, vUv + vec2(0.0, uTexel.y)).r;
+  float m = smoothstep(0.25, 0.55, v);
+  float light = dot(vec2(vr - vl, vd - vu), vec2(-0.7, -0.7));   // Relief, Licht von oben links
+  vec3 vein = pow(c, vec3(1.7));                                   // die Farben des Bildes, tiefer und satter
+  outColor = vec4(mix(c, vein, m) * (1.0 - light * 0.3), 1.0);
+}`;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const gl = glContext(canvas);
+let prog; let quad; let imgTex; let vTex;
+if (gl) {
+  prog = glProgram(gl, FS);
+  quad = glQuad(gl);
+  imgTex = glTexture(gl);
+  vTex = glTexture(gl);
+}
+
+let g = null;
+let w = 0; let h = 0;
+let A; let B; let A2; let B2; let out;
+let KXX; let KYY; let KXY; let KK;  // gerichtete Diffusion und Abstimmung je Zelle
+let alive = false;
+const fingers = new Map();
+
+/* 1. Das Bild lesen. */
+function read(im) {
+  const W = w * CELL; const H = h * CELL;
+  const src = pictureCanvas(im, g, W, H).getContext('2d').getImageData(0, 0, W, H).data;
+  const L = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let yy = 0; yy < CELL; yy++) {
+        for (let xx = 0; xx < CELL; xx++) {
+          const o = ((y * CELL + yy) * W + x * CELL + xx) * 4;
+          sum += 0.3 * src[o] + 0.59 * src[o + 1] + 0.11 * src[o + 2];
+        }
+      }
+      L[y * w + x] = sum / (CELL * CELL * 255);
+    }
+  }
+  let xx = new Float32Array(w * h); let xy = new Float32Array(w * h); let yy = new Float32Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      const gx = L[i + 1] - L[i - 1]; const gy = L[i + w] - L[i - w];
+      xx[i] = gx * gx; xy[i] = gx * gy; yy[i] = gy * gy;
+    }
+  }
+  const blur = (a) => {
+    const b = Float32Array.from(a); // der Rand behält seinen Wert – sonst sähe der Bildrand wie eine Linie aus
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = y * w + x;
+        b[i] = (a[i - w - 1] + a[i - w] + a[i - w + 1] + a[i - 1] + a[i] + a[i + 1] + a[i + w - 1] + a[i + w] + a[i + w + 1]) / 9;
+      }
+    }
+    return b;
+  };
+  for (let k = 0; k < TENSOR_BLUR; k++) { xx = blur(xx); xy = blur(xy); yy = blur(yy); }
+  // lokaler Kontrast: wie stark sich jede Zelle von ihrer Umgebung abhebt, bezogen aufs 95. Perzentil
+  let mean = L;
+  for (let k = 0; k < CONTRAST_BLUR; k++) mean = blur(mean);
+  const contrast = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) contrast[i] = Math.abs(L[i] - mean[i]);
+  const sample = Array.from({ length: 4000 }, () => contrast[Math.floor(Math.random() * w * h)]).sort((a, b) => a - b);
+  const p95 = sample[Math.floor(sample.length * 0.95)] || 1;
+  // Fläche oder Struktur: wie viel sich in einer weiten Umgebung ändert – absolut (STRUCTURE_REF) oder im Vergleich
+  // zum Median des Bildes; eine gleichmäßige Textur ist so keine Struktur
+  let energy = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) energy[i] = xx[i] + yy[i];
+  for (let k = 0; k < REGION_BLUR; k++) energy = blur(energy);
+  const es = Array.from({ length: 4000 }, () => energy[Math.floor(Math.random() * w * h)]).sort((a, b) => a - b);
+  const p50 = es[Math.floor(es.length * 0.5)] || 1;
+  KXX = new Float32Array(w * h); KYY = new Float32Array(w * h); KXY = new Float32Array(w * h); KK = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    // Richtung entlang der Linie (quer zum Gefälle) und wie eindeutig sie ist
+    const angle = 0.5 * Math.atan2(2 * xy[i], xx[i] - yy[i]) + Math.PI / 2;
+    const coherence = Math.sqrt((xx[i] - yy[i]) ** 2 + 4 * xy[i] ** 2) / (xx[i] + yy[i] + 1e-6);
+    const c = Math.cos(angle); const s = Math.sin(angle);
+    const along = 1 + ALONG * coherence; const across = 1 - ALONG * coherence;
+    // Diffusion als Tensor: ∂²/∂t² entlang plus ∂²/∂n² quer, ausgedrückt in uxx, uyy, uxy
+    const r = Math.max(clamp((energy[i] / STRUCTURE_REF - 0.5) / 0.5, 0, 1), clamp((energy[i] / p50 - MEDIAN_RISE) / 0.9, 0, 1));
+    const structure = r * r * (3 - 2 * r);              // 0 = ruhige Fläche, 1 = Struktur
+    const spread = FILL_D + (1 - FILL_D) * structure;
+    KXX[i] = (along * c * c + across * s * s) * spread;
+    KYY[i] = (along * s * s + across * c * c) * spread;
+    KXY[i] = 2 * c * s * (along - across) * spread;
+    const m = clamp((contrast[i] / p95 - 0.1) / 0.6, 0, 1);
+    const line = m * m * (3 - 2 * m);
+    const kStructure = K_OFF - (K_OFF - K_ON) * line;
+    KK[i] = K_FILL + (kStructure - K_FILL) * structure;
+    // am Bildrand nicht: Gray-Scott-Muster legen sich sonst als Streifen an den festen Rand
+    const x = i % w; const y = (i / w) | 0;
+    if (Math.min(x, y, w - 1 - x, h - 1 - y) < EDGE_CELLS) KK[i] = 0.075;
+  }
+}
+
+function clear() {
+  A.fill(1); B.fill(0); A2.fill(1); B2.fill(0);
+  out.fill(0);
+  alive = false;
+}
+
+function seed(x, y) { // CSS-Pixel
+  const cx = x / CELL; const cy = y / CELL;
+  for (let yy = Math.max(1, Math.floor(cy - SEED_R)); yy <= Math.min(h - 2, Math.ceil(cy + SEED_R)); yy++) {
+    for (let xx = Math.max(1, Math.floor(cx - SEED_R)); xx <= Math.min(w - 2, Math.ceil(cx + SEED_R)); xx++) {
+      if (Math.hypot(xx - cx, yy - cy) > SEED_R) continue;
+      const i = yy * w + xx;
+      A[i] = 0.5; B[i] = 0.25 + Math.random() * 0.1;
+    }
+  }
+  alive = true;
+}
+
+/* 2. Wachsen: Gray-Scott mit gerichteter Diffusion. */
+function step() {
+  for (let y = 1; y < h - 1; y++) {
+    let i = y * w + 1;
+    for (let x = 1; x < w - 1; x++, i++) {
+      const a = A[i]; const b = B[i];
+      const kxx = KXX[i]; const kyy = KYY[i]; const kxy = KXY[i];
+      const lapA = kxx * (A[i - 1] + A[i + 1] - 2 * a) + kyy * (A[i - w] + A[i + w] - 2 * a)
+        + kxy * 0.25 * (A[i + w + 1] - A[i + w - 1] - A[i - w + 1] + A[i - w - 1]);
+      const lapB = kxx * (B[i - 1] + B[i + 1] - 2 * b) + kyy * (B[i - w] + B[i + w] - 2 * b)
+        + kxy * 0.25 * (B[i + w + 1] - B[i + w - 1] - B[i - w + 1] + B[i - w - 1]);
+      const abb = a * b * b;
+      A2[i] = a + DIFF_A * lapA - abb + FEED * (1 - a);
+      B2[i] = b + DIFF_B * lapB + abb - (KK[i] + FEED) * b;
+    }
+  }
+  [A, A2] = [A2, A];
+  [B, B2] = [B2, B];
+}
+
+const effect = {
+  setImage(im) {
+    if (!gl) return;
+    g = fit(im);
+    glFit(gl, canvas, im, g, prog);
+    glImage(gl, imgTex, im);
+    w = Math.max(8, Math.round(g.cssW / CELL)); h = Math.max(8, Math.round(g.cssH / CELL));
+    A = new Float32Array(w * h); B = new Float32Array(w * h);
+    A2 = new Float32Array(w * h); B2 = new Float32Array(w * h);
+    out = new Uint8Array(w * h);
+    read(im);
+    clear();
+    glFieldR8(gl, vTex, w, h, out);
+    gl.uniform2f(prog.u('uTexel'), 1 / w, 1 / h);
+    fingers.clear();
+  },
+  reset() { if (A) clear(); },
+};
+
+track(canvas, {
+  down(id, x, y) { fingers.set(id, { x, y, run: 0 }); if (A) seed(x, y); },
+  move(id, x, y) {
+    const f = fingers.get(id);
+    if (!f || !A) return;
+    f.run += Math.hypot(x - f.x, y - f.y);
+    f.x = x; f.y = y;
+    if (f.run >= SEED_EVERY) { f.run = 0; seed(x, y); }
+  },
+  up(id) { fingers.delete(id); },
+});
+
+if (gl) {
+  loop(() => {
+    if (!g) return;
+    if (alive) {
+      for (let k = 0; k < ITER; k++) step();
+      for (let i = 0; i < out.length; i++) out[i] = Math.min(255, B[i] * 600);
+    }
+    gl.useProgram(prog);
+    glUpdateR8(gl, vTex, w, h, out);
+    glBind(gl, prog, 'uImg', 0, imgTex);
+    glBind(gl, prog, 'uV', 1, vTex);
+    quad.draw();
+  });
+}
+
+boot(effect);
+</script>
+</body>
+</html>

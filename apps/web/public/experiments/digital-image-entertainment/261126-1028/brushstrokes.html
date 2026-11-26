@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Pinselstriche</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). In Pinselstrichen neu malen: wo der Finger
+     ist, entsteht das Bild noch einmal aus kurzen Strichen, die dem Verlauf seiner Formen folgen und seine
+     Farben tragen – wie ein impressionistisches Gemälde des Originals.
+     So gebaut: Canvas 2D. Die Richtung der Striche kommt aus einem Strömungsfeld des Bildes (Strukturtensor
+     der Helligkeit, geglättet): sie laufen an Kanten entlang, nicht quer darüber. Die Farbe kommt immer
+     aus dem Original, damit das Neumalen dem Bild treu bleibt.
+     Ben, 2026-11-26: zu hektisch. Darum entsteht jeder Strich jetzt über DUR Sekunden – er wird entlang
+     seiner Bahn gezogen (sanft an, sanft aus) und blendet dabei ein –, und es sind ein Viertel so viele.
+     Striche im Entstehen liegen auf einer eigenen Ebene und kommen fertig ins Bild. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Mal das Bild neu, während du zuhörst.</h1>
+  <p class="hint">Fahr mit dem Finger darüber – unter ihm entsteht das Bild noch einmal, in Pinselstrichen.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script>
+const RATE = 60;          // Striche je Sekunde, solange ein Finger liegt (vorher 240: zu hektisch)
+const DUR_MIN = 0.7;      // Sekunden, in denen ein Strich entsteht …
+const DUR_MAX = 1.2;
+const AREA = 0.09;        // Radius um den Finger, in dem Striche entstehen (Anteil der kürzeren Seite)
+const LEN_MIN = 12;       // Länge eines Strichs in CSS-Pixeln …
+const LEN_MAX = 30;
+const WIDTH_MIN = 3;      // … und seine Breite
+const WIDTH_MAX = 6.5;
+const JITTER = 10;        // wie weit die Farbe eines Strichs vom Original abweichen darf (0…255)
+const FLOW_CELL = 2;      // Rasterweite des Strömungsfelds in CSS-Pixeln – fein, damit dünne Linien zählen
+
+const canvas = document.createElement('canvas'); // das Bild mit allen fertigen Strichen
+const wet = document.createElement('canvas');    // Striche, die gerade entstehen
+stage.append(canvas, wet);
+const ctx = canvas.getContext('2d');
+const wctx = wet.getContext('2d');
+const growing = [];
+let W = 0; let H = 0;
+let src = null;           // das Original in CSS-Pixeln, RGBA
+let fw = 0; let fh = 0;
+let fcos = null; let fsin = null;
+let pristine = null;
+const fingers = new Map();
+
+/* Strukturtensor: wo die Helligkeit sich ändert, liegt eine Kante; Striche laufen an ihr entlang. */
+function buildFlow() {
+  fw = Math.ceil(W / FLOW_CELL); fh = Math.ceil(H / FLOW_CELL);
+  // Helligkeit als Mittel je Zelle – ein einzelnes Pixel je Zelle verfehlt feine Linien und rät die Richtung
+  const L = new Float32Array(fw * fh);
+  for (let y = 0; y < fh; y++) {
+    for (let x = 0; x < fw; x++) {
+      let sum = 0; let n = 0;
+      for (let yy = y * FLOW_CELL; yy < Math.min(H, (y + 1) * FLOW_CELL); yy++) {
+        for (let xx = x * FLOW_CELL; xx < Math.min(W, (x + 1) * FLOW_CELL); xx++) {
+          const o = (yy * W + xx) * 4;
+          sum += 0.3 * src[o] + 0.59 * src[o + 1] + 0.11 * src[o + 2]; n++;
+        }
+      }
+      L[y * fw + x] = sum / Math.max(1, n);
+    }
+  }
+  let xx = new Float32Array(fw * fh); let xy = new Float32Array(fw * fh); let yy = new Float32Array(fw * fh);
+  for (let y = 1; y < fh - 1; y++) {
+    for (let x = 1; x < fw - 1; x++) {
+      const i = y * fw + x;
+      const gx = L[i + 1] - L[i - 1]; const gy = L[i + fw] - L[i - fw];
+      xx[i] = gx * gx; xy[i] = gx * gy; yy[i] = gy * gy;
+    }
+  }
+  const blur = (a) => {
+    const b = new Float32Array(a.length);
+    for (let y = 1; y < fh - 1; y++) {
+      for (let x = 1; x < fw - 1; x++) {
+        const i = y * fw + x;
+        b[i] = (a[i - fw - 1] + a[i - fw] + a[i - fw + 1] + a[i - 1] + a[i] + a[i + 1] + a[i + fw - 1] + a[i + fw] + a[i + fw + 1]) / 9;
+      }
+    }
+    return b;
+  };
+  for (let k = 0; k < 8; k++) { xx = blur(xx); xy = blur(xy); yy = blur(yy); }
+  fcos = new Float32Array(fw * fh); fsin = new Float32Array(fw * fh);
+  for (let i = 0; i < fw * fh; i++) {
+    const a = 0.5 * Math.atan2(2 * xy[i], xx[i] - yy[i]) + Math.PI / 2; // quer zum Gefälle = entlang der Kante
+    fcos[i] = Math.cos(a); fsin[i] = Math.sin(a);
+  }
+}
+function flowAt(x, y) {
+  const i = clamp(Math.floor(y / FLOW_CELL), 0, fh - 1) * fw + clamp(Math.floor(x / FLOW_CELL), 0, fw - 1);
+  return [fcos[i], fsin[i]];
+}
+
+function stroke(x, y) { // in CSS-Pixeln
+  // die Farbe: Mittel aus 3 × 3 Pixeln des Originals, leicht gestreut
+  let sr = 0; let sg = 0; let sb = 0;
+  for (let k = 0; k < 9; k++) {
+    const o = (clamp(Math.round(y) + ((k / 3) | 0) - 1, 0, H - 1) * W + clamp(Math.round(x) + (k % 3) - 1, 0, W - 1)) * 4;
+    sr += src[o]; sg += src[o + 1]; sb += src[o + 2];
+  }
+  const j = () => (Math.random() - 0.5) * 2 * JITTER;
+  const r = clamp(sr / 9 + j(), 0, 255); const gC = clamp(sg / 9 + j(), 0, 255); const b = clamp(sb / 9 + j(), 0, 255);
+  const len = LEN_MIN + Math.random() * (LEN_MAX - LEN_MIN);
+  const w = WIDTH_MIN + Math.random() * (WIDTH_MAX - WIDTH_MIN);
+  const steps = 6;
+  let [dx, dy] = flowAt(x, y);
+  if (Math.random() < 0.5) { dx = -dx; dy = -dy; }
+  const pts = [[x, y]];
+  let px = x; let py = y;
+  for (let k = 0; k < steps; k++) {
+    let [nx, ny] = flowAt(px, py);
+    if (nx * dx + ny * dy < 0) { nx = -nx; ny = -ny; } // die Richtung halten
+    dx = dx * 0.6 + nx * 0.4; dy = dy * 0.6 + ny * 0.4;
+    const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m;
+    px += (dx * len) / steps; py += (dy * len) / steps;
+    pts.push([px, py]);
+  }
+  // Länge der Bahn bis zu jedem Punkt, damit der Strich entlang seiner Bahn wachsen kann
+  const at = [0];
+  for (let k = 1; k < pts.length; k++) at.push(at[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
+  growing.push({ pts, at, nx: -dy, ny: dx, w, r, g: gC, b, t: 0, dur: DUR_MIN + Math.random() * (DUR_MAX - DUR_MIN) });
+}
+
+/* Zeichnet den Strich s bis zum Anteil e seiner Länge, mit Deckkraft a. */
+function paint(c, s, e, a) {
+  const upto = s.at[s.at.length - 1] * e;
+  const line = (off, width, colour) => {
+    const ox = s.nx * off; const oy = s.ny * off;
+    c.beginPath();
+    c.moveTo((s.pts[0][0] + ox) * DPR, (s.pts[0][1] + oy) * DPR);
+    for (let k = 1; k < s.pts.length; k++) {
+      if (s.at[k] <= upto) { c.lineTo((s.pts[k][0] + ox) * DPR, (s.pts[k][1] + oy) * DPR); continue; }
+      const f = (upto - s.at[k - 1]) / (s.at[k] - s.at[k - 1] || 1); // der letzte, angefangene Abschnitt
+      c.lineTo((s.pts[k - 1][0] + (s.pts[k][0] - s.pts[k - 1][0]) * f + ox) * DPR, (s.pts[k - 1][1] + (s.pts[k][1] - s.pts[k - 1][1]) * f + oy) * DPR);
+      break;
+    }
+    c.lineWidth = width * DPR;
+    c.strokeStyle = colour;
+    c.stroke();
+  };
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+  line(0, s.w, `rgba(${s.r},${s.g},${s.b},${0.92 * a})`);
+  // Borsten: feine hellere und dunklere Linien im Strich
+  const shade = (k, al) => `rgba(${clamp(s.r * k, 0, 255)},${clamp(s.g * k, 0, 255)},${clamp(s.b * k, 0, 255)},${al * a})`;
+  line(s.w * 0.28, s.w * 0.22, shade(1.14, 0.45));
+  line(-s.w * 0.3, s.w * 0.2, shade(0.84, 0.45));
+}
+
+const effect = {
+  setImage(im) {
+    const g = fit(im);
+    place(canvas, g);
+    place(wet, g);
+    W = g.cssW; H = g.cssH;
+    canvas.width = wet.width = Math.round(W * DPR);
+    canvas.height = wet.height = Math.round(H * DPR);
+    growing.length = 0;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(im, g.sx, g.sy, g.sw, g.sh, 0, 0, canvas.width, canvas.height);
+    pristine = makeCanvas(canvas.width, canvas.height);
+    pristine.getContext('2d').drawImage(canvas, 0, 0);
+    src = pictureCanvas(im, g, W, H).getContext('2d').getImageData(0, 0, W, H).data;
+    buildFlow();
+    fingers.clear();
+  },
+  reset() { if (pristine) { growing.length = 0; ctx.drawImage(pristine, 0, 0); } },
+};
+
+track(wet, {
+  down(id, x, y) { fingers.set(id, { x, y }); },
+  move(id, x, y) { const f = fingers.get(id); if (f) { f.x = x; f.y = y; } },
+  up(id) { fingers.delete(id); },
+});
+
+let owed = 0;
+loop((dt) => {
+  if (!src) return;
+  if (fingers.size) {
+    owed += RATE * dt;
+    const area = AREA * Math.min(W, H);
+    while (owed >= 1) {
+      owed -= 1;
+      for (const f of fingers.values()) {
+        const a = Math.random() * Math.PI * 2; const d = area * Math.sqrt(Math.random());
+        stroke(f.x + Math.cos(a) * d, f.y + Math.sin(a) * d);
+      }
+    }
+  }
+  if (!growing.length && !wet.dataset.dirty) return;
+  wctx.clearRect(0, 0, wet.width, wet.height);
+  for (let i = growing.length - 1; i >= 0; i--) {
+    const s = growing[i];
+    s.t = Math.min(1, s.t + dt / s.dur);
+    if (s.t >= 1) { paint(ctx, s, 1, 1); growing.splice(i, 1); continue; } // fertig: ins Bild
+    paint(wctx, s, easeInOut(s.t), easeInOut(Math.min(1, s.t / 0.6)));
+  }
+  wet.dataset.dirty = growing.length ? '1' : '';
+});
+
+boot(effect);
+</script>
+</body>
+</html>

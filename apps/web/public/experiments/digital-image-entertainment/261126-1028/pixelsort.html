@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Farbströme</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Farbströme („Pixel Sorting“): unter dem
+     Finger ordnen sich die Pixel nach Helligkeit entlang seiner Richtung, und das Bild zerfließt in Bänder.
+     Ben, 2026-11-26: die Form soll ein Kreis sein, kein Quadrat, und nie gepixelte Kanten zeigen.
+     So gebaut: Canvas 2D auf den Pixeldaten. Um den Finger liegt ein Kreis mit weichem Rand. Die Zeilen
+     (oder Spalten, je nach Zugrichtung) durch ihn werden sortiert – über den Kreis hinaus, damit im Kreis
+     ein Stück eines langen Verlaufs erscheint statt eines kurzen –, und die sortierte Fassung wird je Bild
+     ein Stück weit eingeblendet (STRENGTH), am Rand weich auslaufend. Bleibt der Finger, strömt es weiter.
+     Sortiert wird mit einem Zählsortieren nach Helligkeit (256 Stufen). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Lass die Farben strömen, während du zuhörst.</h1>
+  <p class="hint">Fahr langsam durchs Bild: Unter dem Finger ordnen sich die Farben von dunkel nach hell.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script>
+const BRUSH = 0.07;     // Radius des Kreises, Anteil der kürzeren Seite
+const REACH = 1.5;      // so viele Radien reichen die sortierten Läufe über den Kreis hinaus
+const EDGE = 0.3;       // weicher Rand, Anteil des Radius
+const STRENGTH = 0.2;   // je Bild (bei 60 Hz) wird so viel der sortierten Fassung eingeblendet
+const TURN = 0.25;      // wie schnell die Richtung der Bewegung folgt (0…1 je Bewegung)
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+let frame = null;      // ImageData des ganzen Bildes
+let px32 = null;       // dieselben Pixel als 32-Bit-Werte
+let pristine = null;
+let R = 0;
+let dirty = null;      // [x0, y0, x1, y1]
+let runIdx = new Int32Array(0); let runPx = new Uint32Array(0); let runKey = new Uint8Array(0); let runOut = new Uint32Array(0);
+const counts = new Uint32Array(256);
+const fingers = new Map();
+
+function mark(x0, y0, x1, y1) {
+  if (!dirty) dirty = [x0, y0, x1, y1];
+  else dirty = [Math.min(dirty[0], x0), Math.min(dirty[1], y0), Math.max(dirty[2], x1), Math.max(dirty[3], y1)];
+}
+
+/* Zählsortieren der Pixel runIdx[0 … n) nach Helligkeit, stabil; Ergebnis in runOut. */
+function sortRun(n, ascending) {
+  counts.fill(0);
+  for (let k = 0; k < n; k++) {
+    const p = px32[runIdx[k]];
+    const l = ((p & 255) * 77 + ((p >>> 8) & 255) * 151 + ((p >>> 16) & 255) * 28) >>> 8;
+    runKey[k] = l; runPx[k] = p; counts[l]++;
+  }
+  let pos = 0;
+  if (ascending) for (let l = 0; l < 256; l++) { const c = counts[l]; counts[l] = pos; pos += c; }
+  else for (let l = 255; l >= 0; l--) { const c = counts[l]; counts[l] = pos; pos += c; }
+  for (let k = 0; k < n; k++) runOut[counts[runKey[k]]++] = runPx[k];
+}
+
+/* Mischt Pixel a mit b zu Anteil t (0…1), kanalweise. */
+function blend(a, b, t) {
+  const u = 1 - t;
+  const r = (a & 255) * u + (b & 255) * t;
+  const g = ((a >>> 8) & 255) * u + ((b >>> 8) & 255) * t;
+  const bl = ((a >>> 16) & 255) * u + ((b >>> 16) & 255) * t;
+  return ((255 << 24) | ((bl + 0.5) << 16) | ((g + 0.5) << 8) | (r + 0.5)) >>> 0;
+}
+
+function pour(f, dt) { // Gerätepixel
+  const W = canvas.width; const H = canvas.height;
+  const horizontal = Math.abs(f.dx) >= Math.abs(f.dy);
+  const forward = horizontal ? f.dx >= 0 : f.dy >= 0;
+  const strength = 1 - (1 - STRENGTH) ** (dt * 60);
+  const inner = R * (1 - EDGE);
+  const ext = R * (1 + REACH);
+  for (let o = Math.ceil(-R); o <= Math.floor(R); o++) { // jede Zeile (Spalte) durch den Kreis
+    const line = horizontal ? Math.round(f.y) + o : Math.round(f.x) + o;
+    if (line < 0 || line >= (horizontal ? H : W)) continue;
+    const centre = horizontal ? f.x : f.y;
+    const a = Math.max(0, Math.round(centre - ext));
+    const b = Math.min((horizontal ? W : H) - 1, Math.round(centre + ext));
+    const n = b - a + 1;
+    for (let k = 0; k < n; k++) runIdx[k] = horizontal ? line * W + a + k : (a + k) * W + line;
+    sortRun(n, forward);
+    for (let k = 0; k < n; k++) {
+      const along = a + k - centre;
+      const d = Math.sqrt(along * along + o * o);
+      if (d >= R) continue;
+      const m = d <= inner ? 1 : 1 - (d - inner) / (R - inner);
+      const soft = m * m * (3 - 2 * m); // weicher Rand
+      px32[runIdx[k]] = blend(px32[runIdx[k]], runOut[k], strength * soft);
+    }
+  }
+  mark(Math.max(0, Math.floor(f.x - R)), Math.max(0, Math.floor(f.y - R)), Math.min(W - 1, Math.ceil(f.x + R)), Math.min(H - 1, Math.ceil(f.y + R)));
+}
+
+const effect = {
+  setImage(im) {
+    const g = fit(im);
+    place(canvas, g);
+    canvas.width = Math.round(g.cssW * DPR); canvas.height = Math.round(g.cssH * DPR);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(im, g.sx, g.sy, g.sw, g.sh, 0, 0, canvas.width, canvas.height);
+    frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    px32 = new Uint32Array(frame.data.buffer);
+    pristine = new Uint32Array(px32);
+    R = Math.max(8, BRUSH * Math.min(canvas.width, canvas.height));
+    const longest = Math.ceil(2 * R * (1 + REACH)) + 4;
+    runIdx = new Int32Array(longest); runPx = new Uint32Array(longest); runKey = new Uint8Array(longest); runOut = new Uint32Array(longest);
+    dirty = null;
+    fingers.clear();
+  },
+  reset() {
+    if (!pristine) return;
+    px32.set(pristine);
+    dirty = [0, 0, canvas.width - 1, canvas.height - 1];
+  },
+};
+
+track(canvas, {
+  // Ohne Bewegung strömt es nach unten; mit Bewegung dreht die Richtung sanft mit.
+  down(id, cx, cy) { fingers.set(id, { x: cx * DPR, y: cy * DPR, dx: 0, dy: 1 }); },
+  move(id, cx, cy) {
+    const f = fingers.get(id);
+    if (!f) return;
+    const x = cx * DPR; const y = cy * DPR;
+    const mx = x - f.x; const my = y - f.y;
+    const m = Math.hypot(mx, my);
+    if (m > 0.5) { f.dx += (mx / m - f.dx) * TURN; f.dy += (my / m - f.dy) * TURN; }
+    f.x = x; f.y = y;
+  },
+  up(id) { fingers.delete(id); },
+});
+
+loop((dt) => {
+  if (!frame) return;
+  for (const f of fingers.values()) pour(f, dt);
+  if (!dirty) return;
+  const [x0, y0, x1, y1] = dirty;
+  ctx.putImageData(frame, 0, 0, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  dirty = null;
+});
+
+boot(effect);
+</script>
+</body>
+</html>

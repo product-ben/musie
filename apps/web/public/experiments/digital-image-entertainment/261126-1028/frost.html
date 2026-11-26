@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Frost wegföhnen</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Frost wegföhnen – Ben, 2026-11-26: eine
+     Fassung von „Nebel aufdecken“. Das Bild liegt unter Eis wie hinter einer gefrorenen Scheibe. Der Finger
+     ist ein Föhn: wo die warme Luft hinkommt, taut das Eis, und je länger er an einer Stelle bleibt, desto
+     weiter. Eine Stelle, die REFREEZE_DELAY Sekunden keine Wärme bekommt, friert langsam wieder zu.
+     Ben, zweite Runde: keine Muster auf dem Eis; das Bild darf nicht wackeln; die Ränder bleiben immer
+     weich, auch beim Zufrieren und wenn man lange auf eine Stelle föhnt; und es darf nie flimmern.
+     Darum so gebaut:
+     – Das Eis ist das Bild, stark verschwommen, unter einem eisigen Schleier, am Rand dichter. Nichts sonst.
+     – Getaut wird als „Wärme“ E je Zelle; sichtbar ist 1 − e^(−E). Das hat keine harte Obergrenze, an der
+       ein Plateau mit scharfem Rand entstünde, und die Wärme verteilt sich je Bild ein wenig (SPREAD) –
+       so bleibt das Feld glatt, egal wie lange man föhnt.
+     – Zufrieren nimmt überall gleich schnell Wärme weg; die Grenze wandert dadurch ruhig vom Rand nach
+       innen, ohne Zelle-für-Zelle-Sprünge.
+     – Das Feld geht als Gleitkomma-Textur auf die GPU (keine 8-Bit-Stufen), wird dort noch einmal weich
+       abgetastet und mit einem breiten Übergang gezeigt. Das Bild selbst wird nie verschoben. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Föhn den Frost weg, während du zuhörst.</h1>
+  <p class="hint">Das Bild ist zugefroren. Halte den Finger darauf: Wo die warme Luft hinkommt, taut das Eis. Danach friert es langsam wieder zu.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script src="gl.js"></script>
+<script>
+const CELL = 4;              // CSS-Pixel je Zelle des Tau-Felds
+const HEAT_R = 0.07;         // Reichweite der warmen Luft (σ), Anteil der kürzeren Seite
+const HEAT = 2.2;            // Wärme je Sekunde mitten unter dem Föhn
+const E_MAX = 4;             // mehr Wärme sammelt sich nicht (sichtbar 1 − e^−4 ≈ 98 %), sonst dauert das Zufrieren ewig
+const SPREAD = 0.12;         // so viel verteilt sich die Wärme je Bild zu den Nachbarn: hält die Ränder weich
+const REFREEZE_DELAY = 1.5;  // Sekunden ohne Föhn, bis eine Stelle wieder zufriert …
+const REFREEZE = 0.6;        // … und so viel Wärme verliert sie dann je Sekunde, überall gleich
+
+const FS = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 outColor;
+${PICTURE_GLSL}
+uniform sampler2D uFrost; uniform sampler2D uMelt; uniform vec2 uTexel;
+void main() {
+  // weich abgetastet: Mitte doppelt, dazu vier Nachbarn
+  float m = (2.0 * texture(uMelt, vUv).r
+    + texture(uMelt, vUv + vec2(uTexel.x, 0.0)).r + texture(uMelt, vUv - vec2(uTexel.x, 0.0)).r
+    + texture(uMelt, vUv + vec2(0.0, uTexel.y)).r + texture(uMelt, vUv - vec2(0.0, uTexel.y)).r) / 6.0;
+  float ice = 1.0 - smoothstep(0.15, 0.85, m);      // ein breiter Übergang: nie eine harte Kante
+  outColor = vec4(mix(picture(vUv), texture(uFrost, vUv).rgb, ice), 1.0);
+}`;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const gl = glContext(canvas);
+let prog; let quad; let imgTex; let frostTex; let meltTex;
+if (gl) {
+  prog = glProgram(gl, FS);
+  quad = glQuad(gl);
+  imgTex = glTexture(gl);
+  frostTex = glTexture(gl);
+  meltTex = glTexture(gl);
+}
+
+let g = null;
+let w = 0; let h = 0;
+let E; let next; let warm; let out;
+let active = false;  // ist irgendwo Wärme? sonst muss nichts gerechnet werden
+const fingers = new Map();
+
+/* Das Eis: das Bild stark verschwommen, ein eisiger Schleier darüber, am Rand dichter. Keine Muster. */
+function makeIce(im, W, H) {
+  const c = makeCanvas(W, H);
+  const x = c.getContext('2d');
+  if ('filter' in x) {
+    x.filter = `blur(${Math.round(Math.min(W, H) / 30)}px)`;
+    x.drawImage(im, g.sx, g.sy, g.sw, g.sh, 0, 0, W, H);
+    x.filter = 'none';
+  } else {
+    const small = pictureCanvas(im, g, W / 24, H / 24);
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(small, 0, 0, W, H);
+  }
+  x.fillStyle = 'rgba(232, 240, 245, 0.66)';
+  x.fillRect(0, 0, W, H);
+  const edge = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.hypot(W, H) / 2);
+  edge.addColorStop(0, 'rgba(255,255,255,0)');
+  edge.addColorStop(1, 'rgba(255,255,255,0.35)');
+  x.fillStyle = edge;
+  x.fillRect(0, 0, W, H);
+  return c;
+}
+
+function freeze() { E.fill(0); out.fill(0); warm.fill(1e9); active = true; }
+
+const effect = {
+  setImage(im) {
+    if (!gl) return;
+    g = fit(im);
+    glFit(gl, canvas, im, g, prog);
+    glImage(gl, imgTex, im);
+    glImage(gl, frostTex, makeIce(im, canvas.width, canvas.height));
+    w = Math.max(8, Math.round(g.cssW / CELL)); h = Math.max(8, Math.round(g.cssH / CELL));
+    E = new Float32Array(w * h); next = new Float32Array(w * h); warm = new Float32Array(w * h); out = new Float32Array(w * h);
+    freeze();
+    glFieldR(gl, meltTex, w, h, out);
+    gl.uniform2f(prog.u('uTexel'), 1 / w, 1 / h);
+    fingers.clear();
+  },
+  reset() { if (E) freeze(); },
+};
+
+track(canvas, {
+  down(id, x, y) { fingers.set(id, { x, y }); },
+  move(id, x, y) { const f = fingers.get(id); if (f) { f.x = x; f.y = y; } },
+  up(id) { fingers.delete(id); },
+});
+
+if (gl) {
+  loop((dt) => {
+    if (!g) return;
+    if (!active && fingers.size === 0) return;
+    // warme Luft unter dem Finger
+    const s = (HEAT_R * Math.min(g.cssW, g.cssH)) / CELL;
+    for (const f of fingers.values()) {
+      const cx = f.x / CELL; const cy = f.y / CELL;
+      for (let y = Math.max(0, Math.floor(cy - 3 * s)); y <= Math.min(h - 1, Math.ceil(cy + 3 * s)); y++) {
+        for (let x = Math.max(0, Math.floor(cx - 3 * s)); x <= Math.min(w - 1, Math.ceil(cx + 3 * s)); x++) {
+          const i = y * w + x;
+          const k = Math.exp(-((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2) / (2 * s * s));
+          if (k < 0.02) continue;
+          E[i] = Math.min(E_MAX, E[i] + HEAT * dt * k);
+          warm[i] = 0;
+        }
+      }
+    }
+    // die Wärme verteilt sich ein wenig, und wo länger kein Föhn war, friert es gleichmäßig zu
+    let any = false;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        const e = E[i];
+        const lap = (x > 0 ? E[i - 1] : e) + (x < w - 1 ? E[i + 1] : e) + (y > 0 ? E[i - w] : e) + (y < h - 1 ? E[i + w] : e) - 4 * e;
+        let n = e + SPREAD * lap;
+        warm[i] += dt;
+        if (warm[i] > REFREEZE_DELAY) n -= REFREEZE * dt;
+        n = n < 0 ? 0 : n;
+        next[i] = n;
+        out[i] = 1 - Math.exp(-n);
+        if (n > 0) any = true;
+      }
+    }
+    [E, next] = [next, E];
+    active = any;
+    gl.useProgram(prog);
+    glUpdateR(gl, meltTex, w, h, out);
+    glBind(gl, prog, 'uImg', 0, imgTex);
+    glBind(gl, prog, 'uFrost', 1, frostTex);
+    glBind(gl, prog, 'uMelt', 2, meltTex);
+    quad.draw();
+  });
+}
+
+boot(effect);
+</script>
+</body>
+</html>
