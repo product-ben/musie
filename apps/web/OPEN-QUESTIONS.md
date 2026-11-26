@@ -13041,3 +13041,35 @@ What I need from Ben:
 - **„Mit den physischen Bildkarten“ clips on a phone too** („Mit den
   physisch…“), like the three goals above — same component request.
 
+
+## Experiment „Duett 01“ starts at Ben's combination (2026-11-26)
+
+Where: `apps/web/experiments/duett/src/settings.ts` (`START`, `initial`,
+`setSettings`), one test in `answer2.test.ts`.
+
+What I checked: Ben sent a link and asked for it to be the default:
+`#on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel`.
+
+What I did:
+- **The page opens on that combination**, which is a new constant called
+  `START`. A visitor's own last combination (localStorage) and any `#…` in the
+  address still win, as before.
+- **`DEFAULTS` stays „wie heute“, on purpose.** It is three things at once:
+  the state the tests prove is the app note for note, the slider values a
+  switch starts at, and the reference every address and every PostHog
+  `settings_key` is written against. Moving it would have changed what every
+  link already sent and every event already recorded means; `on=longer`
+  would have silently gone from 1.5 × to 3 ×. Kept relative to today, Ben's
+  link is exactly the encoding of `START`, and the test says so.
+- **Today got an address of its own, `#heute`.** It used to be the bare
+  address, which is `START` now. „Alles wie heute“ writes `#heute`, so it
+  survives a reload and „Link kopieren“ still shares it. PostHog already
+  called it `heute`.
+
+Why: one sentence from Ben, and the cheapest version of it that breaks no
+link and no recorded data.
+
+What I need from Ben:
+- **Nothing to decide.** One thing to know: anyone who has already changed a
+  switch on a device keeps their own combination there, because localStorage
+  wins over `START`. To start fresh, open the link itself.

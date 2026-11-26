@@ -16,7 +16,7 @@ import type { ComposeContext, Motif } from './answer2';
 import { COLLISION_MS, createConversation, LEARN, LIFT_RETRY_MS } from './conversation';
 import { DEFINITIONS } from './instruments';
 import { runState } from './run';
-import { DEFAULTS, decode, encode, FIGURE_IDS, setSettings, SHAPES } from './settings';
+import { DEFAULTS, decode, encode, FIGURE_IDS, setSettings, SHAPES, START } from './settings';
 import type { Settings, ShapeId } from './settings';
 
 const DEGREES = { harp: 7, kalimba: 9, marimba: 10 } as const;
@@ -449,5 +449,13 @@ describe('the address', () => {
     expect(encode(s)).toBe('i=kalimba&on=faster,longer&minMs=900&fig=bogen,zweiklang');
     expect(decode(`#${encode(s)}`)).toEqual(s);
     expect(decode('#minMs=99999&i=piano').minMs).toBe(1800);
+  });
+
+  it('starts at the link Ben sent on 2026-11-26, and today keeps an address of its own', () => {
+    const link =
+      'on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel';
+    expect(encode(START)).toBe(link);
+    expect(decode(`#${link}`)).toEqual(START);
+    expect(decode('#heute')).toEqual(DEFAULTS);
   });
 });

@@ -10,6 +10,13 @@
  * Every slider default is the value a switch starts at when it is turned on.
  * They are GUESSES, not measurements: nobody has played them yet.
  *
+ * START is where a visitor begins: Ben's combination of 2026-11-26, sent as a
+ * link. It is NOT DEFAULTS, on purpose. The address and PostHog's
+ * `settings_key` stay relative to today, so every link already shared, and
+ * every event already recorded, keeps meaning what it meant. „Alles wie heute“
+ * is still one press away. All switches off now has its own address, `#heute`,
+ * because the bare address is START now.
+ *
  * The state lives in the address (`#…`), so a combination can be sent as a
  * link, and in localStorage, so a reload keeps it.
  */
@@ -116,6 +123,21 @@ export const DEFAULTS: Settings = {
   ornamentChance: 0.5,
 };
 
+/** #on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel */
+export const START: Settings = {
+  ...DEFAULTS,
+  faster: true,
+  followTempo: true,
+  longer: true, timesYours: 3, maxNotes: 9,
+  growing: true, growRounds: 4,
+  noTiny: true,
+  wider: true,
+  figures: {
+    ...noFigures,
+    frage: true, sequenz: true, spiegel: true, erinnerung: true, bogen: true, pendel: true,
+  },
+};
+
 export const BOOL_KEYS: readonly BoolKey[] = [
   'faster', 'onLift', 'phraseEnd', 'learn', 'keepRhythm', 'followTempo', 'followDynamics',
   'longer', 'growing', 'noTiny', 'wider',
@@ -180,9 +202,9 @@ function initial(): Settings {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored !== null) return decode(stored);
   } catch {
-    /* private mode: start from today */
+    /* private mode: start from START */
   }
-  return DEFAULTS;
+  return START;
 }
 
 let current: Settings = initial();
@@ -196,7 +218,8 @@ export function setSettings(next: Settings | ((s: Settings) => Settings)): void 
   current = typeof next === 'function' ? next(current) : next;
   if (typeof window !== 'undefined') {
     const text = encode(current);
-    const url = `${window.location.pathname}${window.location.search}${text ? `#${text}` : ''}`;
+    /* Today encodes to nothing, and nothing is START now, so today says so. */
+    const url = `${window.location.pathname}${window.location.search}#${text || 'heute'}`;
     window.history.replaceState(null, '', url);
     try {
       window.localStorage.setItem(STORAGE_KEY, text);
