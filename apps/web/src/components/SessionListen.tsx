@@ -228,6 +228,20 @@ export interface SessionListenProps {
    * `?`, no re-roll button.
    */
   question: SessionQuestion;
+  /**
+   * ── HOW LONG THIS RUN IS — chosen on Einsteigen (Ben, 2026-11-26) ───────
+   * The step's minimum, in seconds, for a card exercise; null for every kind
+   * that does not ask, which keeps the exercise's own `listen_gate_seconds`
+   * capped to the recording, as before.
+   *
+   * THE PIECE REPEATS TO FILL IT. A card's piece runs 1:40–3:11 and the
+   * length goes up to 10:00, so the recording plays as many times as the
+   * length needs (`useMix`'s laps) and the step sees one long recording: the
+   * clock, the scrubber and the gate count across the repeats. When the
+   * length is reached the way on opens and the pass that is playing finishes
+   * — what happened before, when the minimum was reached (Ben: „wie heute").
+   */
+  lengthSeconds?: number | null;
 }
 
 /**
@@ -241,7 +255,7 @@ export interface SessionListenProps {
  */
 export function SessionListen({
   exercise, digital = false, audio, sessionId, card, listened, onListened, onAdvance, back,
-  question,
+  question, lengthSeconds = null,
 }: SessionListenProps) {
   const t = useT();
 
@@ -310,6 +324,18 @@ export function SessionListen({
     setSimulated(true);
   }, []);
 
+  /* ── ONE RECORDING, OR THE SAME ONE SEVERAL TIMES ──────────────────────
+     `fileSeconds` is the recording; `duration` is what this step plays, which
+     is the recording times the laps a chosen length needs — a 2:30 piece for
+     a 6:00 run plays three times, and the step reads 7:30 everywhere it used
+     to read 2:30. Only a PIECE repeats: a cut is a guided session with its
+     own ending, and no kind with cuts asks for a length. */
+  const fileSeconds = audio?.durationSeconds ?? 0;
+  const laps = lengthSeconds !== null && audio?.kind === 'piece' && fileSeconds > 0
+    ? Math.max(1, Math.ceil(lengthSeconds / fileSeconds))
+    : 1;
+  const duration = fileSeconds * laps;
+
   /* ── THE PLAYER ────────────────────────────────────────────────────────
      One hook for one or two streams: a card exercise passes a null
      `musicSrc` and gets exactly the single element this file used to hold.
@@ -321,12 +347,14 @@ export function SessionListen({
     mixedSrc,
     voiceSrc,
     musicMuted,
+    laps,
+    lapSeconds: fileSeconds,
     onPlay: () => { if (!simulatedRef.current) setPlaying(true); },
     onPause: () => { if (!simulatedRef.current) setPlaying(false); },
     onTime: (at) => { if (!simulatedRef.current) setPosition(at); },
     /* Pinned to the full duration rather than left wherever the last
        timeupdate landed: that is what puts the button into `ended`. */
-    onEnded: () => setPosition(audio?.durationSeconds ?? 0),
+    onEnded: () => setPosition(duration),
     /* A FILE THAT WOULD NOT LOAD. The clock takes over; whether it is RUNNING
        is left alone, because this can arrive before anybody pressed anything. */
     onError: goSimulated,
@@ -487,11 +515,16 @@ export function SessionListen({
    * The CAP is still this component's, because the exercise cannot see the
    * recording: a gate longer than the track would never be reachable, so a
    * shorter piece is satisfied by finishing it.
+   *
+   * A CHOSEN LENGTH (2026-11-26) is the gate instead, and the cap cannot bite
+   * it: the laps above make the recording at least that long. The `min` stays
+   * as a guard for a recording whose length is unknown.
    */
-  const duration = audio?.durationSeconds ?? 0;
-  const gate = duration > 0
-    ? Math.min(exercise.listenGateSeconds, duration)
-    : exercise.listenGateSeconds;
+  const gate = lengthSeconds !== null
+    ? (duration > 0 ? Math.min(lengthSeconds, duration) : lengthSeconds)
+    : duration > 0
+      ? Math.min(exercise.listenGateSeconds, duration)
+      : exercise.listenGateSeconds;
   const met = listened || Math.floor(position) >= gate;
   /* WHAT THE LISTENING VIEW COUNTS DOWN. The same number the stage's locked CTA
      interpolates, hoisted because two controls now read it. `Math.floor` on the

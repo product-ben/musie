@@ -13041,3 +13041,16 @@ What I need from Ben:
 - **„Mit den physischen Bildkarten“ clips on a phone too** („Mit den
   physisch…“), like the three goals above — same component request.
 
+
+# Exercise length — 2026-11-26
+
+## Exercise length — card and instrument exercises run as long as the person chooses — RESOLVED
+Where: `src/lib/exerciseLength.ts` (kinds, bounds, step, start), `src/components/SessionIntro.tsx` (the `Slider`, last), `src/routes/Session.tsx` (state, `saveLength`, the play clock), `src/components/SessionListen.tsx` + `src/lib/mixer.ts` (laps), `supabase/migrations/20261126100000_session_length.sql`
+What I checked: Ben, from user testing — some found an exercise too long, some too short. First brief: „min 1:30, max = the length of the track". The data said no: a card exercise's piece is picked by the CARD (`sessions_card_plays()`), which is drawn after Einsteigen; the pieces run 1:40–3:11; an instrument has no track. Asked twice; Ben: „Dann statisch: Max 10 min, min 1:30", start „1:30 wie heute", and when the time is up „wie heute".
+What I did: `card_based` and `instruments` ask, as the last setting on Einsteigen, „Wie lange soll die Übung dauern?" — 1:30 to 10:00 in half minutes, starting at the exercise's own `listen_gate_seconds` (1:30 for all five). The answer is the step's minimum: the listen step's clock, the play step's timer. It is written to `sessions.length_seconds` on the way out of Einsteigen, so a resumed run keeps it (measured: a resumed harp run at 3:00 shows 03:00). The listen step REPEATS the piece until the length is filled and lets the pass it is in finish — `useMix` plays every lap but the last with the element's own `loop`, so there is no gap and no `play()` outside a gesture; measured with a real 6-second file on a private stack: the file time ran 1.9 → 5.9 → 1.8 → 5.8 without a pause while the clock counted 1:30 → 1:19 across the seam. The intro sentence „die nächsten 2/3 Minuten" became `{minutes}` (migration, by kind) and follows the slider: „die nächsten 5 Minuten" at 5:00.
+Why: Ben's numbers and his „wie heute"; the repeat is his „zwei Mal abgespielt" carried to a 10-minute ceiling.
+What I need from Ben:
+- **Kalimba and Marimba too?** He wrote „Bei der Harfe min 1:30, max 10 min"; the brief was the instrument KIND, so all three ask. One line in `exerciseLength.ts` if not.
+- **The reflexion experiment shows the slider now** (Freie Bahn, Harfe): it renders the real Session (rule 10). Its shims store the answer; nothing breaks — but it changes what that experiment measures. Keep, or hide it there?
+- **After the minimum the pass finishes**, so a run can be up to one piece longer than chosen (5:00 on a 2:48 piece plays 5:36). That is „wie heute" — say if it should stop at the chosen time instead.
+- **The intro sentence on the HOSTED rows** is rewritten by the migration with a pattern (`nächsten [0-9]+ Minuten`), so it holds even if a number was edited there; `pnpm db:sync` after merge, as always.

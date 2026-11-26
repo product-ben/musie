@@ -175,6 +175,14 @@ export interface SessionRow {
    * first screen of every run.
    */
   digitalCards: boolean;
+  /**
+   * HOW LONG THIS RUN IS, in seconds — `sessions.length_seconds`, 2026-11-26.
+   * Chosen on Einsteigen for a card or instrument exercise
+   * (`lib/exerciseLength.ts`); null for every other kind and before the run
+   * has left Einsteigen. Seeds the slider on a resume, so coming back to a
+   * run keeps the length it was given.
+   */
+  lengthSeconds: number | null;
   /** Append-only log of rejections. Never cleared, including by the reset. */
   rejectedQuestionIds: string[];
   /** What a re-roll will not offer right now. Emptied by the reset. */
@@ -239,7 +247,7 @@ function toRow(row: {
   listening_question_id: string | null; listening_question: string | null;
   rejected_question_ids: string[]; rejected_this_round: string[];
   posture: string | null; ending: string | null; digital_cards: boolean;
-  goal_id: string | null;
+  goal_id: string | null; length_seconds: number | null;
 }): SessionRow | null {
   if (row.status !== 'started' && row.status !== 'finished' && row.status !== 'abandoned') {
     console.error(`[musie] session ${row.id} has status "${row.status}" — dropped`);
@@ -269,10 +277,11 @@ function toRow(row: {
     ending: row.ending,
     digitalCards: row.digital_cards,
     goalId: row.goal_id,
+    lengthSeconds: row.length_seconds,
   };
 }
 
-const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, music_mode, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending, digital_cards, goal_id';
+const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, music_mode, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending, digital_cards, goal_id, length_seconds';
 
 /**
  * One session by id. Null when there is no such row — which, under RLS, is
@@ -470,6 +479,28 @@ export async function saveDigitalCards(id: string, digitalCards: boolean): Promi
     .eq('id', id);
   if (error !== null) {
     throw new Error(`[musie] could not save which run this is: ${error.message}`);
+  }
+}
+
+/**
+ * HOW LONG THIS RUN IS — written on the way OUT of Einsteigen, 2026-11-26.
+ *
+ * `saveListeningAnswers`' timing and its reason: one request on the way out
+ * rather than one per step of a drag. Written whether or not the slider was
+ * moved, because the question was PUT, and leaving it at 1:30 is an answer —
+ * the column records what was chosen, and a report about lengths would read a
+ * missing row as "never asked".
+ *
+ * IT THROWS, like the others on this screen: the person pressed Continue and
+ * is waiting, and a silent failure would leave a resumed run at the default.
+ */
+export async function saveLength(id: string, seconds: number): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ length_seconds: Math.round(seconds) })
+    .eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not save how long this run is: ${error.message}`);
   }
 }
 

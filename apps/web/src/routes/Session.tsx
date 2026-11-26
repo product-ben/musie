@@ -81,6 +81,7 @@ import {
   DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedForRun, stepsForRun,
 } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
+import { hasVariableLength, initialLength } from '../lib/exerciseLength';
 import type { Card, Exercise, ListenAudio, Track } from '../lib/content';
 import { pathOf, useSessionFeelings } from '../lib/feelings';
 import { FOCUS_FEELINGS, FOCUS_THOUGHTS, FOCUS_UNDERSTAND, REFLECT_SHEETS, hasAnswered } from '../lib/reflect';
@@ -88,7 +89,7 @@ import type { ReflectMode, ReflectSheet } from '../lib/reflect';
 import { scanCardInto } from '../lib/scan';
 import {
   completedBefore, endSession, readSession, saveCard, saveDigitalCards, saveGoal,
-  saveListeningAnswers, savePlay, saveReflection, saveStep,
+  saveLength, saveListeningAnswers, savePlay, saveReflection, saveStep,
 } from '../lib/session';
 import { goalsOffered, readStartedVia } from '../lib/startedVia';
 /* `saveFeelingChange` and `FeelingChange` left this file on 2026-10-16 with
@@ -501,6 +502,21 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
   );
   const deckStart = deckCode !== null && data.row.cardId === null;
 
+  /* ── HOW LONG THIS RUN IS — Ben, 2026-11-26 ────────────────────────────
+     A card or instrument exercise asks, as the last setting on Einsteigen
+     (`lib/exerciseLength.ts`). Held HERE, like the other intro answers: the
+     intro draws it, the listen step's minimum and the play step's timer count
+     it down, and the row stores it on the way out of Einsteigen. Seeded from
+     the row, so a resumed run keeps its length; from the exercise's own
+     minimum otherwise, which is where every run used to be fixed. */
+  const variableLength = hasVariableLength(data.exercise.kind);
+  const [lengthSeconds, setLengthSeconds] = React.useState<number>(
+    () => initialLength(data.row.lengthSeconds, data.exercise.listenGateSeconds),
+  );
+  /** What the listen step and the play step count down: the chosen length
+   *  where there was a choice, the exercise's own minimum everywhere else. */
+  const gateSeconds = variableLength ? lengthSeconds : data.exercise.listenGateSeconds;
+
   /* ── AN INSTRUMENT'S TWO SETTINGS — 2026-11-09 ──────────────────────────
      Held HERE, not in the step: the step draws them, the focus sheet reads
      them on every note, and the row stores them on the way out. Seeded from
@@ -523,8 +539,16 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
      Reflektieren* appears in the row once the timer is paused or done, the
      same moment it appears in the sheet. The stage hands every change back. */
   const [playClock, setPlayClock] = React.useState<ClockState>(
-    () => initialClock(data.exercise.listenGateSeconds),
+    () => initialClock(gateSeconds),
   );
+  /* A NEW LENGTH IS A NEW TIMER — while the timer has not been started. Once
+     it has (the person played and came back to Einsteigen), it keeps the
+     length it is running on: re-timing a clock mid-run would move the moment
+     „Weiter" opens under somebody who has already been told when that is. */
+  function changeLength(seconds: number) {
+    setLengthSeconds(seconds);
+    setPlayClock((clock) => (clock.phase === 'unstarted' ? initialClock(seconds) : clock));
+  }
   /* The sensor's permission, asked on Einsteigen when its switch goes on, for
      the instruments that use one, on touch screens (Ben). Listening only
      while that intro is on screen. */
@@ -893,6 +917,13 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
        that computes a different run from the one on screen. */
     if (state.step === 'intro' && asksForCards && digitalCards !== data.row.digitalCards) {
       void saveDigitalCards(id, digitalCards);
+    }
+
+    /* HOW LONG THIS RUN IS, on the same way out and for the same reason —
+       one write, whether or not the slider moved: the question was put, and
+       1:30 left alone is an answer (`saveLength`). */
+    if (state.step === 'intro' && variableLength) {
+      void saveLength(id, lengthSeconds);
     }
 
     if (state.step === 'intro' && asksHowToListen) {
@@ -1526,7 +1557,7 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
               /* The length of what is about to play, for the `{minutes}` the
                  intro copy quotes. From the resolved cut rather than from the
                  exercise, because a re-recording changes it. */
-              durationSeconds={introDuration}
+              durationSeconds={variableLength ? lengthSeconds : introDuration}
               /* Undefined where the question is not put, which is how the step
                  knows there is no question rather than no answer — now per
                  question rather than for both at once. */
@@ -1575,6 +1606,9 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
                 motionWanted,
                 onMotionWantedChange: changeMotionWanted,
               }}
+              /* How long this run is — the last setting, card and instrument
+                 exercises only. The `{minutes}` above follows it. */
+              length={variableLength ? { seconds: lengthSeconds, onChange: changeLength } : undefined}
             />
           )}
 
@@ -1587,6 +1621,7 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
               motion={motionWanted}
               clock={playClock}
               onClock={setPlayClock}
+              timerSeconds={gateSeconds}
               onAdvance={finishPlay}
             />
           )}
@@ -1642,6 +1677,9 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
               onAdvance={advance}
               back={back}
               question={question}
+              /* The chosen length, where there was a choice: the step's
+                 minimum, and how often the piece repeats to fill it. */
+              lengthSeconds={variableLength ? lengthSeconds : null}
             />
           )}
 

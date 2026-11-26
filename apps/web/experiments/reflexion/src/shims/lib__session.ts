@@ -53,6 +53,12 @@ export async function saveGoal(id: string, goalId: string): Promise<void> {
   store.updateRow(id, { goalId });
 }
 
+/** How long the run is (Einsteigen's slider, 2026-11-26) — held in the
+ *  store, so a call cannot reach the throwing Supabase shim. */
+export async function saveLength(id: string, seconds: number): Promise<void> {
+  store.updateRow(id, { lengthSeconds: seconds });
+}
+
 export async function saveListeningAnswers(id: string, posture: string | null, ending: string): Promise<void> {
   store.updateRow(id, { posture, ending });
 }

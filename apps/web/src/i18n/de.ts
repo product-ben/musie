@@ -561,6 +561,18 @@ export const de: Messages = {
   'session.intro.goalHint.relax': 'Musie wählt für diese Übung Musik aus, die dir beim Entspannen hilft.',
   'session.intro.goalHint.wakeUp': 'Musie wählt für diese Übung Musik aus, die dir beim Aktivieren hilft.',
   'session.intro.goalHint.mindfulness': 'Musie wählt für diese Übung Musik aus, die dir hilft, Achtsamkeit zu stärken.',
+
+  /* ── WIE LANG DIESER DURCHGANG IST — Ben, 2026-11-26 ───────────────────
+     Die letzte Einstellung auf Einsteigen bei Karten- und
+     Instrument-Übungen. Gefragt wird nach der ÜBUNG, nicht nach dem Üben:
+     bei einem Instrument klingt „üben" nach Hausaufgabe. Die Zahlen unter
+     dem Slider schreibt der Code (M:SS); hier steht, was ein Screenreader
+     stattdessen sagt, weil „1:30" als Uhrzeit vorgelesen wird. */
+  'session.intro.length.label': 'Wie lange soll die Übung dauern?',
+  'session.intro.length.minutes': '{minutes} Minuten',
+  'session.intro.length.oneMinute': '1 Minute',
+  'session.intro.length.minutesSeconds': '{minutes} Minuten {seconds} Sekunden',
+  'session.intro.length.oneMinuteSeconds': '1 Minute {seconds} Sekunden',
   /* Bens Satz, auf den Standard gebracht (§7, §8): 'Bildschirmen' statt
      'Biuldschirmen', 'optimale' klein, 'Größe' mit ß, und das Komma vor dem
      Relativsatz. */
