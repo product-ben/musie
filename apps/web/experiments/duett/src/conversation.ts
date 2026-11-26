@@ -22,6 +22,7 @@ import { compose2, motifOf, pause2 } from './answer2';
 import type { Pause } from './answer2';
 import { chordsAt, underneath } from './chords';
 import { recordAnswer, recordTurn, resetRun, runState, updateRun } from './run';
+import type { AnswerEntry, NowPlaying } from './run';
 import { settings } from './settings';
 import type { ChordKind } from './settings';
 
@@ -33,6 +34,8 @@ export const LEARN = { up: 1.3, down: 0.92, min: 0.5, max: 2 } as const;
 export const LIFT_RETRY_MS = 30;
 /** How many motifs „Erinnerung“ can draw on. */
 export const MEMORY_SIZE = 8;
+/** How long the pill names a chord laid under their note. Display only. */
+export const UNDER_PILL_MS = 1500;
 
 export function createConversation(deps: ConversationDeps): Conversation {
   const { config, timers } = deps;
@@ -50,10 +53,25 @@ export function createConversation(deps: ConversationDeps): Conversation {
   let under: ChordKind | null = null;
   let underTimers: number[] = [];
 
+  /** The pill: what Musie sounds now. An answer's name stays up while it rings. */
+  let pillTimer: number | null = null;
+  function show(playing: NowPlaying | null, forMs?: number) {
+    if (pillTimer !== null) timers.clearTimeout(pillTimer);
+    pillTimer = null;
+    updateRun({ playing });
+    if (playing !== null && forMs !== undefined) {
+      pillTimer = timers.setTimeout(() => {
+        pillTimer = null;
+        if (runState().playing === playing) updateRun({ playing: null });
+      }, forMs);
+    }
+  }
+
   function playUnder(stroke: Stroke) {
     const chord = underneath(stroke, config, deps.degrees(), deps.random, settings());
     if (chord === null) return;
     under = chord.kind;
+    show({ kind: 'under', chord: chord.kind }, UNDER_PILL_MS);
     for (const nt of chord.notes) {
       const sound = () => deps.play({ degree: nt.degree, velocity: nt.velocity, roll: false, at: deps.now() });
       if (nt.t === 0) sound();
@@ -73,6 +91,7 @@ export function createConversation(deps: ConversationDeps): Conversation {
     answering = false;
     voices.forEach((v) => v.fade(config.interruptFadeTau));
     voices = [];
+    if (runState().playing?.kind === 'answer') show(null);
   }
 
   function sound(degree: number, velocity: number, roll: boolean) {
@@ -101,6 +120,7 @@ export function createConversation(deps: ConversationDeps): Conversation {
         answering = false;
         answerTimers = [];
         voices = [];
+        if (runState().playing?.kind === 'answer') show(null);
       }, end),
     );
   }
@@ -126,7 +146,7 @@ export function createConversation(deps: ConversationDeps): Conversation {
     const motif = motifOf(heard, round);
     updateRun({ round, memory: motif === null ? run.memory : [...run.memory, motif].slice(-MEMORY_SIZE) });
     deps.onAnswered?.({ heard: heard.length, notes: composed.notes.length });
-    recordAnswer({
+    const entry: AnswerEntry = {
       round,
       figure: composed.figure,
       ornaments: composed.ornaments,
@@ -139,8 +159,10 @@ export function createConversation(deps: ConversationDeps): Conversation {
       learn: settings().learn ? run.learn : 1,
       chords: composed.chords,
       under,
-    });
+    };
+    recordAnswer(entry);
     under = null;
+    show({ kind: 'answer', entry });
     playAnswer(composed.notes);
     answerStartedAt = deps.now();
   }
@@ -191,6 +213,7 @@ export function createConversation(deps: ConversationDeps): Conversation {
       underTimers.forEach((h) => timers.clearTimeout(h));
       underTimers = [];
       under = null;
+      show(null);
       phrase = [];
       answerStartedAt = null;
     },

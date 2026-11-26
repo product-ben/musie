@@ -74,6 +74,43 @@
   color: var(--accent-2-text);
 }
 
+/* ── the pill: what Musie plays now, at the foot of the instrument ── */
+
+.duett-pill {
+  position: absolute;
+  inset-block-end: var(--sp-4);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  max-inline-size: calc(100% - 2 * var(--gutter));
+  margin: 0;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-full);
+  background: var(--interactive-primary);
+  color: var(--interactive-primary-on);
+  box-shadow: var(--elevation-1);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.duett-pill[data-on='true'] {
+  opacity: 1;
+}
+
+.duett-pill__label {
+  opacity: 0.75;
+}
+
 /* ── buttons ── */
 
 .duett-button {

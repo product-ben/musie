@@ -31,7 +31,7 @@
 import { gapsOf, pauseMs } from '../../../src/instruments/engine/answer';
 import type { AnswerNote, Random } from '../../../src/instruments/engine/answer';
 import type { AnswerConfig, Stroke } from '../../../src/instruments/types';
-import { ALONE_UP_TO, chordsAt, harmonise } from './chords';
+import { ALONE_UP_TO, chordFits, chordsAt, harmonise } from './chords';
 import { SHAPES } from './settings';
 import type { ChordKind, FigureId, Settings, ShapeId } from './settings';
 
@@ -721,7 +721,12 @@ export function compose2(
   const always: number[] = [];
   /* „Ein Akkord als Antwort“: to a very short phrase, one note at home and its chord. */
   if (chordsAt(s, 'allein') && phrase.length <= ALONE_UP_TO && random() < s.chordChance) {
-    notes = [{ degree: w.nearestHome(w.degs[w.degs.length - 1]), t: 0, velocity: velocities(w)(0, 1), roll: w.endsInRoll }];
+    /* The home nearest their last note — among those a chord fits on, under the rules, when there is one. */
+    const last = w.degs[w.degs.length - 1];
+    const roomy = w.homes.filter((h) => chordFits(h, config, degrees, s));
+    const near = Math.min(...(roomy.length ? roomy : w.homes).map((h) => Math.abs(h - last)));
+    const degree = roomy.length ? w.pick(roomy.filter((h) => Math.abs(h - last) === near)) : w.nearestHome(last);
+    notes = [{ degree, t: 0, velocity: velocities(w)(0, 1), roll: w.endsInRoll }];
     figure = 'akkord';
     always.push(0);
   }

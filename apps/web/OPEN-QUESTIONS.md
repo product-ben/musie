@@ -13122,3 +13122,37 @@ What I need from Ben:
   as before.
 - **Lucia's ear** on the voicings: whether the melody note belongs on top and
   whether the a-chord (d g a) sounds right are a musician's calls, not mine.
+
+### Follow-up, 2026-11-26 — chords in the default, a pill, and where chords fit
+
+What I did:
+- **`START` is Ben's second link**, the first plus `wann=schluss,lang,allein`
+  and `akk=quinte,dreiklang`; the test holds it to the link.
+- **A pill at the foot of the instrument** names what Musie plays while it
+  plays: the figure (or „Wie heute“ / „Ein Akkord“), its ornaments, its
+  chords; „Unter deinem Ton · …“ for 1.5 s when a chord is laid under theirs.
+  It goes when the answer has rung out or is interrupted.
+- **Ben: „Akkorde passen nicht immer. Seltener, aber an den richtigen
+  Stellen?“** Measured over 400 random phrases per instrument with his
+  default: every answer had a chord (1.64 per answer, „Am Schluss“ fires every
+  time); in 29 % the melody note was not on top — answers often end on the
+  lowest d, the chord had to go above it, and the ear takes the chord's top
+  note (h, a) for the last note, so the answer stops sounding home; 18 % fell
+  on e or a, passing notes; 7 % of final chords were e-Moll.
+- **Three switches under „Wo sie passen“, off in `START`** so the default is
+  exactly Ben's link:
+  - Melodie bleibt oben (`chordBelow`): only where the whole chord fits under
+    the melody note → 29 % → 0 %.
+  - Nur auf Ruhetönen (`chordRest`): only on g, h, d, and the triad there is
+    G-Dur → e/a 18 % → 0 %, e-Moll endings → 0 %.
+  - Höchstens einer pro Antwort (`chordOne`): the strongest place only — the
+    end, else the longest note — and „Wie oft“ then counts per answer →
+    1.64 → 1.00 per answer.
+  - All three: 0.89 per answer; with „Wie oft“ at 60 %: 0.58, about every
+    other answer, always on a rest note with the melody on top.
+  „Ein Akkord als Antwort“ picks a home note a chord fits on under the rules.
+
+What I need from Ben:
+- **Compare by ear**, his default against the three switches, and send the
+  link of the one that fits. These are measurements of where chords land, not
+  of how they sound.

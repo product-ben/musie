@@ -132,6 +132,13 @@ export interface Settings {
   chordSpread: number;
   /** The chord's other notes, relative to the melody note. */
   chordVolume: number;
+  /* Where they fit (chords.ts): each makes chords rarer, and each for a reason. */
+  /** Of the places the moments allow, only the strongest: the end, else the longest note. */
+  chordOne: boolean;
+  /** Only on g, h and d — the notes of G-Dur — and the triad there is G-Dur. */
+  chordRest: boolean;
+  /** Only where the whole chord fits under the melody note. */
+  chordBelow: boolean;
 }
 
 export type BoolKey = {
@@ -167,9 +174,15 @@ export const DEFAULTS: Settings = {
   chordChance: 1,
   chordSpread: 0,
   chordVolume: 0.75,
+  chordOne: false,
+  chordRest: false,
+  chordBelow: false,
 };
 
-/** #on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel */
+/**
+ * Ben's link of 2026-11-26, the second one (the first had no chords):
+ * #on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel&wann=schluss,lang,allein&akk=quinte,dreiklang
+ */
 export const START: Settings = {
   ...DEFAULTS,
   faster: true,
@@ -182,11 +195,13 @@ export const START: Settings = {
     ...noFigures,
     frage: true, sequenz: true, spiegel: true, erinnerung: true, bogen: true, pendel: true,
   },
+  chordWhen: { ...noMoments, schluss: true, lang: true, allein: true },
+  chordKinds: { ...noKinds, quinte: true, dreiklang: true },
 };
 
 export const BOOL_KEYS: readonly BoolKey[] = [
   'faster', 'onLift', 'phraseEnd', 'learn', 'keepRhythm', 'followTempo', 'followDynamics',
-  'longer', 'growing', 'noTiny', 'wider',
+  'longer', 'growing', 'noTiny', 'wider', 'chordOne', 'chordRest', 'chordBelow',
 ];
 
 /** [min, max, step] for every slider. */

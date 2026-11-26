@@ -121,10 +121,34 @@ function chordList(kinds: readonly ChordKind[]): string {
   return [...counts].map(([k, c]) => (c > 1 ? `${CHORD_KIND_TEXT[k].label} × ${c}` : CHORD_KIND_TEXT[k].label)).join(', ');
 }
 
+/** The answer's name from the repertoire: its figure, or „Wie heute“ / „Ein Akkord“. */
+function figureName(e: AnswerEntry): string {
+  return e.figure === 'heute' ? 'Wie heute' : e.figure === 'akkord' ? 'Ein Akkord' : FIGURE_TEXT[e.figure].label;
+}
+
+/** The pill under the instrument: what Musie sounds now, from the repertoire. */
+export function NowPlaying() {
+  const { playing } = useRun();
+  let text = '';
+  if (playing?.kind === 'answer') {
+    const e = playing.entry;
+    const head = [figureName(e), ...e.ornaments.map((o) => FIGURE_TEXT[o].label)].join(' + ');
+    text = e.chords.length ? `${head} · ${chordList(e.chords)}` : head;
+  } else if (playing?.kind === 'under') {
+    text = `Unter deinem Ton · ${CHORD_KIND_TEXT[playing.chord].label}`;
+  }
+  return (
+    <p className="duett-pill" role="status" data-on={text ? 'true' : undefined}>
+      {text ? <span className="duett-pill__label">Musie spielt</span> : null}
+      {text}
+    </p>
+  );
+}
+
 const ENDING: Record<AnswerEntry['ending'], string> = { closed: 'klang fertig', open: 'klang offen', neutral: '' };
 
 function Entry({ e }: { e: AnswerEntry }) {
-  const name = e.figure === 'heute' ? 'Wie heute' : e.figure === 'akkord' ? 'Ein Akkord' : FIGURE_TEXT[e.figure].label;
+  const name = figureName(e);
   const extra = e.ornaments.map((o) => FIGURE_TEXT[o].label);
   const from = e.fromRound !== undefined ? ` aus Runde ${e.fromRound}` : '';
   const why = [ENDING[e.ending], e.learn !== 1 ? `gelernt × ${de(e.learn, 2)}` : ''].filter(Boolean).join(', ');
@@ -276,7 +300,24 @@ export function Panel() {
           ) : null}
           {anyMoment && anyKind ? (
             <>
-              <Slider id="chordChance" label="Wie oft, wo einer passt" format={percent} />
+              <h3>Wo sie passen</h3>
+              <p className="duett-section__today">Jede Regel macht Akkorde seltener, und jede aus einem Grund.</p>
+              <Toggle
+                id="chordBelow"
+                label="Melodie bleibt oben"
+                hint="Nur wo der ganze Akkord unter den Melodieton passt. Sonst hört man den obersten Akkordton als Schlusston, und die Antwort endet nicht mehr zu Hause."
+              />
+              <Toggle
+                id="chordRest"
+                label="Nur auf Ruhetönen"
+                hint="Nur auf g, h und d, den Tönen von G-Dur, und dort immer G-Dur. Auf e und a, wo die Melodie nur vorbeigeht, kein Akkord."
+              />
+              <Toggle
+                id="chordOne"
+                label="Höchstens einer pro Antwort"
+                hint="Von allen Stellen nur die stärkste: der Schluss, sonst der längste Ton. „Wie oft“ gilt dann pro Antwort."
+              />
+              <Slider id="chordChance" label={s.chordOne ? 'Wie oft, pro Antwort' : 'Wie oft, wo einer passt'} format={percent} />
               <Slider id="chordSpread" label="Gebrochen" format={(v) => (v === 0 ? 'alle Töne zugleich' : `${v} ms von Ton zu Ton`)} />
               <Slider id="chordVolume" label="Lautstärke der Akkordtöne" format={(v) => `${percent(v)} des Melodietons`} />
             </>

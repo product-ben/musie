@@ -87,9 +87,12 @@ function firstIn(p: Pitches, k: number, candidates: number[], count: number): nu
   return out;
 }
 
-/** The pitch classes that join the melody note's, per kind of triad. */
-function triadFor(pc: number, random: Random): number[] {
-  const either = (a: number[], b: number[]) => (random() < 0.5 ? a : b);
+/** The notes of G-Dur, where a melody rests: `chordRest` puts chords only here. */
+export const REST_PCS: ReadonlySet<number> = new Set([G, H, D]);
+
+/** The pitch classes that join the melody note's, per kind of triad. `tonic`: always G-Dur where it can be. */
+function triadFor(pc: number, random: Random, tonic: boolean): number[] {
+  const either = (a: number[], b: number[]) => (tonic ? a : random() < 0.5 ? a : b);
   switch (pc) {
     case D: return [G, H]; // G-Dur
     case E: return [G, H]; // e-Moll
@@ -100,7 +103,7 @@ function triadFor(pc: number, random: Random): number[] {
 }
 
 /** The chord's other notes for melody degree `k`, as degrees, low to high. */
-export function voicing(kind: ChordKind, k: number, p: Pitches, random: Random): number[] {
+export function voicing(kind: ChordKind, k: number, p: Pitches, random: Random, tonic = false): number[] {
   const byPc = (pcs: number[]) => {
     const taken = new Set([k]);
     const out: number[] = [];
@@ -129,7 +132,7 @@ export function voicing(kind: ChordKind, k: number, p: Pitches, random: Random):
       out = bySemis([-7, -5, 7, 5]); // the fifth below; on g (no c) the fourth
       break;
     case 'dreiklang':
-      out = byPc(triadFor(p.pc(k), random));
+      out = byPc(triadFor(p.pc(k), random, tonic));
       break;
     case 'vierklang':
       out = byPc(p.pc(k) === A ? [D, E, G] : [E, G, H, D].filter((pc) => pc !== p.pc(k)));
@@ -149,14 +152,31 @@ export function voicing(kind: ChordKind, k: number, p: Pitches, random: Random):
  * note (the harp's seven strings hold an octave only on d and e), the next
  * checked one that has. Null when none has.
  */
-function chordOn(kinds: readonly ChordKind[], k: number, p: Pitches, random: Random): { kind: ChordKind; others: number[] } | null {
+function chordOn(kinds: readonly ChordKind[], k: number, p: Pitches, random: Random, s: Settings): { kind: ChordKind; others: number[] } | null {
   const first = Math.floor(random() * kinds.length);
   for (let i = 0; i < kinds.length; i += 1) {
     const kind = kinds[(first + i) % kinds.length];
-    const others = voicing(kind, k, p, random);
-    if (others.length) return { kind, others };
+    const others = voicing(kind, k, p, random, s.chordRest);
+    /* `chordBelow`: the melody note on top, the whole chord under it. */
+    if (others.length && (!s.chordBelow || others.every((d) => d < k))) return { kind, others };
   }
   return null;
+}
+
+/**
+ * Can a chord of a checked kind stand on degree `k`, under the rules?
+ * „Ein Akkord als Antwort“ asks it to choose a home note with room under it.
+ * Both triad choices are tried, so it decides without drawing at random.
+ */
+export function chordFits(k: number, config: AnswerConfig, degrees: number, s: Settings): boolean {
+  const p = pitchesOf(config, degrees);
+  if (s.chordRest && !REST_PCS.has(p.pc(k))) return false;
+  return checkedKinds(s).some((kind) =>
+    [() => 0, () => 0.99].some((pick) => {
+      const others = voicing(kind, k, p, pick, s.chordRest);
+      return others.length > 0 && (!s.chordBelow || others.every((d) => d < k));
+    }),
+  );
 }
 
 export interface Harmonised {
@@ -205,11 +225,14 @@ export function harmonise(
   if (!kinds.length || !melody.length) return out;
   const p = pitchesOf(config, degrees);
   const forced = new Set(always);
-  for (const k of momentsOf(melody, s, always)) {
-    if (!forced.has(k) && random() >= s.chordChance) continue;
+  let spots = momentsOf(melody, s, always);
+  /* `chordRest`: a melody passing through e or a gets no chord. */
+  if (s.chordRest) spots = spots.filter((k) => forced.has(k) || REST_PCS.has(p.pc(melody[k].degree)));
+
+  const place = (k: number): boolean => {
     const nt = melody[k];
-    const chord = chordOn(kinds, nt.degree, p, random);
-    if (chord === null) continue;
+    const chord = chordOn(kinds, nt.degree, p, random, s);
+    if (chord === null) return false;
     const { kind, others } = chord;
     out.kinds.push(kind);
     out.under.set(k, others);
@@ -222,6 +245,21 @@ export function harmonise(
       if (degree === nt.degree) out.melody[k].t = t;
       else out.tones.push({ degree, t, velocity: nt.velocity * s.chordVolume, roll: false });
     });
+    return true;
+  };
+
+  if (s.chordOne) {
+    /* The strongest place first: the last note, then the one with the longest gap after it. */
+    const gapAfter = (k: number) => (k < melody.length - 1 ? melody[k + 1].t - melody[k].t : Infinity);
+    spots.sort((a, b) => gapAfter(b) - gapAfter(a) || b - a);
+    /* „Wie oft“ asks once per answer here, not once per place. */
+    if (!spots.some((k) => forced.has(k)) && random() >= s.chordChance) return out;
+    for (const k of spots) if (place(k)) break;
+    return out;
+  }
+  for (const k of spots) {
+    if (!forced.has(k) && random() >= s.chordChance) continue;
+    place(k);
   }
   return out;
 }
@@ -229,8 +267,9 @@ export function harmonise(
 /** „Unter deinem Spiel“: the chord under a note of theirs, to sound now (`t` from now). */
 export function underneath(stroke: Stroke, config: AnswerConfig, degrees: number, random: Random, s: Settings): { notes: AnswerNote[]; kind: ChordKind } | null {
   const kinds = checkedKinds(s);
-  if (!kinds.length || random() >= s.chordChance) return null;
-  const chord = chordOn(kinds, stroke.degree, pitchesOf(config, degrees), random);
+  const p = pitchesOf(config, degrees);
+  if (!kinds.length || (s.chordRest && !REST_PCS.has(p.pc(stroke.degree))) || random() >= s.chordChance) return null;
+  const chord = chordOn(kinds, stroke.degree, p, random, s);
   if (chord === null) return null;
   return {
     kind: chord.kind,

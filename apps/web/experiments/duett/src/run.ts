@@ -42,11 +42,17 @@ export interface AnswerEntry {
   turn?: Turn;
 }
 
+/** What Musie is sounding right now, for the pill under the instrument. */
+export type NowPlaying =
+  | { kind: 'answer'; entry: AnswerEntry }
+  | { kind: 'under'; chord: ChordKind };
+
 export interface RunState {
   round: number;
   learn: number;
   memory: readonly Motif[];
   entries: readonly AnswerEntry[];
+  playing: NowPlaying | null;
 }
 
 export type RunEvent =
@@ -54,7 +60,7 @@ export type RunEvent =
   | { type: 'turn'; entry: AnswerEntry; turn: Turn };
 
 const KEEP = 12;
-const fresh = (): RunState => ({ round: 0, learn: 1, memory: [], entries: [] });
+const fresh = (): RunState => ({ round: 0, learn: 1, memory: [], entries: [], playing: null });
 
 let state: RunState = fresh();
 const listeners = new Set<() => void>();
@@ -66,7 +72,7 @@ export function runState(): RunState {
   return state;
 }
 
-export function updateRun(patch: Partial<Pick<RunState, 'round' | 'learn' | 'memory'>>): void {
+export function updateRun(patch: Partial<Pick<RunState, 'round' | 'learn' | 'memory' | 'playing'>>): void {
   state = { ...state, ...patch };
   notify();
 }

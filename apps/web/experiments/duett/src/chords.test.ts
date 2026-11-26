@@ -8,8 +8,8 @@ import type { AnswerNote } from '../../../src/instruments/engine/answer';
 import { fakeTime, seeded } from '../../../src/instruments/engine/testing';
 import type { Stroke, Voice } from '../../../src/instruments/types';
 import { compose2 } from './answer2';
-import { harmonise, LONG_NOTE, pitchesOf, SPREAD_SHARE, UNDER_SOFTER, voicing } from './chords';
-import { createConversation } from './conversation';
+import { harmonise, LONG_NOTE, pitchesOf, SPREAD_SHARE, underneath, UNDER_SOFTER, voicing } from './chords';
+import { createConversation, UNDER_PILL_MS } from './conversation';
 import { DEFINITIONS } from './instruments';
 import { runState } from './run';
 import { CHORD_KINDS, CHORD_MOMENTS, decode, DEFAULTS, encode, setSettings } from './settings';
@@ -329,6 +329,125 @@ describe('Unter deinem Spiel', () => {
     expect(d.played).toHaveLength(2);
     d.time.advance(80);
     expect(d.played).toHaveLength(3);
+    d.c.stop();
+  });
+});
+
+describe('where they fit', () => {
+  const config = configOf('marimba');
+  const p = pitchesOf(config, 10);
+  /* A melody through every pitch class, with room below and some notes long. */
+  const melody = melodyOf([7, 6, 8, 9, 5, 6, 7], [0, 300, 600, 1500, 1800, 2100, 2400]);
+
+  it('Nur auf Ruhetönen: chords only on g, h and d, and the triad there is G-Dur', () => {
+    for (let seed = 1; seed < 40; seed += 1) {
+      const got = harmonise(melody, config, 10, seeded(seed), chords(['jeder'], ['dreiklang'], { chordRest: true }));
+      expect(got.under.size).toBeGreaterThan(0);
+      for (const [k, tones] of got.under) {
+        expect([D, G, H]).toContain(p.pc(melody[k].degree));
+        expect([...new Set([melody[k].degree, ...tones].map(p.pc))].sort().join()).toBe([D, G, H].join());
+      }
+    }
+  });
+
+  it('Melodie bleibt oben: no chord where it would reach above the melody note', () => {
+    const low = melodyOf([0, 1, 2, 7], [0, 300, 600, 900]);
+    for (let seed = 1; seed < 40; seed += 1) {
+      const got = harmonise(low, config, 10, seeded(seed), chords(['jeder'], ['dreiklang', 'quinte'], { chordBelow: true }));
+      for (const [k, tones] of got.under) tones.forEach((d) => expect(d).toBeLessThan(low[k].degree));
+      expect(got.under.has(0)).toBe(false); // the lowest d has nothing under it
+    }
+  });
+
+  it('Höchstens einer: one chord, on the last note when it can carry one', () => {
+    for (let seed = 1; seed < 40; seed += 1) {
+      const got = harmonise(melody, config, 10, seeded(seed), chords(['jeder'], ['quinte'], { chordOne: true }));
+      expect([...got.under.keys()]).toEqual([melody.length - 1]);
+    }
+  });
+
+  it('Höchstens einer: when the end has no room, the longest note instead', () => {
+    const endsLow = melodyOf([7, 8, 6, 0], [0, 300, 1400, 1700]);
+    const got = harmonise(endsLow, config, 10, seeded(3), chords(['jeder'], ['dreiklang'], { chordOne: true, chordBelow: true }));
+    expect([...got.under.keys()]).toEqual([1]); // 1100 ms after it, the longest gap
+  });
+
+  it('Höchstens einer: „Wie oft“ decides per answer', () => {
+    let answers = 0;
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const got = harmonise(melody, config, 10, seeded(seed), chords(['jeder'], ['quinte'], { chordOne: true, chordChance: 0.5 }));
+      expect(got.under.size).toBeLessThanOrEqual(1);
+      answers += got.under.size;
+    }
+    expect(answers).toBeGreaterThan(70);
+    expect(answers).toBeLessThan(130);
+  });
+
+  it('Ein Akkord als Antwort with Melodie bleibt oben: a home with room under it', () => {
+    const s = chords(['allein'], ['dreiklang'], { chordBelow: true });
+    for (let seed = 1; seed < 30; seed += 1) {
+      const got = compose2(at([0]), config, 10, seeded(seed), s, { previousLength: 0, round: 0, memory: [] }); // they played the lowest d
+      expect(got.figure).toBe('akkord');
+      expect(got.chords).toEqual(['dreiklang']);
+      const melodyNote = got.notes.reduce((a, b) => (b.velocity > a.velocity ? b : a));
+      expect(config.home).toContain(melodyNote.degree);
+      got.notes.forEach((x) => expect(x.degree).toBeLessThanOrEqual(melodyNote.degree));
+    }
+  });
+
+  it('Unter deinem Spiel follows the rules too', () => {
+    const s = chords(['begleitung'], ['dreiklang'], { chordRest: true, chordBelow: true });
+    expect(underneath({ degree: 8, velocity: 0.6, at: 0 }, config, 10, seeded(1), s)).toBeNull(); // a: not a rest tone
+    expect(underneath({ degree: 0, velocity: 0.6, at: 0 }, config, 10, seeded(1), s)).toBeNull(); // the lowest d: no room below
+    expect(underneath({ degree: 7, velocity: 0.6, at: 0 }, config, 10, seeded(1), s)?.notes.every((x) => x.degree < 7)).toBe(true);
+  });
+});
+
+describe('the pill', () => {
+  function duet(s: Settings) {
+    setSettings(s);
+    const time = fakeTime();
+    const c = createConversation({
+      config: configOf('harp'),
+      degrees: () => DEGREES.harp,
+      now: time.now,
+      timers: time.timers,
+      random: seeded(11),
+      isHolding: () => false,
+      enabled: () => true,
+      play: () => ({ fade: vi.fn() }) as Voice,
+    });
+    const play = (degree: number) => c.heard({ degree, velocity: 0.6, at: time.now() });
+    return { c, time, play };
+  }
+
+  it('names the answer while it sounds, and is gone when it has rung out', () => {
+    const d = duet(DEFAULTS);
+    d.play(3);
+    d.time.advance(300);
+    d.play(5);
+    expect(runState().playing).toBeNull();
+    d.time.advance(1800); // today's wait: the answer starts
+    expect(runState().playing).toMatchObject({ kind: 'answer', entry: { figure: 'heute' } });
+    d.time.advance(10_000);
+    expect(runState().playing).toBeNull();
+  });
+
+  it('goes when the person plays into the answer', () => {
+    const d = duet(DEFAULTS);
+    d.play(3);
+    d.time.advance(1800);
+    expect(runState().playing?.kind).toBe('answer');
+    d.play(4);
+    expect(runState().playing).toBeNull();
+  });
+
+  it('names a chord laid under their note, for a moment', () => {
+    const d = duet(chords(['begleitung'], ['quinte']));
+    d.play(5);
+    expect(runState().playing).toEqual({ kind: 'under', chord: 'quinte' });
+    d.time.advance(UNDER_PILL_MS);
+    expect(runState().playing).toBeNull();
     d.c.stop();
   });
 });
