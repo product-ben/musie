@@ -46,6 +46,32 @@ export const FIGURE_TEXT: Record<FigureId, { label: string; hint: string }> = {
   zweiklang: { label: 'Zweiklang', hint: 'Der Schlusston klingt mit seiner Oktave oder Quarte.' },
 };
 
+/* ── chords: when Musie plays one, and which kind ── */
+
+export const CHORD_MOMENTS = ['anfang', 'schluss', 'lang', 'jeder', 'allein', 'begleitung'] as const;
+export type ChordMoment = (typeof CHORD_MOMENTS)[number];
+
+export const CHORD_MOMENT_TEXT: Record<ChordMoment, { label: string; hint: string }> = {
+  anfang: { label: 'Zu Beginn', hint: 'Der erste Ton der Antwort.' },
+  schluss: { label: 'Am Schluss', hint: 'Der letzte Ton der Antwort.' },
+  lang: { label: 'Auf langen Tönen', hint: 'Wo nach einem Ton eine längere Pause kommt, so dass der Akkord ausklingen kann.' },
+  jeder: { label: 'Auf jedem Ton', hint: 'Die ganze Antwort in Akkorden, wie ein Choral.' },
+  allein: { label: 'Ein Akkord als Antwort', hint: 'Spielst du nur einen oder zwei Töne, antwortet Musie mit einem einzigen Akkord.' },
+  begleitung: { label: 'Unter deinem Spiel', hint: 'Musie legt einen leisen Akkord unter deinen ersten Ton, während du spielst.' },
+};
+
+export const CHORD_KINDS = ['oktave', 'quinte', 'dreiklang', 'vierklang', 'schwebend', 'schimmernd'] as const;
+export type ChordKind = (typeof CHORD_KINDS)[number];
+
+export const CHORD_KIND_TEXT: Record<ChordKind, { label: string; hint: string }> = {
+  oktave: { label: 'Oktave', hint: 'Der Ton mit sich selbst, eine Oktave tiefer. Klar und ruhig. Die Harfe hat dafür nur auf d und e Platz.' },
+  quinte: { label: 'Quinte', hint: 'Der Ton mit seiner Quinte darunter, auf g mit der Quarte. Leer und offen, wie ein Dudelsack.' },
+  dreiklang: { label: 'Dreiklang', hint: 'G-Dur oder e-Moll, je nach Ton; auf a ein D mit Quarte statt Terz. Wie in einem Lied.' },
+  vierklang: { label: 'Vierklang', hint: 'e, g, h und d zusammen: G-Dur mit Sexte. Weich, wie ein Wiegenlied.' },
+  schwebend: { label: 'Schwebend', hint: 'Je zwei Leitertöne Abstand, meist Quarten. Offen und schwebend.' },
+  schimmernd: { label: 'Schimmernd', hint: 'Die zwei Nachbartöne darunter, dicht wie ein Windspiel.' },
+};
+
 export interface Settings {
   instrument: InstrumentId;
 
@@ -94,6 +120,18 @@ export interface Settings {
   figureShare: number;
   /** How often each checked ornament is added, 0 … 1. */
   ornamentChance: number;
+
+  /* ── Akkorde ── */
+  /** When a chord may come. None checked: none comes, as today. */
+  chordWhen: Record<ChordMoment, boolean>;
+  /** Which chords; one of the checked per chord. None checked: none comes. */
+  chordKinds: Record<ChordKind, boolean>;
+  /** How often a chord comes where one may, 0 … 1. */
+  chordChance: number;
+  /** Broken: ms between the chord's notes, low to high. 0 is together. */
+  chordSpread: number;
+  /** The chord's other notes, relative to the melody note. */
+  chordVolume: number;
 }
 
 export type BoolKey = {
@@ -104,6 +142,8 @@ export type NumberKey = {
 }[keyof Settings];
 
 const noFigures = Object.fromEntries(FIGURE_IDS.map((id) => [id, false])) as Record<FigureId, boolean>;
+const noMoments = Object.fromEntries(CHORD_MOMENTS.map((id) => [id, false])) as Record<ChordMoment, boolean>;
+const noKinds = Object.fromEntries(CHORD_KINDS.map((id) => [id, false])) as Record<ChordKind, boolean>;
 
 export const DEFAULTS: Settings = {
   instrument: 'harp',
@@ -121,6 +161,12 @@ export const DEFAULTS: Settings = {
   figures: noFigures,
   figureShare: 1,
   ornamentChance: 0.5,
+  chordWhen: noMoments,
+  chordKinds: noKinds,
+  /* GUESSES, like every slider here. 0.75 is the Zweiklang's partner. */
+  chordChance: 1,
+  chordSpread: 0,
+  chordVolume: 0.75,
 };
 
 /** #on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel */
@@ -153,6 +199,9 @@ export const RANGES: Record<NumberKey, readonly [number, number, number]> = {
   widerBy: [1, 5, 1],
   figureShare: [0, 1, 0.05],
   ornamentChance: [0, 1, 0.05],
+  chordChance: [0, 1, 0.05],
+  chordSpread: [0, 200, 10],
+  chordVolume: [0.3, 1, 0.05],
 };
 const NUMBER_KEYS = Object.keys(RANGES) as NumberKey[];
 
@@ -169,12 +218,21 @@ export function encode(s: Settings): string {
   for (const k of NUMBER_KEYS) if (s[k] !== DEFAULTS[k]) p.set(k, String(s[k]));
   const fig = FIGURE_IDS.filter((id) => s.figures[id]);
   if (fig.length) p.set('fig', fig.join(','));
+  const wann = CHORD_MOMENTS.filter((id) => s.chordWhen[id]);
+  if (wann.length) p.set('wann', wann.join(','));
+  const akk = CHORD_KINDS.filter((id) => s.chordKinds[id]);
+  if (akk.length) p.set('akk', akk.join(','));
   return p.toString().replace(/%2C/g, ',');
 }
 
 export function decode(text: string): Settings {
   const p = new URLSearchParams(text.replace(/^#/, ''));
-  const s: Settings = { ...DEFAULTS, figures: { ...DEFAULTS.figures } };
+  const s: Settings = {
+    ...DEFAULTS,
+    figures: { ...DEFAULTS.figures },
+    chordWhen: { ...DEFAULTS.chordWhen },
+    chordKinds: { ...DEFAULTS.chordKinds },
+  };
   const i = p.get('i');
   if (i !== null && (INSTRUMENTS as readonly string[]).includes(i)) s.instrument = i as InstrumentId;
   const on = new Set((p.get('on') ?? '').split(',').filter(Boolean));
@@ -188,6 +246,10 @@ export function decode(text: string): Settings {
   }
   const fig = new Set((p.get('fig') ?? '').split(',').filter(Boolean));
   for (const id of FIGURE_IDS) s.figures[id] = fig.has(id);
+  const wann = new Set((p.get('wann') ?? '').split(',').filter(Boolean));
+  for (const id of CHORD_MOMENTS) s.chordWhen[id] = wann.has(id);
+  const akk = new Set((p.get('akk') ?? '').split(',').filter(Boolean));
+  for (const id of CHORD_KINDS) s.chordKinds[id] = akk.has(id);
   return s;
 }
 

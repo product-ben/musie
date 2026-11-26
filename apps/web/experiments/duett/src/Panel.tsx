@@ -1,7 +1,7 @@
 /**
- * The panel: switches, sliders and the ten figures, read live by the answer.
- * Plain inputs — the design system has no checkbox or slider, and this page
- * lives a few weeks (CLAUDE.md rule 10). Colours and type are its tokens.
+ * The panel: switches, sliders, the ten figures and the chords, read live by
+ * the answer. Plain inputs — the design system has no checkbox or slider, and
+ * this page lives a few weeks (CLAUDE.md rule 10). Colours and type are its tokens.
  */
 import * as React from 'react';
 import type { InstrumentId } from '../../../src/instruments/types';
@@ -9,9 +9,10 @@ import { INSTRUMENT_NAMES } from './instruments';
 import type { AnswerEntry } from './run';
 import { resetRun, runState, subscribeRun } from './run';
 import {
-  DEFAULTS, FIGURE_TEXT, ORNAMENTS, RANGES, SHAPES, setSettings, settings, subscribe,
+  CHORD_KIND_TEXT, CHORD_KINDS, CHORD_MOMENT_TEXT, CHORD_MOMENTS, DEFAULTS, FIGURE_TEXT, ORNAMENTS, RANGES, SHAPES,
+  setSettings, settings, subscribe,
 } from './settings';
-import type { BoolKey, FigureId, NumberKey } from './settings';
+import type { BoolKey, ChordKind, ChordMoment, FigureId, NumberKey } from './settings';
 
 export function useSettings() {
   return React.useSyncExternalStore(subscribe, settings);
@@ -68,27 +69,62 @@ function Slider({ id, label, format }: { id: NumberKey; label: string; format: (
   );
 }
 
-function Figure({ id }: { id: FigureId }) {
-  const s = useSettings();
+function Check({ checked, onChange, text }: { checked: boolean; onChange: (on: boolean) => void; text: { label: string; hint: string } }) {
   return (
     <label className="duett-figure">
-      <input
-        type="checkbox"
-        checked={s.figures[id]}
-        onChange={(e) => setSettings((cur) => ({ ...cur, figures: { ...cur.figures, [id]: e.target.checked } }))}
-      />
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span className="duett-opt__text">
-        <span className="duett-opt__label">{FIGURE_TEXT[id].label}</span>
-        <span className="duett-opt__hint">{FIGURE_TEXT[id].hint}</span>
+        <span className="duett-opt__label">{text.label}</span>
+        <span className="duett-opt__hint">{text.hint}</span>
       </span>
     </label>
   );
 }
 
+function Figure({ id }: { id: FigureId }) {
+  const s = useSettings();
+  return (
+    <Check
+      checked={s.figures[id]}
+      onChange={(on) => setSettings((cur) => ({ ...cur, figures: { ...cur.figures, [id]: on } }))}
+      text={FIGURE_TEXT[id]}
+    />
+  );
+}
+
+function Moment({ id }: { id: ChordMoment }) {
+  const s = useSettings();
+  return (
+    <Check
+      checked={s.chordWhen[id]}
+      onChange={(on) => setSettings((cur) => ({ ...cur, chordWhen: { ...cur.chordWhen, [id]: on } }))}
+      text={CHORD_MOMENT_TEXT[id]}
+    />
+  );
+}
+
+function Kind({ id }: { id: ChordKind }) {
+  const s = useSettings();
+  return (
+    <Check
+      checked={s.chordKinds[id]}
+      onChange={(on) => setSettings((cur) => ({ ...cur, chordKinds: { ...cur.chordKinds, [id]: on } }))}
+      text={CHORD_KIND_TEXT[id]}
+    />
+  );
+}
+
+/** „Dreiklang × 2, Quinte“ */
+function chordList(kinds: readonly ChordKind[]): string {
+  const counts = new Map<ChordKind, number>();
+  kinds.forEach((k) => counts.set(k, (counts.get(k) ?? 0) + 1));
+  return [...counts].map(([k, c]) => (c > 1 ? `${CHORD_KIND_TEXT[k].label} × ${c}` : CHORD_KIND_TEXT[k].label)).join(', ');
+}
+
 const ENDING: Record<AnswerEntry['ending'], string> = { closed: 'klang fertig', open: 'klang offen', neutral: '' };
 
 function Entry({ e }: { e: AnswerEntry }) {
-  const name = e.figure === 'heute' ? 'Wie heute' : FIGURE_TEXT[e.figure].label;
+  const name = e.figure === 'heute' ? 'Wie heute' : e.figure === 'akkord' ? 'Ein Akkord' : FIGURE_TEXT[e.figure].label;
   const extra = e.ornaments.map((o) => FIGURE_TEXT[o].label);
   const from = e.fromRound !== undefined ? ` aus Runde ${e.fromRound}` : '';
   const why = [ENDING[e.ending], e.learn !== 1 ? `gelernt × ${de(e.learn, 2)}` : ''].filter(Boolean).join(', ');
@@ -101,6 +137,14 @@ function Entry({ e }: { e: AnswerEntry }) {
         {e.notes} {e.notes === 1 ? 'Ton' : 'Töne'} (bis {e.cap}) auf deine {e.heard} · nach {seconds(e.waitMs)}
         {why ? ` · ${why}` : ''}
       </span>
+      {e.chords.length || e.under ? (
+        <span className="duett-log__line">
+          {[
+            e.under ? `Unter deinem ersten Ton: ${CHORD_KIND_TEXT[e.under].label}` : '',
+            e.chords.length ? `Akkorde: ${chordList(e.chords)}` : '',
+          ].filter(Boolean).join(' · ')}
+        </span>
+      ) : null}
       {e.turn ? (
         <span className="duett-log__line" data-collision={e.turn.collision ? 'true' : undefined}>
           {e.turn.collision
@@ -121,6 +165,8 @@ export function Panel() {
   const [copied, setCopied] = React.useState(false);
   const anyShape = SHAPES.some((id) => s.figures[id]);
   const anyOrnament = ORNAMENTS.some((id) => s.figures[id]);
+  const anyMoment = CHORD_MOMENTS.some((id) => s.chordWhen[id]);
+  const anyKind = CHORD_KINDS.some((id) => s.chordKinds[id]);
 
   function copyLink() {
     void navigator.clipboard?.writeText(window.location.href).then(() => {
@@ -210,6 +256,30 @@ export function Panel() {
           {anyOrnament ? <Slider id="ornamentChance" label="Wie oft" format={percent} /> : null}
           {run.memory.length ? (
             <p className="duett-readout">Erinnerung kennt {run.memory.length} {run.memory.length === 1 ? 'Motiv' : 'Motive'}.</p>
+          ) : null}
+        </section>
+
+        <section className="duett-section">
+          <h2>Akkorde</h2>
+          <p className="duett-section__today">Heute spielt Musie immer nur einen Ton auf einmal.</p>
+          <h3>Wann</h3>
+          {CHORD_MOMENTS.map((id) => <Moment key={id} id={id} />)}
+          <h3>Welche</h3>
+          <p className="duett-section__today">
+            Musie wählt pro Akkord einen der angehakten. Alle sind aus den Tönen des Instruments gebaut, der Melodieton bleibt meist oben.
+          </p>
+          {CHORD_KINDS.map((id) => <Kind key={id} id={id} />)}
+          {anyMoment !== anyKind ? (
+            <p className="duett-readout" role="status">
+              {anyMoment ? 'Kreuze noch an, welche Akkorde.' : 'Kreuze noch an, wann ein Akkord kommt.'}
+            </p>
+          ) : null}
+          {anyMoment && anyKind ? (
+            <>
+              <Slider id="chordChance" label="Wie oft, wo einer passt" format={percent} />
+              <Slider id="chordSpread" label="Gebrochen" format={(v) => (v === 0 ? 'alle Töne zugleich' : `${v} ms von Ton zu Ton`)} />
+              <Slider id="chordVolume" label="Lautstärke der Akkordtöne" format={(v) => `${percent(v)} des Melodietons`} />
+            </>
           ) : null}
         </section>
 

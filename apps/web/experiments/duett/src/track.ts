@@ -9,7 +9,7 @@
  * What is sent — the question is which switches make a better duet, so:
  *   duett_started   the settings at the start
  *   duett_settings  the settings after a change (debounced)
- *   duett_answer    figure, ornaments, lengths, the wait and why
+ *   duett_answer    figure, ornaments, chords, lengths, the wait and why
  *   duett_turn      the person's first note after an answer began: how soon,
  *                   and whether it was a collision (Musie came in too early)
  * Each carries `settings_key`, the address fragment of the combination, so
@@ -21,7 +21,7 @@
 import posthog from 'posthog-js';
 import type { RunEvent } from './run';
 import { onRunEvent } from './run';
-import { BOOL_KEYS, encode, FIGURE_IDS, settings, subscribe } from './settings';
+import { BOOL_KEYS, CHORD_KINDS, CHORD_MOMENTS, encode, FIGURE_IDS, settings, subscribe } from './settings';
 import type { Settings } from './settings';
 
 const EXPERIMENT = 'duett-01';
@@ -52,6 +52,9 @@ export function settingsProps(s: Settings): Record<string, unknown> {
     figures: FIGURE_IDS.filter((id) => s.figures[id]),
     min_ms: s.minMs, patience: s.patience, times_yours: s.timesYours, max_notes: s.maxNotes,
     grow_rounds: s.growRounds, wider_by: s.widerBy, figure_share: s.figureShare, ornament_chance: s.ornamentChance,
+    chord_moments: CHORD_MOMENTS.filter((id) => s.chordWhen[id]),
+    chord_kinds: CHORD_KINDS.filter((id) => s.chordKinds[id]),
+    chord_chance: s.chordChance, chord_spread_ms: s.chordSpread, chord_volume: s.chordVolume,
   };
   for (const k of BOOL_KEYS) props[`on_${k}`] = s[k];
   return props;
@@ -96,6 +99,8 @@ export function startTracking(): void {
         ending: e.entry.ending,
         learn: e.entry.learn,
         from_round: e.entry.fromRound ?? null,
+        chords: e.entry.chords,
+        under: e.entry.under,
       });
     } else {
       posthog.capture('duett_turn', {

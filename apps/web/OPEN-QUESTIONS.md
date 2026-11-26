@@ -13073,3 +13073,52 @@ What I need from Ben:
 - **Nothing to decide.** One thing to know: anyone who has already changed a
   switch on a device keeps their own combination there, because localStorage
   wins over `START`. To start fresh, open the link itself.
+
+## Experiment „Duett 01“ gets a section „Akkorde“ (2026-11-26)
+
+Where: `apps/web/experiments/duett/src/chords.ts` (new), `chords.test.ts`
+(new), and `settings.ts`, `answer2.ts`, `conversation.ts`, `Panel.tsx`,
+`run.ts`, `track.ts` beside it.
+
+What I checked: Ben, 2026-11-26: „a new section to experiment with which kind
+of chords Musie plays and when it plays them.“ Today Musie never plays two
+notes at once; only the Zweiklang figure adds a second note, on the last
+note. All three instruments play the pentatonic d e g a h, whose only triads
+are G-Dur and e-Moll; a stands in neither.
+
+What I did:
+- **Wann**, checkboxes that combine: zu Beginn · am Schluss · auf langen Tönen
+  (the gap after the note ≥ 1.4 × the answer's middle gap and ≥ 350 ms) · auf
+  jedem Ton · ein Akkord als Antwort (to 1–2 notes, one home note and its
+  chord, logged as the figure „Ein Akkord“) · unter deinem Spiel (a soft
+  chord under the first note of each of the person's phrases, at once; not an
+  answer, so nothing waits for it and nothing interrupts it).
+- **Welche**, checkboxes, one picked per chord: Oktave · Quinte (on g the
+  fourth, as there is no c) · Dreiklang (G-Dur or e-Moll by note; on a, d g a)
+  · Vierklang (e g h d, G with a sixth) · Schwebend (two and four scale steps
+  away, mostly fourths) · Schimmernd (the two neighbours). All are built from
+  the scale's own notes, below the melody note, and above it only where the
+  instrument has no room below. The harp's seven strings hold an octave only
+  on d and e; elsewhere another ticked kind steps in.
+- **Regler:** how often (where a chord may come) · gebrochen (0–200 ms, low to
+  high, never more than half the gap to the next note) · the chord notes'
+  volume relative to the melody note.
+- **Nothing ticked is the answer as before**, draw for draw — tested against
+  the untouched section, and the 400-phrase test still holds every switch off
+  to the app. New address keys `wann` and `akk`, so every existing link and
+  PostHog `settings_key` keeps its meaning. PostHog gets the chord settings and,
+  per answer, `chords` and `under`.
+- **Fixed on the way:** with Vorschlag and Zweiklang both on, the Zweiklang
+  paired the last grace note instead of the answer's last note, because the
+  graces were appended after the melody. The ornaments now read the melody
+  only; a test holds it.
+- **Every number is a GUESS** and is marked so in `chords.ts`.
+
+Why: the question is by ear, so the panel offers kinds and moments to combine
+rather than one decided chord rule. The scale makes it safe: nothing can clash.
+
+What I need from Ben:
+- **Play it** after merging. The link of a combination you like is the spec,
+  as before.
+- **Lucia's ear** on the voicings: whether the melody note belongs on top and
+  whether the a-chord (d g a) sounds right are a musician's calls, not mine.

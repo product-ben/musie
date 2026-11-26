@@ -8,7 +8,7 @@
  * with `onRunEvent`, so the conversation stays testable in node.
  */
 import type { Ending, Motif } from './answer2';
-import type { FigureId, ShapeId } from './settings';
+import type { ChordKind, FigureId, ShapeId } from './settings';
 
 export interface Turn {
   /** From Musie's first note to the person's next one. */
@@ -21,8 +21,12 @@ export interface Turn {
 
 export interface AnswerEntry {
   round: number;
-  figure: ShapeId | 'heute';
+  figure: ShapeId | 'heute' | 'akkord';
   ornaments: FigureId[];
+  /** One per chord in the answer. */
+  chords: ChordKind[];
+  /** The chord „Unter deinem Spiel“ laid under the phrase's first note, if one was. */
+  under: ChordKind | null;
   fromRound?: number;
   /** Notes in the person's phrase. */
   heard: number;
