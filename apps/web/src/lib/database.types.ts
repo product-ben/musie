@@ -1031,6 +1031,7 @@ export type Database = {
           feeling_change: string | null
           goal_id: string | null
           id: string
+          length_seconds: number | null
           listened_at: string | null
           listening_question: string | null
           listening_question_id: string | null
@@ -1056,6 +1057,7 @@ export type Database = {
           feeling_change?: string | null
           goal_id?: string | null
           id?: string
+          length_seconds?: number | null
           listened_at?: string | null
           listening_question?: string | null
           listening_question_id?: string | null
@@ -1081,6 +1083,7 @@ export type Database = {
           feeling_change?: string | null
           goal_id?: string | null
           id?: string
+          length_seconds?: number | null
           listened_at?: string | null
           listening_question?: string | null
           listening_question_id?: string | null

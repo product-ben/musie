@@ -18,7 +18,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { handover } from './mixer';
+import { handover, placeOnLaps } from './mixer';
 
 /** The four members `handover` touches, plus a log of the calls in order. */
 function element(currentTime: number, paused: boolean, log: string[], name: string) {
@@ -126,5 +126,32 @@ describe('handover · the cases that must not throw', () => {
 
     expect(to.currentTime).toBe(42);
     expect(log).toEqual(['to.currentTime=42', 'to.play', 'from.pause']);
+  });
+});
+
+/* ── THE LAPS — a card exercise's piece repeats to fill the chosen length ──
+   (2026-11-26). The hook's wrap detection rides on the element's own `loop`
+   and is measured in the browser; what is pure, and worth pinning, is where a
+   position across the laps lands — the scrubber and the restart both seek
+   through it. */
+describe('placeOnLaps', () => {
+  it('is the file time itself when the recording plays once', () => {
+    expect(placeOnLaps(42, 150, 1)).toEqual({ lap: 0, at: 42 });
+  });
+
+  it('finds the lap and the time inside it', () => {
+    expect(placeOnLaps(0, 150, 3)).toEqual({ lap: 0, at: 0 });
+    expect(placeOnLaps(160, 150, 3)).toEqual({ lap: 1, at: 10 });
+    expect(placeOnLaps(300, 150, 3)).toEqual({ lap: 2, at: 0 });
+  });
+
+  it('keeps the very end in the last lap rather than opening one that does not exist', () => {
+    expect(placeOnLaps(450, 150, 3)).toEqual({ lap: 2, at: 150 });
+    expect(placeOnLaps(999, 150, 3)).toEqual({ lap: 2, at: 150 });
+  });
+
+  it('treats a missing lap length as one lap', () => {
+    expect(placeOnLaps(42, 0, 3)).toEqual({ lap: 0, at: 42 });
+    expect(placeOnLaps(-5, 150, 3)).toEqual({ lap: 0, at: 0 });
   });
 });

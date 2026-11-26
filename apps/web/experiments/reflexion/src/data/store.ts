@@ -121,6 +121,7 @@ function freshRow(): SessionRow {
     posture: null,
     ending: null,
     goalId: null,
+    lengthSeconds: null,
   };
 }
 

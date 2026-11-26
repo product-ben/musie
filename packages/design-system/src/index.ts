@@ -127,6 +127,11 @@ export type { ToastProps, ToastAction, ToastLive, ToastTone, ToastPlacement } fr
 export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedSize, SegmentedLabels, SegmentedLegendStep, SegmentedControlProps, SegmentedOption } from './SegmentedControl';
 
+/* One value on a range — how long an exercise runs (2026-11-26). Drawn from
+   §15's primitives, not §21's rail; Slider.tsx's header says why. */
+export { Slider } from './Slider';
+export type { SliderProps, SliderLabelStep, SliderAccent } from './Slider';
+
 /* Two levels, and §15's build-up with none of its semantics — a CheckboxGroup
    per dimension rather than one RadioGroup, scrolled rather than divided. The
    header of FilterChips.tsx is where the two are told apart. */

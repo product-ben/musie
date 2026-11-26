@@ -72,6 +72,39 @@ export interface MixOptions {
    * sixteen end-to-end walks found a transport that sat on `paused` forever.
    */
   onRefused?: () => void;
+  /**
+   * ── HOW MANY TIMES THE RECORDING PLAYS, BACK TO BACK — 2026-11-26 ───────
+   * A card exercise's length is chosen on Einsteigen (up to 10:00), and its
+   * piece runs 1:40–3:11 — so the piece repeats until the length is filled.
+   * One by default, which is every run before this.
+   *
+   * THE CALLER SEES ONE LONG RECORDING. `onTime` reports the position across
+   * the laps, `seek` takes one, and `onEnded` fires once, at the end of the
+   * last lap — so the listen step's clock, scrubber and gate need no idea of
+   * repetition. See `placeOnLaps`.
+   *
+   * THE ELEMENT'S OWN `loop`, not `ended` + `play()`. Every lap but the last
+   * plays with `loop` on, which the media engine wraps seamlessly — no gap,
+   * no pause/play flicker on the transport, and no `play()` outside a gesture,
+   * which iOS may refuse with the screen locked. The wrap is noticed as the
+   * time jumping back to the start, and the last lap runs with `loop` off so
+   * it ends.
+   */
+  laps?: number;
+  /** One lap: the recording's own length in seconds. Needed with `laps` > 1. */
+  lapSeconds?: number;
+}
+
+/**
+ * Where a position across the laps lands: which lap, and where in the file.
+ * The end of the last lap stays in the last lap rather than starting a lap
+ * that does not exist. Pure, for the test.
+ */
+export function placeOnLaps(seconds: number, lapSeconds: number, laps: number): { lap: number; at: number } {
+  if (laps <= 1 || lapSeconds <= 0) return { lap: 0, at: Math.max(0, seconds) };
+  const position = Math.min(Math.max(0, seconds), laps * lapSeconds);
+  const lap = Math.min(laps - 1, Math.floor(position / lapSeconds));
+  return { lap, at: position - lap * lapSeconds };
 }
 
 export interface Mix {
@@ -96,6 +129,7 @@ export interface Mix {
 
 export function useMix({
   mixedSrc, voiceSrc, musicMuted, onPlay, onPause, onTime, onEnded, onError, onRefused,
+  laps = 1, lapSeconds = 0,
 }: MixOptions): Mix {
   /* ONE BATCH, so the pair costs one round trip rather than two — and keyed on
      both object keys, so changing an answer on the Einsteigen step re-signs
@@ -122,6 +156,23 @@ export function useMix({
   const handlers = React.useRef({ onPlay, onPause, onTime, onEnded, onError, onRefused });
   handlers.current = { onPlay, onPause, onTime, onEnded, onError, onRefused };
 
+  /* THE LAPS, in refs for the same reason as the handlers: the element
+     listeners read them, and must not be rebuilt when they change. `lap` is
+     which lap is sounding; `lastAt` is the file time last reported, so a jump
+     back to the start can be told from playing on. */
+  const lapCount = React.useRef(1);
+  const lapLength = React.useRef(0);
+  lapCount.current = Math.max(1, Math.floor(laps));
+  lapLength.current = Math.max(0, lapSeconds);
+  const lap = React.useRef(0);
+  const lastAt = React.useRef(0);
+  /** `loop` on while a lap follows this one, off on the last. */
+  const setLooping = React.useCallback(() => {
+    const more = lapLength.current > 0 && lap.current < lapCount.current - 1;
+    if (mixed.current !== null) mixed.current.loop = more;
+    if (voice.current !== null) voice.current.loop = more;
+  }, []);
+
   /* ── the elements ────────────────────────────────────────────────────── */
   React.useEffect(() => {
     if (mixedUrl === null) return undefined;
@@ -142,6 +193,10 @@ export function useMix({
     const first = make(mixedUrl);
     mixed.current = first;
     voice.current = voiceUrl === null ? null : make(voiceUrl);
+    /* New elements start at the top of the first lap. */
+    lap.current = 0;
+    lastAt.current = 0;
+    setLooping();
     /* The mix is what plays, so it is active until the switch says otherwise —
        including when the switch is already on at mount, which the effect below
        settles. */
@@ -153,7 +208,20 @@ export function useMix({
        the exercise had stopped, in the middle of a handover. */
     const listeners = both.map((element) => {
       const mine = () => active.current === element;
-      const time = () => { if (mine()) handlers.current.onTime?.(element.currentTime); };
+      const time = () => {
+        if (!mine()) return;
+        const at = element.currentTime;
+        /* THE FILE WRAPPED ROUND: `loop` was on and the time jumped back to
+           the start. A second's margin, because a timeupdate can land a few
+           hundred milliseconds either side of the seam; a seek never trips
+           this, because `seek` sets the lap and `lastAt` itself. */
+        if (element.loop && at + 1 < lastAt.current) {
+          lap.current += 1;
+          setLooping();
+        }
+        lastAt.current = at;
+        handlers.current.onTime?.(lap.current * lapLength.current + at);
+      };
       const started = () => { if (mine()) handlers.current.onPlay?.(); };
       const stopped = () => { if (mine()) handlers.current.onPause?.(); };
       const ended = () => { if (mine()) handlers.current.onEnded?.(); };
@@ -217,7 +285,11 @@ export function useMix({
        elements, and the one below hands over between them. Reading the switch
        here would put it in these dependencies, and every flip would rebuild
        both elements — which is to say, stop the audio. */
-  }, [mixedUrl, voiceUrl, mixedSrc, voiceSrc]);
+  }, [mixedUrl, voiceUrl, mixedSrc, voiceSrc, setLooping]);
+
+  /* The laps can arrive after the elements (the length is known before the
+     recording's URL is); whichever comes second sets `loop`. */
+  React.useEffect(() => { setLooping(); }, [laps, lapSeconds, setLooping]);
 
   /* ── the switch ──────────────────────────────────────────────────────── */
   React.useEffect(() => {
@@ -253,12 +325,17 @@ export function useMix({
   }, []);
 
   const seek = React.useCallback((seconds: number) => {
-    const at = Math.max(0, seconds);
+    /* A position across the laps: the lap is SET here, so the wrap test in
+       `time` never mistakes a seek backwards for the file coming round. */
+    const placed = placeOnLaps(seconds, lapLength.current, lapCount.current);
+    lap.current = placed.lap;
+    lastAt.current = placed.at;
+    setLooping();
     /* BOTH, so a handover after a seek lands where the listener is rather than
        where the other file was left. */
-    if (mixed.current !== null) mixed.current.currentTime = at;
-    if (voice.current !== null) voice.current.currentTime = at;
-  }, []);
+    if (mixed.current !== null) mixed.current.currentTime = placed.at;
+    if (voice.current !== null) voice.current.currentTime = placed.at;
+  }, [setLooping]);
 
   const restart = React.useCallback(() => { seek(0); }, [seek]);
 
