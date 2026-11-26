@@ -57,12 +57,18 @@ const meta = {
           'sunken, `--sp-1` of padding, `--radius-control`, a lane',
           '`--target-primary` high. The chosen part is the chosen segment — raised',
           'fill, primary-on-subtle ink — stretched from the start to the thumb. The',
-          'end values are set like an unchosen segment\'s word.',
+          'values under the track are set like an unchosen segment\'s word.',
+          '',
+          '**The current value stands under the thumb**, on the line of the min and',
+          'max, and follows it (Ben, 2026-11-26). At rest it is a bare figure; while',
+          'the slider is being moved — a drag, or keyboard focus on the thumb — it',
+          'sits in a sunken pill. An end value it covers fades out; at the minimum',
+          'the two are the same figure in the same place. Drag the thumb to see it.',
           '',
           '**The thumb sits inside the track** (`thumbAlignment="edge"`). At the',
           'minimum the raised part is exactly one segment\'s square.',
           '',
-          '**Every string on screen is the caller\'s.** The readout and both ends',
+          '**Every string on screen is the caller\'s.** The current value and both ends',
           'are the value as `formatValue` writes it, and there is no default.',
           'What a screen reader hears is `valueText`, which falls back to the same',
           'string — pass it whenever the drawn form reads badly aloud.',
@@ -101,10 +107,10 @@ const meta = {
     step: { control: 'number', description: 'The granularity of a value: dragging snaps to multiples of it, counted from min. 1 by default.' },
     largeStep: { control: 'number', description: 'What Page Up / Page Down and Shift + arrow move by. base-ui’s 10 by default.' },
     value: { control: false, description: 'Controlled value.' },
-    defaultValue: { control: 'number', description: 'Uncontrolled starting value.' },
+    defaultValue: { control: 'number', description: 'Uncontrolled starting value. `min` when neither is given.' },
     onValueChange: { action: 'valueChange', description: 'Fires on every change — each step of a drag.' },
     onValueCommitted: { action: 'valueCommitted', description: 'Fires once a change is settled — the drag released, the key pressed.' },
-    formatValue: { control: false, description: 'How a value is DRAWN: the readout, and both ends. Required.' },
+    formatValue: { control: false, description: 'How a value is DRAWN: the current value under the thumb, and both ends. Required.' },
     valueText: { control: false, description: 'How a value is HEARD (aria-valuetext). Falls back to formatValue.' },
     minLabel: { control: 'text', description: 'A word drawn before the minimum’s value at the start of the track. Optional.' },
     maxLabel: { control: 'text', description: 'The same, before the maximum’s value at the end of the track.' },
@@ -125,7 +131,7 @@ type Story = StoryObj<typeof meta>;
 /** The exercise length: 1:30 to the length of the piece, in steps of 15 s. */
 export const Default: Story = {};
 
-/** Both accent families. Only the readout's and the grip's ink changes. */
+/** Both accent families. Only the current value's and the grip's ink changes. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
@@ -149,10 +155,14 @@ export const LabelSteps: Story = {
 /** Words before the end values. Optional: the values alone already label the ends. */
 export const WithEndWords: Story = { args: { minLabel: 'Min.', maxLabel: 'Max.' } };
 
-/** The label stays the accessible name; the readout keeps its place at the end. */
+/** The label stays the accessible name; the track moves up into its place. */
 export const LabelHidden: Story = { args: { labelHidden: true } };
 
-/** The two ends of the range. At the minimum the raised part is one segment's square. */
+/**
+ * The two ends of the range. At the minimum the raised part is one segment's
+ * square, and the current value stands where the min does — so the min fades
+ * and one figure is seen. The same at the maximum.
+ */
 export const AtTheEnds: Story = {
   render: (args) => (
     <Stack>
@@ -187,7 +197,7 @@ export const WithSegmentedControl: Story = {
   ),
 };
 
-/** The longest label: it wraps, and the readout stays on its first line's baseline. */
+/** The longest label: it wraps, as the segmented control's legend does. */
 export const LongLabel: Story = {
   args: { label: 'Wie lange möchtest du dir heute für diese Übung Zeit nehmen?' },
 };

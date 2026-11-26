@@ -22,8 +22,8 @@
  *   · the CHOSEN PART is the chosen segment — raised fill and the
  *     primary-on-subtle ink — stretched from the start of the track to the
  *     thumb. At the minimum it is exactly one segment's square;
- *   · the end values are set like an unchosen segment's word — label-md,
- *     muted.
+ *   · the values under the track are set like an unchosen segment's word —
+ *     label-md.
  *
  * The thin rail is the music player's scrubber, which seeks inside a piece;
  * this sets a quantity before anything plays. Different jobs, different
@@ -37,17 +37,33 @@
  * is what base-ui gives it) and the thumb, filled the same, carries the raised
  * part the rest of the way — one shape, two elements, no seam.
  *
+ * ── THE VALUE STANDS UNDER THE THUMB ──────────────────────────────────────
+ * Ben, 2026-11-26, the same day: the current value moved out of the label row
+ * into the row under the track, on the min's and max's line, and it FOLLOWS
+ * THE THUMB rather than standing still between them. At rest it is a bare
+ * figure like the two ends; while the slider is being moved it sits in a
+ * sunken pill, so the figure that is changing is the one that looks
+ * different. "Being moved" is a drag, and keyboard focus on the thumb — the
+ * arrow keys move it in single presses, with no drag to mark.
+ *
+ * It is placed by the same arithmetic base-ui places an edge-aligned thumb
+ * with — half a thumb in, plus the travel times the fraction — so the CSS
+ * puts it under the thumb's centre at every width with no measuring. What
+ * does need measuring is the one thing CSS cannot know: whether it now
+ * covers an end value. That end fades out while it does; at the minimum the
+ * two are the same figure in the same place, and only one is seen.
+ *
  * ── EVERY STRING ON SCREEN IS THE CALLER'S ────────────────────────────────
- * The readout and both ends are the value as `formatValue` writes it, and
- * there is no default: a duration is `1:30`, a count is `3`, and guessing
+ * The current value and both ends are the value as `formatValue` writes it,
+ * and there is no default: a duration is `1:30`, a count is `3`, and guessing
  * between them would be the system choosing copy (rule 7 of the repo). What a
  * screen reader hears is `valueText`, which falls back to the same string —
  * pass it whenever the drawn form reads badly aloud. `1:30` is announced as a
  * time of day; „1 Minute 30 Sekunden“ is not.
  *
- * The readout is base-ui's <output>, which keeps `aria-live="off"`: the thumb
- * already announces its value as it moves, and a live region would say every
- * step of a drag a second time.
+ * The current value is base-ui's <output>, which keeps `aria-live="off"`: the
+ * thumb already announces its value as it moves, and a live region would say
+ * every step of a drag a second time.
  *
  * ── NO `size` AND NO `guided`, YET ────────────────────────────────────────
  * The segmented control has both. The `min` rung would put a drag control at
@@ -73,8 +89,7 @@ export interface SliderProps {
   labelHidden?: boolean;
   /**
    * The label's type step. `label-lg` by default, as the segmented control's
-   * legend; `label-md` as one field among several in a form. The readout
-   * beside the label takes the same step.
+   * legend; `label-md` as one field among several in a form.
    */
   labelStep?: SliderLabelStep;
   /** The lowest value. Drawn at the start of the track via `formatValue`. */
@@ -92,7 +107,7 @@ export interface SliderProps {
   largeStep?: number;
   /** Controlled value. */
   value?: number;
-  /** Uncontrolled starting value. */
+  /** Uncontrolled starting value. `min` when neither is given. */
   defaultValue?: number;
   /** Fires on every change — each step of a drag. */
   onValueChange?: (value: number) => void;
@@ -102,8 +117,9 @@ export interface SliderProps {
    */
   onValueCommitted?: (value: number) => void;
   /**
-   * How a value is DRAWN: the readout, and both ends. Required — a duration
-   * and a count are written differently, and the system does not guess.
+   * How a value is DRAWN: the current value under the thumb, and both ends.
+   * Required — a duration and a count are written differently, and the
+   * system does not guess.
    */
   formatValue: (value: number) => string;
   /**
@@ -126,6 +142,9 @@ export interface SliderProps {
   className?: string;
 }
 
+/** Do two boxes share any horizontal extent? Direction-blind, so RTL holds. */
+const overlapsInline = (a: DOMRect, b: DOMRect) => a.left < b.right && a.right > b.left;
+
 export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
   function Slider({
     label, labelHidden = false, labelStep = 'label-lg', min, max, step = 1, largeStep,
@@ -136,6 +155,45 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
       console.warn(`Slider "${label}": max (${max}) must be greater than min (${min}).`);
     }
 
+    /* WHERE THE VALUE STANDS follows the value, and the value is `value` when
+       the slider is controlled. Uncontrolled, base-ui holds its own and this
+       mirrors it from `onValueChange` — the one piece of state here, the same
+       bargain SegmentedControl makes for its description. */
+    const [ownValue, setOwnValue] = React.useState(defaultValue ?? min);
+    const current = value ?? ownValue;
+    const fraction = max > min ? Math.min(1, Math.max(0, (current - min) / (max - min))) : 0;
+
+    /* WHICH END IS COVERED. The only measurement in the component: the CSS
+       already places the current value, but how wide three formatted strings
+       come out is the font's business. Re-measured when the value moves and
+       when the row is resized. */
+    const scaleRef = React.useRef<HTMLDivElement>(null);
+    const minRef = React.useRef<HTMLSpanElement>(null);
+    const maxRef = React.useRef<HTMLSpanElement>(null);
+    const currentRef = React.useRef<HTMLOutputElement>(null);
+    const [covered, setCovered] = React.useState({ min: false, max: false });
+
+    const minText = formatValue(min);
+    const maxText = formatValue(max);
+    const currentText = formatValue(current);
+
+    React.useLayoutEffect(() => {
+      const scale = scaleRef.current;
+      const measure = () => {
+        const cur = currentRef.current?.getBoundingClientRect();
+        const lo = minRef.current?.getBoundingClientRect();
+        const hi = maxRef.current?.getBoundingClientRect();
+        if (!cur || !lo || !hi) return;
+        const next = { min: overlapsInline(cur, lo), max: overlapsInline(cur, hi) };
+        setCovered((prev) => (prev.min === next.min && prev.max === next.max ? prev : next));
+      };
+      measure();
+      if (!scale || typeof ResizeObserver !== 'function') return undefined;
+      const observer = new ResizeObserver(measure);
+      observer.observe(scale);
+      return () => observer.disconnect();
+    }, [fraction, minText, maxText, currentText, minLabel, maxLabel]);
+
     return (
       <BaseSlider.Root
         ref={ref}
@@ -145,7 +203,10 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
         largeStep={largeStep}
         value={value}
         defaultValue={defaultValue}
-        onValueChange={(next) => onValueChange?.(next)}
+        onValueChange={(next) => {
+          setOwnValue(next);
+          onValueChange?.(next);
+        }}
         onValueCommitted={(next) => onValueCommitted?.(next)}
         disabled={disabled}
         name={name}
@@ -155,23 +216,20 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
           accent !== 'primary' ? `musy-slider--${accent}` : '',
           className ?? '',
         ].filter(Boolean).join(' ')}
+        style={{ '--musy-slider-fraction': fraction } as React.CSSProperties}
       >
-        <div className="musy-slider__head">
-          {/* THE SEGMENTED CONTROL'S LEGEND, BY CLASS. Not a copy of its
-              declarations: `.musy-radio-group__legend` plus the step is what
-              draws that legend, so drawing this label with it is the only way
-              the two cannot drift apart. It is a <div> named by base-ui, not a
-              <legend> — there is no fieldset around one value. */}
-          <BaseSlider.Label
-            className={labelHidden ? 'musy-sr-only' : 'musy-radio-group__legend'}
-            data-type-step={labelHidden ? undefined : labelStep}
-          >
-            {label}
-          </BaseSlider.Label>
-          <BaseSlider.Value className="musy-slider__value" data-type-step={labelStep}>
-            {(_formatted, values) => formatValue(values[0] ?? min)}
-          </BaseSlider.Value>
-        </div>
+        {/* THE SEGMENTED CONTROL'S LEGEND, BY CLASS. Not a copy of its
+            declarations: `.musy-radio-group__legend` plus the step is what
+            draws that legend — its gap to the track included — so drawing
+            this label with it is the only way the two cannot drift apart. It
+            is a <div> named by base-ui, not a <legend>: there is no fieldset
+            around one value. */}
+        <BaseSlider.Label
+          className={labelHidden ? 'musy-sr-only' : 'musy-radio-group__legend'}
+          data-type-step={labelHidden ? undefined : labelStep}
+        >
+          {label}
+        </BaseSlider.Label>
 
         {/* The sunken track is a plain box AROUND base-ui's Control, not the
             Control itself. base-ui places an edge-aligned thumb by measuring
@@ -190,19 +248,26 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
           </BaseSlider.Control>
         </div>
 
-        {/* THE ENDS. In the reading order after the control, and not hidden:
+        {/* THE VALUES. In the reading order after the control, and not hidden:
             `aria-valuemin`/`max` carry raw numbers no screen reader turns into
-            "1:30", so these two are the only place the range is said in words.
-            Each sits under the thumb's resting place at its end. */}
-        <div className="musy-slider__ends" data-type-step="label-md">
-          <span className="musy-slider__end">
-            {minLabel && <span className="musy-slider__end-word">{minLabel} </span>}
-            {formatValue(min)}
-          </span>
-          <span className="musy-slider__end">
-            {maxLabel && <span className="musy-slider__end-word">{maxLabel} </span>}
-            {formatValue(max)}
-          </span>
+            "1:30", so these are the only place the range is said in words. A
+            covered end fades rather than leaving the tree — it is still true.
+            The scale inside is the lane's width exactly, so a fraction of it
+            is a fraction of the thumb's travel. */}
+        <div className="musy-slider__values" data-type-step="label-md">
+          <div className="musy-slider__scale" ref={scaleRef}>
+            <span ref={minRef} className="musy-slider__end" data-covered={covered.min ? '' : undefined}>
+              {minLabel && <span className="musy-slider__end-word">{minLabel} </span>}
+              {minText}
+            </span>
+            <span ref={maxRef} className="musy-slider__end" data-covered={covered.max ? '' : undefined}>
+              {maxLabel && <span className="musy-slider__end-word">{maxLabel} </span>}
+              {maxText}
+            </span>
+            <BaseSlider.Value ref={currentRef} className="musy-slider__current">
+              {() => currentText}
+            </BaseSlider.Value>
+          </div>
         </div>
       </BaseSlider.Root>
     );

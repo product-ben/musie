@@ -3256,17 +3256,19 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
      .musy-seg__track               .musy-slider__track: sunken, --sp-1, pill
      a segment, --target-primary    the lane, --target-primary
      the chosen segment             indicator + thumb: raised, primary ink
-     an unchosen segment's word     the two end values: label-md, muted
+     an unchosen segment's word     the values under the track: label-md
+     the track's sunken fill        the current value's pill, while moving
 
    No edge anywhere, as §15 since 2026-11-16 — the escapes are in BORDERLESS
    SURFACES at the end of the file, where the track is listed beside §15's.
 
-   NO TRANSITIONS. The thumb follows the finger and must not lag it (§21's
-   rule), and the indicator has to stay glued to the thumb, so neither moves
-   on a timer — and there is nothing for reduced motion to switch off.      */
+   NOTHING THAT MOVES IS ON A TIMER. The thumb follows the finger and must
+   not lag it (§21's rule), the indicator and the current value have to stay
+   glued to the thumb, so none of the three transitions its position. Only
+   colour and opacity fade, on --motion-toggle, as §15's segments do.      */
 
 .musy-slider {
-  /* The chosen segment's ink: the readout and the grip. */
+  /* The chosen segment's ink: the current value and the grip. */
   --musy-slider-ink: var(--interactive-primary-on-subtle);
   /* The thumb is the target, so it is the lane's own height, square. */
   --musy-slider-thumb: var(--target-primary);
@@ -3274,31 +3276,8 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 }
 .musy-slider--accent { --musy-slider-ink: var(--interactive-accent-on-subtle); }
 
-/* ── THE LABEL ROW ─────────────────────────────────────────────────────────
-   The label at the start, the value at the end, on one baseline. The gap to
-   the track is the legend's own (`--space-gap-related`), moved from the label
-   to the row: a hidden label is taken out of the flow, and the readout must
-   not then sit on the track. */
-.musy-slider__head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-gap-related);
-  margin-block-end: var(--space-gap-related);
-}
-.musy-slider__head > .musy-radio-group__legend {
-  flex: 1 1 auto;
-  min-inline-size: 0;
-  margin-block-end: 0;
-}
-/* The type step is `[data-type-step]`'s, the same as the label's. Tabular
-   figures so the readout does not shift sideways as a drag changes a digit. */
-.musy-slider__value {
-  flex: 0 0 auto;
-  margin-inline-start: auto;   /* stays at the end when the label is hidden */
-  color: var(--musy-slider-ink);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
+/* THE LABEL needs no rule here: it is the legend, class and step, and the
+   legend's own `margin-block-end` is its gap to the track — as in §15. */
 
 /* ── THE TRACK — `.musy-seg__track`, declaration for declaration ─────────── */
 .musy-slider__track {
@@ -3391,25 +3370,84 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   outline-offset: var(--focus-ring-offset);
 }
 
-/* ── THE ENDS ──────────────────────────────────────────────────────────────
-   Set like an unchosen segment's word — label-md from `[data-type-step]`,
-   muted. Inset by the track's chrome and each at least a thumb wide, centred,
-   so a bare value sits under the thumb's resting place at its end. A word
-   before it makes the end wider than the thumb; it then starts at the
-   thumb's edge instead, which still reads as belonging to that end. */
-.musy-slider__ends {
+/* ── THE VALUES UNDER THE TRACK ────────────────────────────────────────────
+   One line: the minimum at the start, the maximum at the end, and the current
+   value under the thumb (Ben, 2026-11-26). All three label-md from
+   `[data-type-step]` — an unchosen segment's word — with tabular figures, so
+   a drag changing a digit does not jostle the figure sideways.
+
+   THE ROW IS INSET BY THE TRACK'S CHROME, so the scale inside it is the
+   lane's width exactly: a fraction of the scale is then a fraction of the
+   thumb's travel, and the current value can be placed by arithmetic alone. */
+.musy-slider__values {
+  margin-block-start: var(--sp-2);
+  padding-inline: calc(var(--sp-1) + var(--border-width-hairline));
+  font-variant-numeric: tabular-nums;
+}
+.musy-slider__scale {
+  position: relative;
   display: flex;
   justify-content: space-between;
   gap: var(--space-gap-related);
-  margin-block-start: var(--sp-2);
-  padding-inline: calc(var(--sp-1) + var(--border-width-hairline));
-  color: var(--on-surface-muted);
-  font-variant-numeric: tabular-nums;
 }
+
+/* ALL THREE CARRY THE PILL'S PADDING, the two ends included, at rest
+   included. The pill then only fills a box that was already there: the
+   figure does not jump when it appears, and the three stay on one baseline
+   because they are one shape of box. */
+.musy-slider__end,
+.musy-slider__current {
+  box-sizing: border-box;
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-2);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+/* The ends: muted, and each at least a thumb wide and centred, so a bare
+   value sits under the thumb's resting place at its end — which is also
+   exactly where the current value stands when it reaches that end. A word
+   before the value makes the end wider than the thumb; it then starts at the
+   thumb's edge instead, which still reads as belonging to that end. */
 .musy-slider__end {
   min-inline-size: var(--musy-slider-thumb);
   text-align: center;
-  white-space: nowrap;
+  color: var(--on-surface-muted);
+  transition: opacity var(--motion-toggle);
+}
+/* Covered by the current value — measured in Slider.tsx, the one thing CSS
+   cannot know. Faded, not removed: the end is still true, and still read. */
+.musy-slider__end[data-covered] { opacity: 0; }
+
+/* THE CURRENT VALUE, under the thumb's centre. The same arithmetic base-ui
+   places an edge-aligned thumb with: half a thumb in, plus the travel — the
+   scale less one thumb — times the fraction Slider.tsx publishes. No
+   transition on the position: it follows the finger (§21's rule). */
+.musy-slider__current {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: calc(
+    var(--musy-slider-thumb) / 2
+    + (100% - var(--musy-slider-thumb)) * var(--musy-slider-fraction, 0)
+  );
+  translate: -50% 0;
+  color: var(--musy-slider-ink);
+  background-color: transparent;
+  transition: background-color var(--motion-toggle);
+}
+.musy-slider__current:dir(rtl) { translate: 50% 0; }
+
+/* WHILE IT IS BEING MOVED it sits in a sunken pill — the track's own fill —
+   so the figure that is changing is the one that looks different (Ben,
+   2026-11-26). A drag is base-ui's `[data-dragging]`. Keyboard focus counts
+   too: the arrow keys move the thumb in single presses with no drag to mark,
+   and focus is the whole time they can. A rule of its own for the `:has()`,
+   for the reason the thumb's focus ring has one. */
+.musy-slider[data-dragging] .musy-slider__current {
+  background-color: var(--surface-sunken);
+}
+.musy-slider:has(.musy-slider__thumb :focus-visible) .musy-slider__current {
+  background-color: var(--surface-sunken);
 }
 
 /* ── DISABLED — §15's swap: the disabled fill still lifts the chosen part off
@@ -3420,7 +3458,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 .musy-slider[data-disabled] .musy-slider__thumb {
   background-color: var(--interactive-primary-disabled);
 }
-.musy-slider[data-disabled] .musy-slider__ends { color: var(--on-surface-disabled); }
+.musy-slider[data-disabled] .musy-slider__end { color: var(--on-surface-disabled); }
 
 /* The chosen segment's contrast escape (LIGHTER SELECTION BOUNDARIES): its
    edge comes back strong and thick. Indicator and thumb both take it, so the
@@ -3435,11 +3473,14 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 }
 
 /* Forced colours discard the raised fill, so the chosen part takes Highlight
-   — §21's escape for its played portion — and the grip HighlightText. */
+   — §21's escape for its played portion — and the grip HighlightText. The
+   current value's pill is a fill too; while moving it keeps its shape as an
+   outline instead. */
 @media (forced-colors: active) {
   .musy-slider__indicator,
   .musy-slider__thumb { background-color: Highlight; }
   .musy-slider__thumb { color: HighlightText; }
+  .musy-slider[data-dragging] .musy-slider__current { outline: var(--border-width-hairline) var(--border-style-solid) CanvasText; }
   .musy-slider[data-disabled] .musy-slider__indicator,
   .musy-slider[data-disabled] .musy-slider__thumb { background-color: GrayText; }
 }

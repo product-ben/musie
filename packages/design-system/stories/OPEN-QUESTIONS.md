@@ -4648,3 +4648,22 @@ Why: the same one-line fix applies there, but it changes a shipped component
 and belongs in its own commit.
 What I need from Ben: nothing, just flagging — a one-line fix whenever §21 is
 next touched.
+
+## Slider — the current value moves under the thumb, in a pill while moving — RESOLVED
+Where: `src/Slider.tsx`, `src/musy-components.css` §15a (`.musy-slider__current`)
+What I checked: Ben, 2026-11-26: „Zeig die aktuelle Zahl bitte unter dem
+slider, aligned mit den min und max werten. Wenn der slider bewegt wird, kommt
+die zahl in eine sunken pill. ansonsten steht die einfach so da." Asked
+whether it follows the thumb or stands in the middle; he chose „folgt dem
+Regler".
+What I did: the value left the label row. It stands on the min/max line,
+placed by CSS with base-ui's own edge-alignment arithmetic (measured: centred
+under the thumb to 0.1px at every position tried, one baseline with both
+ends). The pill is the track's sunken fill, on `[data-dragging]` and on
+keyboard focus — arrow keys move the thumb with no drag to mark. An end the
+value covers fades out (measured in a layout effect, the one thing CSS cannot
+know); at the minimum the two are the same figure in the same place.
+Why: Ben's instruction; keyboard focus is my reading of „bewegt" for a
+keyboard user.
+What I need from Ben: nothing — unless the pill should NOT show on keyboard
+focus.
