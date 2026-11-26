@@ -4611,3 +4611,40 @@ class and keep heading-sm; Ben named the segmented control. The hidden
 legends (language, reflect mode, diary filter, exercises view) have no
 heading above them.
 What I need from Ben: nothing.
+
+# Slider — the exercise length (2026-11-26)
+
+## Slider — which primitives: the segmented control's or the music player's? — RESOLVED
+Where: `src/Slider.tsx`, `src/musy-components.css` §15a, `stories/Slider.stories.tsx`
+What I checked: the brief — „a Slider (based on base ui) … the same label as
+the segmented control … follow the same design primitives". Two readings: the
+thin rail §21 already draws for its scrubber, or §15's sunken track and
+raised chosen segment. Asked Ben with three sketches (segment track, thin
+rail, a sliding segment carrying the value); he chose the segment track.
+What I did: the label is the legend's own class and step; the track is
+`.musy-seg__track`'s declarations; indicator + thumb are the chosen segment's
+raised fill, joined into one pill (the indicator is rounded at its start only
+— rounded at both ends it left a notch either side of the thumb, measured in
+Storybook). Ends are label-md, muted, each centred under the thumb's resting
+place. `formatValue` is required and `valueText` optional, so every drawn and
+spoken string is the caller's. No `size`, no `guided`: a 24px drag control is
+what §21's header argues against, and nothing calls `guided`.
+Why: Ben's choice, and one class for the label is the only way it cannot
+drift from the segmented control's.
+What I need from Ben: nothing — the integration into the card and instrument
+intros is the next step and was out of this one's scope.
+
+## MusicPlayer — the scrubber's thumb never draws a focus ring
+Where: `src/musy-components.css` §21, `.musy-mplayer__thumb:focus-visible`
+What I checked: measured in Storybook (`components-musicplayer--default`):
+tabbing onto the scrubber focuses base-ui's `<input type="range">` INSIDE the
+thumb, which matches `:focus-visible`; the thumb itself never does, and its
+computed outline is `none`. The input is visually hidden, so a keyboard user
+sees no focus at all on the only drag control the player has (2.4.7).
+What I did: nothing in §21 — out of this change's scope. The Slider draws its
+ring with `.musy-slider__thumb:has(:focus-visible)`, in a rule of its own
+rather than in §0's list, because one unparseable selector voids a whole list.
+Why: the same one-line fix applies there, but it changes a shipped component
+and belongs in its own commit.
+What I need from Ben: nothing, just flagging — a one-line fix whenever §21 is
+next touched.
