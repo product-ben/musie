@@ -28,7 +28,7 @@
  */
 import QRCode from 'qrcode';
 import { useLocale, useT } from '../i18n/localeContext';
-import { getCards } from '../lib/content';
+import { getCards, getExerciseCodes } from '../lib/content';
 import { scanLink } from '../lib/scanCode';
 import { useAsync } from '../lib/useAsync';
 
@@ -49,12 +49,15 @@ export function DevQrSheet() {
   const origin = window.location.origin;
 
   const { data, loading, error } = useAsync<Tile[]>(async () => {
-    const cards = await getCards(locale);
+    /* The deck, then the exercise cards (2026-11-23, P5): every code that
+       is printed, so each way in can be tried with a phone and no print. */
+    const [cards, exercises] = await Promise.all([getCards(locale), getExerciseCodes()]);
+    const codes = [...cards.map((card) => card.code), ...exercises.map((exercise) => exercise.code)];
     return Promise.all(
-      cards.map(async (card) => {
-        const url = scanLink(card.code, origin);
+      codes.map(async (code) => {
+        const url = scanLink(code, origin);
         return {
-          code: card.code,
+          code,
           url,
           /* SVG rather than a canvas or a PNG: it stays sharp at whatever size
              the tile ends up, which is what a camera pointed at a laptop

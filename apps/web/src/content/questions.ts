@@ -14,7 +14,8 @@
  *
  * Content lives in the content tables because of the ROWS THE TEXT HANGS OFF,
  * not because it is text. `cards.code` is printed on the paper beside the QR.
- * `exercise_tracks` says which recording plays for an (exercise, card) pair.
+ * `cards.activation_track_id` / `relax_track_id` say which recordings a card
+ * can play, and `sessions.track_id` which one a run did.
  * `sessions.card_id` has a foreign key into `cards` so a diary entry can never
  * claim a card that does not exist. The `_i18n` siblings are in Postgres
  * because their PARENTS have to be.

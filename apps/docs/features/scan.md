@@ -1,18 +1,53 @@
 # Scanning a card
 
-Three ways to name a card — the phone's own camera app, the in-app camera, and
-a typed code — and all three arrive at the same decoder. There is no domain in
-the product, and this is the file that makes that cost nothing.
+Two kinds of printed card carry a QR code: the **deck** (`MC-01` … ) and, since
+2026-11-23, the **exercise cards** (`EX-01` … `EX-08`). Scanned with the
+phone's own camera app, either one **starts** something. Inside a running card
+exercise, the in-app camera and the typed code name a deck card for that run.
+There is no domain in the decoder, and this is the file that makes that cost
+nothing.
 
 ```mermaid
 flowchart TD
-  A["Phone camera app<br/>reads the printed QR"] -->|"&lt;origin&gt;/s/MC-01"| D
-  B["In-app camera<br/>opens on a button press"] --> D
-  C["Typed code<br/>always on screen"] --> D
+  A["Phone camera app<br/>reads a printed QR"] -->|"&lt;origin&gt;/s/EX-02 or /s/MC-04"| K["decodeLink()"]
+  K -->|"EX-NN"| X["that exercise starts,<br/>on its intro"]
+  K -->|"MC-NN"| F["Freie Bahn starts with the card;<br/>Weiter goes straight to listening"]
+  X --> R{"something running?"}
+  F --> R
+  R -->|"yes"| G["the dialog:<br/>start the new one, or continue"]
+  B["In-app camera<br/>on the scan step"] --> D
+  C["Typed code<br/>on the scan step"] --> D
   D["decodeScan()<br/>→ canonical MC-01"] --> L["getCardByCode()"]
   L -->|"found"| S["scanCardInto() → the session"]
   L -->|"unknown"| E["error, under the field"]
 ```
+
+::: designers
+## A printed card starts a run — 2026-11-23
+
+The PRD „Übungskarten mit QR-Code" changed what the phone's camera app does.
+
+- **An exercise card** opens its exercise on the **intro**. A card exercise
+  started this way asks **„Was brauchst du gerade?"** there — the goal sheet's
+  question and goals, with the goal last chosen in the library preselected —
+  and the answer decides which of the card's two pieces plays. From the
+  library the question is not asked: the goal was chosen there. Under it, a
+  sentence says what the chosen answer does to the music.
+- **A deck card** starts **Freie Bahn** with that card. Its picture stands where
+  the exercise's would, the question „Wie möchtest du die Übung machen?" and
+  the sentence about the stack are not shown, the rail has „Scannen" checked
+  off already, and „Weiter" writes the card and goes straight to listening.
+- **Something already running** — even the same exercise — brings up the
+  dialog „Neue Übung starten?": its sentence names both exercises; „Neue Übung
+  starten" is the primary answer and ends the old one; „Zurück zur aktuellen
+  Übung" goes back to it. The library shows the same dialog, except that
+  pressing the running exercise again simply continues it.
+
+Until that day a deck card was written into the running session, a scan with
+nothing running was held for the scan step, and a scan into a digital run
+switched it to paper. All three are gone: the camera app starts, and the scan
+step's copy names only the scanner in Musie.
+:::
 
 ::: designers
 ## There is a run where nothing is scanned at all
@@ -28,18 +63,13 @@ card scanned from the table leave the same `card_id` and `track_id`, so the
 diary, the reveal and the discovered-music listing cannot tell them apart. See
 [a session](/features/session) for which run has which second step.
 
-A code scanned **into** a digital run wins: `/s/MC-01` writes the card and turns
-`digital_cards` off, because a printed code is proof that the deck is in
-somebody's hands.
+## Starting from paper, naming a card inside the app
 
-## Three ways in, and the common one is not the app
-
-The common path is **the phone's own camera app** following
-`<origin>/s/MC-01`. Somebody holding a printed card points their phone at it the
-way they point it at any QR code — Musie does not have to be open.
-
-The in-app camera is the **least used** of the three. The typed field is always
-on screen.
+The phone's own camera app follows `<origin>/s/EX-02` or `<origin>/s/MC-04` —
+Musie does not have to be open — and starts a run. Inside a running card
+exercise, the scan step names the card with the in-app camera or the typed
+field; it no longer suggests the camera app, which would start Freie Bahn
+instead.
 
 ## The camera does not start itself, and that is the main decision
 

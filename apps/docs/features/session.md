@@ -219,7 +219,8 @@ hand and which of the two digital steps the run has.
 ## The reducer learns the run through its own action
 
 `{ type: 'RUN', skipped }`. `useReducer`'s initialiser runs **once**, so
-flipping the switch on Einsteigen relabelled the rail while the reachability
+changing the cards answer on Einsteigen — „Mit den physischen Bildkarten" or
+„Komplett digital", a question since 2026-11-24 and a switch before — relabelled the rail while the reachability
 rule still refused `select` — the rail and the rule disagreed about the same
 run. The action refuses by identity when the run has not actually changed, and
 it is the one action exempt from the terminal-state guard.

@@ -164,7 +164,7 @@ describe('checkMusic · the warnings that do not', () => {
     expect(checkMusic(library()).warnings.join(' ')).toContain('/discovered-music');
   });
 
-  /* The deck plays nine pieces through `exercise_tracks`, which this module
+  /* The deck plays its pieces through the cards themselves, which this module
      does not own and cannot see — so a warning would be wrong nine times. */
   it('says nothing about a piece no cut plays', () => {
     expect(checkMusic(library({ cuts: [] })).warnings.join(' '))

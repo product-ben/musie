@@ -162,14 +162,16 @@ the guard is in code and not only here:
 - `pnpm music:migration` writes `exercise_cuts` **only**. The `tracks` half
   came out, and that is the single most important line of the change: it is
   the overlap that would otherwise clobber an edit on the next run.
-- `exercise_tracks`, `cards.image_url` and `card_i18n.image_alt` are
-  **derived**, rewritten by `public.project_deck()` on every admin write. A
-  row written there by hand for a card is erased by the next change.
+- `cards.image_url` and `card_i18n.image_alt` are **derived**, rewritten by
+  `public.project_deck()` on every admin write. A row written there by hand
+  for a card is erased by the next change.
   **Since 2026-11-20 the source is the CARD, not its grid square:**
   `cards.artwork_id`, `activation_track_id` and `relax_track_id` belong to
-  the card and move with it; `grid_cells.track_id` / `artwork_id` are unread
-  and wait for a drop. `exercise_tracks` is activation only and the app no
-  longer reads it. Which piece a session plays is decided by the trigger
+  the card and move with it; `grid_cells.track_id` / `artwork_id` are no
+  longer projected — /maintenance still shows what is parked on an empty
+  square with them, so they stay. `exercise_tracks` and
+  `exercises.needs_cards` were dropped on 2026-11-23
+  (`20261123100000_exercise_cards.sql`). Which piece a session plays is decided by the trigger
   `sessions_card_plays()` when the card is written — by the goal's
   `music_mode` (`relax` / `activate` / `random`, drawn once) — and stored in
   `sessions.track_id` + `music_mode`. Never re-derive it in the client

@@ -12927,3 +12927,117 @@ What I need from Ben:
   the marimba v6 for whatever changes.
 - **Lucia**: the answer is her design, and its restraint („never longer than
   you“) was deliberate. Worth her ear before anything ports.
+
+## Exercise cards with a QR code — a printed card starts the run (2026-11-23)
+
+What I checked: Ben's PRD „Übungskarten mit QR-Code“
+(https://claude.ai/artifact/1RJSQu6PnxUff5shXxULpM, decided 20.–23.11.;
+summary in `docs/plans/exercise-cards-prd.md`). Ben's choices on the
+simplifications: V1 (the question hangs on `kind = 'card_based'`, no
+`asks_goal` column), V2 not taken (the deck card is written on „Weiter“, D11),
+V3 (the start path lives in the intro's address, no column), V4 not taken
+(pressing the running exercise in the library still continues it), V5 (drop
+the unread leftovers). D20, the printed address: `musie.org`. Built against a
+private stack (`musie-excards`, ports +400), because the shared one must not
+be reset (rule 9).
+
+What I did:
+- **`/s/:code` starts a run.** `EX-NN` opens that exercise, `MC-NN` opens
+  Freie Bahn with the card (`?via=deck-card&card=MC-04` on the intro).
+  Anything running — even the same exercise — gets the dialog. The three old
+  outcomes (card written into the running session, „nothing is running“, „this
+  exercise draws no cards“) and the „scan wins over a digital run“ rule are
+  gone, and with them the held code in `sessionStorage` and the scan step's
+  prefill.
+- **The intro asks „Was brauchst du gerade?“** on a card exercise started from
+  a printed card: the goal sheet's question and goals, as a third
+  `SegmentedControl` in the slot the other two questions use — no new layout
+  (Ben). Preselected: the goal last chosen in the library if the exercise has
+  it, else the first in the sheet's order (D10, D12). Written on the way out,
+  before the card. Glyphs chosen here because the goals had none: `Waves`,
+  `BatteryCharging`, `Flower2`. **They are a guess** — clear of the intro's
+  other glyphs, nothing more.
+- **After a deck card** the intro shows the card's picture in the image slot
+  and no cards switch or stack sentence (D23). „Weiter“ writes the goal, then
+  the card, moves the row to `listen`, and the session screen re-reads before
+  it follows. Navigating from inside the run raced the router's transition:
+  the reconciliation saw the old address and wrote `intro` back (the walk
+  caught it).
+- **The dialog**: its own title „Neue Übung starten?“, the sentence names both
+  exercises, „{neu} starten“ is primary, „{laufend} fortsetzen“ secondary, no
+  „Abbrechen“. After a scan, the X continues the running one (D15).
+- **Migration** `20261123100000_exercise_cards.sql`: `exercises.code` (EX-01 …
+  EX-08, EX-03 reserved for Atementspannung), the scan texts name only the
+  scanner in Musie (A9), `exercise_tracks` and `exercises.needs_cards` dropped
+  (V5). `grid_cells.track_id` / `artwork_id` were NOT dropped: /maintenance
+  still shows what is parked on an empty square with them. `project_deck()` is
+  re-created without the projection; `content:export` reads `plays` from the
+  card.
+- **`deck:pdf`** prints `exercises-de.pdf` and `exercises-en.pdf` beside
+  `deck.pdf`, from the database, in Figma's design, and reads every QR code
+  back with `zxing-wasm` before writing a PDF (P4). Default address
+  `https://musie.org`. `/dev/qr` and `qr-codes.mjs` know the EX codes (P5).
+- **The walks sign in now.** `reachTheLibrary` walked the explainer carousel
+  that anonymous accounts used to start at; since 2026-10-20 that ends at the
+  sign-in gate, so every walk using it was red on `main`. It now signs in an
+  onboarded account (`signIn` in `e2e/support.ts`). `scanlink.spec.ts` is
+  rewritten for the three ways in, the dialog, a signed-out scan (with the
+  one-time code read from the stack's mail catcher) and unknown codes: 12 of
+  12 green in both locales.
+- **Types hand-edited** (`gen:types` is denied); byte-identical to
+  `supabase gen types --db-url` against the private stack, apart from the
+  `graphql_public` schema the comparison left out.
+
+Why: the PRD's acceptance — and „nichts neu bauen, sondern nur das
+Existierende erweitern“.
+
+What I could not resolve:
+- **15 other walks are red, on `main` too.** With the same sign-in, unchanged
+  `main` fails the same 15 (session, cancel ×2, digitalcards one-card, reveal,
+  camera, instruments ×3 in DE; both locales where the walk runs in both) and
+  passes the same 13. Causes seen: `deck.json` pairings that no longer match
+  the database (trk-17 vs trk-05), a track id the snapshot names that does not
+  exist (trk-22), instrument copy that changed, and the library's „one of each
+  kind“ hiding cards a walk expects. None is this branch's; each needs its
+  walk brought up to date.
+
+What I need from Ben:
+- **Try it at the localhost link** in the hand-over (private stack, port
+  5485), then merge. The migration drops two objects on hosted; both are
+  unread there too.
+- **The goal glyphs** (`Waves`, `BatteryCharging`, `Flower2`) — keep or swap.
+- **Three goals clip on a phone — a component request, not an app fix.** At
+  393 px the `SegmentedControl` shows „Entspann…“, „Energie s…“, „Achtsamk…“:
+  three German labels do not fit, and the component clips them (its glyph and
+  accessible name stay whole, as designed). The two existing intro questions
+  have two options and fit. The fix belongs in the design system (rule 1) —
+  e.g. stacking the labels or wrapping to two lines when three options do not
+  fit — not in a screen.
+- **Print** with `pnpm deck:pdf` once merged; the QR codes are read back on
+  every run. MC-10 is still „test“ with MC-06's picture in the snapshot (Lucia).
+
+### Follow-up, 2026-11-24 — Ben's review on localhost
+
+What I did:
+- **„Was brauchst du gerade?“ explains itself**: under the control, the chosen
+  goal's sentence — „Musie wählt für diese Übung Musik aus, die dir beim
+  Entspannen hilft.“ / „… beim Aktivieren hilft.“ / „…, die dir hilft,
+  Achtsamkeit zu stärken.“ The third is Ben's sentence with the grammar
+  straightened („beim Achtsamkeit stärken“ needs „beim Stärken der
+  Achtsamkeit“). It is `SegmentedOption.description`, the component's own
+  slot, so there is nothing new in the layout.
+- **The cards switch is a question now**, wherever the run was started:
+  „Wie möchtest du die Übung machen?“ — „Mit den physischen Bildkarten“
+  (default) or „Komplett digital“, a `SegmentedControl` in the switch's old
+  place. User testing found „Die analogen Karten liegen vor mir.“ unclear.
+  After a deck card it stays hidden (D23).
+- **After a deck card the rail shows „Scannen“ as done** while still on the
+  intro. Display only; pressing it does what „Weiter“ does.
+- **The dialog's buttons name no exercise**: „Zurück zur aktuellen Übung“
+  (secondary) and „Neue Übung starten“ (primary; Ben wrote „Starten“, German
+  UI writing keeps the verb lower case).
+
+What I need from Ben:
+- **„Mit den physischen Bildkarten“ clips on a phone too** („Mit den
+  physisch…“), like the three goals above — same component request.
+

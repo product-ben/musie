@@ -58,7 +58,6 @@ import { CardScanner } from './CardScanner';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import type { Card, Exercise } from '../lib/content';
-import { takeHeldCode } from '../lib/scan';
 
 export interface SessionScanProps {
   exercise: Exercise;
@@ -89,17 +88,11 @@ export function SessionScan({
 }: SessionScanProps) {
   const t = useT();
 
-  /**
-   * A CODE SCANNED BEFORE THERE WAS A SESSION — PRE-FILLED, NOT WRITTEN.
-   *
-   * Taken once, on mount, and this component mounts when the scan step is on
-   * screen — so a held code is consumed by the step that can use it rather
-   * than by the session screen arriving at `intro` and throwing it away. It
-   * fills the field; it does not press the button. `lib/scan.ts` says why that
-   * distinction is the whole point.
-   */
-  const [held] = React.useState(() => takeHeldCode());
-  const [code, setCode] = React.useState(held ?? '');
+  /* NO CODE IS CARRIED IN ANY MORE — 2026-11-23. A deck card scanned with the
+     phone's camera while nothing ran used to be held and pre-filled here. It
+     now starts Freie Bahn with that card and skips this step altogether (PRD
+     „Übungskarten mit QR-Code", D2), so the field always opens empty. */
+  const [code, setCode] = React.useState('');
 
   /**
    * ── TYPING THE CODE IS THE THIRD WAY IN, AND IT IS A MODE OF THE FRAME ──
@@ -114,13 +107,11 @@ export function SessionScan({
    * One place where a card gets named, three ways of naming it, and only one
    * of them on screen at a time.
    *
-   * IT OPENS ITSELF IF IT IS ALREADY NEEDED. A code carried in from a scanned
-   * deep link is IN the field, and showing the viewfinder over it would hide
-   * the one thing that just happened — same for an error, which appears under
-   * the field it belongs to and would otherwise be reported into a frame that
-   * is not showing it.
+   * IT OPENS ITSELF IF IT IS ALREADY NEEDED: an error appears under the field
+   * it belongs to and would otherwise be reported into a frame that is not
+   * showing it.
    */
-  const [typing, setTyping] = React.useState(held !== null);
+  const [typing, setTyping] = React.useState(false);
 
   /* An answer about a code OPENS the form rather than being drawn into a
      frame that is showing something else. It sets state rather than being
@@ -215,12 +206,7 @@ export function SessionScan({
                  broken, which is what user testing reported. The hint below
                  already carries the example, where it cannot be mistaken for
                  input. */
-              /* The held hint REPLACES the how-to-find-it line while the field
-                 still carries the scanned code: somebody who just scanned the
-                 card does not need to be told where the code is printed. */
-              description={held !== null && code === held
-                ? t('session.scan.heldHint')
-                : t('session.scan.codeHint')}
+              description={t('session.scan.codeHint')}
               error={codeError !== null && code.trim() === errored ? codeError : undefined}
             />
 

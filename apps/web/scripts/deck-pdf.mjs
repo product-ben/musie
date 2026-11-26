@@ -1,5 +1,29 @@
 /**
- * `supabase/content/deck.json` → a print-ready PDF of the paper deck.
+ * `supabase/content/deck.json` → a print-ready PDF of the paper deck, and
+ * since 2026-11-23 the EXERCISE CARDS beside it, one PDF per language, read
+ * from the database (PRD „Übungskarten mit QR-Code", P1–P4).
+ *
+ * ── THE EXERCISE CARDS ────────────────────────────────────────────────────
+ * One card per implemented exercise that has a code (`exercises.code`). The
+ * design is Figma's „Musie · Druckkarten", Übungskarten DE/EN, rebuilt here
+ * (F2): the deck's format, surface, faces and scan group. The FRONT is the
+ * exercise's picture, 16:9 across the whole width and into the bleed, with
+ * its name and duration in the band below. The BACK is the description, top
+ * left; the stamp, the code and „Scanne und leg los" bottom left; the
+ * wordmark bottom right. A description longer than four lines is cut to its
+ * first sentence, as Figma's draft does for Klangreise.
+ *
+ * Read from the database rather than a snapshot: exercise copy travels by
+ * migration (CLAUDE.md 4.1), so the database IS the source. Which one is
+ * `SUPABASE_TEST_URL` + `SUPABASE_TEST_SERVICE_ROLE_KEY`, both or neither,
+ * else the local stack — `content-export.mjs`'s rule.
+ *
+ * ── EVERY CODE IS READ BACK BEFORE THE PDF IS WRITTEN (P4) ────────────────
+ * Each stamp is rendered, photographed at four times its size and decoded
+ * with the same reader the app's camera uses (`zxing-wasm`), and the URL it
+ * yields is compared with the one it should carry. A mismatch fails the run.
+ * The reason is on record: a QR whose finder rings came out a hair too thin
+ * looked perfect and did not scan, and only decoding it showed that.
  *
  * ── WHAT IT MAKES ─────────────────────────────────────────────────────────
  * Two faces per card. The FRONT is the picture, and nothing else — no word
@@ -31,13 +55,13 @@
  * viewport — every `clamp()` in it would collapse to its minimum. A printed
  * size is a physical measurement, so it is written as one.
  *
- * ── THE PDF IS NOT COMMITTED, AND THE DECK IS NOT PRINTABLE YET ───────────
+ * ── THE PDF IS NOT COMMITTED, AND THE ADDRESS IS DECIDED ──────────────────
  * Same rule as `qr-codes.mjs`: the generator is committed and its output is
- * not, because the thing that gets printed must be reproducible. And the QR
- * carries an ABSOLUTE url, so the deck cannot go to a printer until the domain
- * is decided (BUILD-PLAN.md's blocker table). Until then `--base-url` defaults
- * to the dev server and the PDF is a real proof you can cut out and scan on
- * your own laptop; print day is the same command with the real address.
+ * not, because the thing that gets printed must be reproducible. The QR
+ * carries an ABSOLUTE url, and since 2026-11-23 that is `https://musie.org`
+ * (Ben, D20 of the exercise-card PRD), so the default is what goes to the
+ * press. A proof to scan against your own laptop passes
+ * `--base-url http://localhost:5173`.
  *
  * USAGE
  *   node scripts/deck-pdf.mjs                                  # or: pnpm deck:pdf
@@ -48,16 +72,21 @@
  *   node scripts/deck-pdf.mjs --card 63x88                     # portrait instead
  *   node scripts/deck-pdf.mjs --codes MC-03,MC-07              # reprint two cards
  *   node scripts/deck-pdf.mjs --masters ~/elsewhere/cards      # masters somewhere else
+ *   node scripts/deck-pdf.mjs --only exercises                 # the exercise cards alone
+ *   node scripts/deck-pdf.mjs --only deck                      # the deck alone
  *
- * It writes `deck.pdf` and the `deck.html` it was printed from — open the HTML
- * in a browser to iterate on the design without waiting for a PDF.
+ * It writes `deck.pdf`, `exercises-de.pdf` and `exercises-en.pdf`, each with
+ * the HTML it was printed from — open the HTML in a browser to iterate on the
+ * design without waiting for a PDF.
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import QRCode from 'qrcode';
+import { createClient } from '@supabase/supabase-js';
 import { LOCALES, assertDeck, ordered, readDeck } from './deck.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -97,6 +126,9 @@ const PUBLIC = join(HERE, '..', 'public');
  * warning and a printable deck rather than a crash.
  */
 const DEFAULT_MASTERS = join(homedir(), 'Documents', 'musie-assets', 'cards');
+
+/** The exercise pictures' masters, beside the cards' (`app graphics`). */
+const DEFAULT_EXERCISE_MASTERS = join(homedir(), 'Documents', 'musie-assets', 'app graphics', 'exercises');
 
 /** Print-master extensions, best first. */
 const MASTER_EXT = ['.png', '.webp', '.jpg', '.jpeg', '.tif', '.tiff'];
@@ -152,9 +184,9 @@ function stampSize(card) {
   return Math.min(card.width, card.height) * STAMP_FRACTION;
 }
 
-/** The dev server, so the default output is scannable with no argument — the
- *  same default, for the same reason, as `qr-codes.mjs`. */
-const DEFAULT_BASE_URL = 'http://localhost:5173';
+/** The address the printed codes carry — decided by Ben on 2026-11-23 (D20).
+ *  It was the dev server until then, while the domain was open. */
+const DEFAULT_BASE_URL = 'https://musie.org';
 
 /**
  * A4, in millimetres, TURNED TO MATCH THE CARD.
@@ -174,6 +206,15 @@ const sheetFor = (card) =>
  * singular, du, verb first, no 'Bitte'.
  */
 const CAPTION = { de: 'Scanne und hör zu', en: 'Scan and listen' };
+
+/** The exercise card's caption under its stamp (PRD copy table). */
+const EXERCISE_CAPTION = { de: 'Scanne und leg los', en: 'Scan and begin' };
+
+/** The duration on an exercise card's front — `exercises.fact.timeShort`. */
+const DURATION = {
+  de: (min, max) => `${min}–${max} Min.`,
+  en: (min, max) => `${min}–${max} min`,
+};
 
 function parseArgs(argv) {
   const args = {};
@@ -329,9 +370,39 @@ function back(card, locales, qr) {
   return `<div class="musie-card musie-card--back">
   <p class="musie-wordmark">Musie</p>
   <div class="musie-scan">
-    <div class="musie-qr">${qr}</div>
+    <div class="musie-qr" data-url="${escape(qr.url)}">${qr.svg}</div>
     <p class="musie-code">${escape(card.code)}</p>
     <p class="musie-caption">${locales.map((locale) => escape(CAPTION[locale])).join(' · ')}</p>
+  </div>
+</div>`;
+}
+
+/* ── an exercise card's two faces — 2026-11-23 ────────────────────────── */
+
+/**
+ * The front: the exercise's picture over the full width, 16:9, running into
+ * the bleed on three sides; its name and duration in the band below.
+ */
+function exerciseFront(exercise, locale, artwork) {
+  return `<div class="musie-card musie-card--exfront">
+  ${artwork === null ? '<div class="musie-ex-art musie-ex-art--none"></div>'
+    : `<img class="musie-ex-art" src="${artwork}" alt="${escape(exercise.alt)}" />`}
+  <div class="musie-ex-band">
+    <p class="musie-ex-name">${escape(exercise.name)}</p>
+    <p class="musie-ex-time">${escape(DURATION[locale](exercise.min, exercise.max))}</p>
+  </div>
+</div>`;
+}
+
+/** The back: the description, the stamp group and the wordmark. */
+function exerciseBack(exercise, locale, qr) {
+  return `<div class="musie-card musie-card--back musie-card--exback">
+  <p class="musie-ex-text" data-full="${escape(exercise.description)}">${escape(exercise.description)}</p>
+  <p class="musie-wordmark">Musie</p>
+  <div class="musie-scan">
+    <div class="musie-qr" data-url="${escape(qr.url)}">${qr.svg}</div>
+    <p class="musie-code">${escape(exercise.code)}</p>
+    <p class="musie-caption">${escape(EXERCISE_CAPTION[locale])}</p>
   </div>
 </div>`;
 }
@@ -369,7 +440,12 @@ function singlePages(faces, card, bleed) {
     /* Nothing is inset from this face's edge any more — the stamp is on the
        back, which sits inside the safe area — so the art front is simply the
        whole sheet. */
-    .musie-page .musie-card--art { position: absolute; inset: 0; width: auto; height: auto; }`;
+    .musie-page .musie-card--art { position: absolute; inset: 0; width: auto; height: auto; }
+    /* An exercise card's picture runs into the bleed on top, left and right. */
+    .musie-page .musie-card--exfront .musie-ex-art {
+      top: -${bleed}mm; left: -${bleed}mm; right: -${bleed}mm;
+      height: calc(var(--musie-ex-art-height) + ${bleed}mm);
+    }`;
 
   return { css, html: faces.map((face) => `<section class="musie-page">${face}</section>`).join('\n') };
 }
@@ -446,7 +522,7 @@ function document_(body, layoutCss, card, meta) {
   const stampMm = stampSize(card);
 
   return `<!doctype html>
-<html lang="de">
+<html lang="${meta.lang ?? 'de'}">
   <head>
     <meta charset="utf-8" />
     <title>Musie · ${escape(meta.title)}</title>
@@ -574,6 +650,51 @@ function document_(body, layoutCss, card, meta) {
         letter-spacing: 0.06em;
         color: var(--on-surface-muted);
       }
+
+      /* ── the exercise card (2026-11-23) ───────────────────────────────
+         Figma „Musie · Druckkarten", Übungskarten: the deck's sizes for code,
+         caption and wordmark, a 16:9 picture across the front, the name and
+         duration in the band under it, the description on the back. */
+      .musie-card--exfront {
+        display: block; padding: 0;
+        --musie-ex-art-height: ${(card.width * 9 / 16).toFixed(2)}mm;
+      }
+      .musie-ex-art {
+        position: absolute; top: 0; left: 0; right: 0;
+        height: var(--musie-ex-art-height);
+        width: auto; display: block; object-fit: cover;
+      }
+      .musie-ex-art--none { background: var(--border-subtle); }
+      .musie-ex-band {
+        position: absolute; left: 6mm; right: 6mm;
+        top: calc(var(--musie-ex-art-height) + (${card.height.toFixed(2)}mm - var(--musie-ex-art-height)) / 2);
+        transform: translateY(-50%);
+        display: flex; align-items: baseline; justify-content: space-between; gap: 2mm;
+        text-align: left;
+      }
+      .musie-ex-name {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: var(--font-weight-medium);
+        font-size: ${(unit * 0.0667).toFixed(2)}mm;
+        letter-spacing: -0.01em;
+      }
+      .musie-ex-time {
+        margin: 0;
+        font-family: var(--font-text);
+        font-size: ${(unit * 0.045).toFixed(2)}mm;
+        color: var(--on-surface-muted);
+        white-space: nowrap;
+      }
+      .musie-ex-text {
+        position: absolute; top: 6mm; left: 6mm; right: 6mm;
+        margin: 0; text-align: left;
+        font-family: var(--font-text);
+        font-size: ${(unit * 0.05).toFixed(2)}mm;
+        line-height: 1.4;
+        /* No automatic breaks: Figma sets the description unhyphenated. */
+        hyphens: manual;
+      }
     </style>
   </head>
   <body data-theme="light">
@@ -612,12 +733,113 @@ ${body}
             word.style.fontSize = size + 'px';
           }
         }
+        /* AN EXERCISE'S DESCRIPTION GETS FOUR LINES. Past that it would run
+           into the stamp group, so it is cut to its first sentence — the rule
+           Figma's draft applied to Klangreise. Measured, not counted in
+           characters: German and English wrap differently. */
+        for (const text of document.querySelectorAll('.musie-ex-text')) {
+          const lineHeight = parseFloat(getComputedStyle(text).lineHeight);
+          const lineCount = () => Math.round(text.getBoundingClientRect().height / lineHeight);
+          if (lineCount() > 4) {
+            const first = /^[\\s\\S]*?[.!?](\\s|$)/.exec(text.textContent);
+            if (first !== null) text.textContent = first[0].trim();
+            text.dataset.shortened = 'true';
+          }
+        }
         window.deckFitted = true;
       });
     </script>
   </body>
 </html>
 `;
+}
+
+/* ── reading the exercises, and printing a page ───────────────────────── */
+
+/** Where the exercises are read from — `content-export.mjs`'s rule. */
+function target() {
+  const url = process.env.SUPABASE_TEST_URL;
+  const key = process.env.SUPABASE_TEST_SERVICE_ROLE_KEY;
+  if (url && key) return { url, key, named: 'the environment' };
+  if (url || key) {
+    throw new Error('Set SUPABASE_TEST_URL and SUPABASE_TEST_SERVICE_ROLE_KEY together, or neither.');
+  }
+  const status = JSON.parse(execFileSync('supabase', ['status', '-o', 'json'], { encoding: 'utf8' }));
+  return { url: status.API_URL, key: status.SERVICE_ROLE_KEY, named: 'the local stack' };
+}
+
+/**
+ * Every implemented exercise that has a printed code, in catalogue order,
+ * with its copy in both languages.
+ */
+async function readExercises() {
+  const { url, key, named } = target();
+  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await db
+    .from('exercises')
+    .select('id, code, sort, timeframe_min, timeframe_max, image_url, exercise_i18n(locale, name, description, image_alt)')
+    .eq('implemented', true)
+    .not('code', 'is', null)
+    .order('sort');
+  if (error !== null) throw new Error(`exercises: ${error.message} (read from ${named}, ${url})`);
+  return { named, url, exercises: data };
+}
+
+/**
+ * EVERY STAMP ON THE PAGE, DECODED — P4.
+ *
+ * Each `.musie-qr` carries the URL it was drawn for. The element is
+ * photographed (the page runs at four times its pixel density for this) and
+ * read with `zxing-wasm`, the reader behind the app's own camera; the text it
+ * yields must be that URL. Any other answer, or none, fails the run before a
+ * PDF exists.
+ */
+async function verifyStamps(tab) {
+  const { readBarcodes } = await import('zxing-wasm/reader');
+  const stamps = tab.locator('.musie-qr[data-url]');
+  const count = await stamps.count();
+  const failed = [];
+  for (let index = 0; index < count; index += 1) {
+    const stampNode = stamps.nth(index);
+    const expected = await stampNode.getAttribute('data-url');
+    const png = await stampNode.screenshot();
+    const results = await readBarcodes(new Uint8Array(png), { formats: ['QRCode'] });
+    const read = results.map((result) => result.text);
+    if (!read.includes(expected)) failed.push(`${expected} → ${read.join(', ') || 'nothing'}`);
+  }
+  if (failed.length > 0) {
+    throw new Error(`${failed.length} of ${count} QR codes do not read back as their URL:\n  ${failed.join('\n  ')}`);
+  }
+  return count;
+}
+
+/** Write `<name>.html`, load it, decode every stamp, print `<name>.pdf`. */
+async function printPage(browser, html, out, name) {
+  await mkdir(out, { recursive: true });
+  const htmlPath = join(out, `${name}.html`);
+  const pdfPath = join(out, `${name}.pdf`);
+  await writeFile(htmlPath, html, 'utf8');
+
+  const tab = await browser.newPage({ deviceScaleFactor: 4 });
+  try {
+    await tab.goto(pathToFileURL(htmlPath).href, { waitUntil: 'load' });
+    /* Waiting on the page's own fit pass, which waits on the webfonts — so this
+       covers both: without it the first page can print in a fallback face,
+       because @font-face is fetched lazily and `load` does not wait for it.
+
+       Expressions rather than functions, because these run in the PAGE and
+       everything else in this file runs in node — where `document` and
+       `window` are neither defined nor lintable (eslint.config.js hands
+       scripts/ node's globals and nothing else, on purpose). */
+    await tab.evaluate('document.fonts.ready');
+    await tab.waitForFunction('window.deckFitted === true');
+    const decoded = await verifyStamps(tab);
+    const shortened = await tab.locator('.musie-ex-text[data-shortened]').count();
+    await tab.pdf({ path: pdfPath, printBackground: true, preferCSSPageSize: true });
+    return { pdfPath, htmlPath, decoded, shortened };
+  } finally {
+    await tab.close();
+  }
 }
 
 /* ── main ─────────────────────────────────────────────────────────────── */
@@ -627,11 +849,18 @@ async function main() {
   const baseUrl = typeof args['base-url'] === 'string' ? args['base-url'] : DEFAULT_BASE_URL;
   const out = resolve(typeof args.out === 'string' ? args.out : 'deck-print');
   const masters = resolve(typeof args.masters === 'string' ? args.masters : DEFAULT_MASTERS);
+  const exerciseMasters = resolve(
+    typeof args['exercise-masters'] === 'string' ? args['exercise-masters'] : DEFAULT_EXERCISE_MASTERS,
+  );
   const card = parseSize(args.card, { width: 88, height: 63 });
   const bleed = args.bleed === undefined ? 3 : Number(args.bleed);
   const layout = args.layout === 'sheet' ? 'sheet' : 'single';
+  const only = typeof args.only === 'string' ? args.only : 'both';
 
   if (!Number.isFinite(bleed) || bleed < 0) throw new Error('--bleed wants millimetres, from 0 up.');
+  if (!['both', 'deck', 'exercises'].includes(only)) {
+    throw new Error(`--only takes deck or exercises, not "${only}".`);
+  }
 
   const wanted = args.locale === true || args.locale === undefined ? 'both' : String(args.locale);
   if (wanted !== 'both' && !LOCALES.includes(wanted)) {
@@ -641,6 +870,29 @@ async function main() {
      front's big word is the first locale in this list. */
   const locales = wanted === 'both' ? ['de', 'en'] : [wanted];
 
+  const { chromium } = await import('@playwright/test');
+  let browser;
+  try {
+    browser = await chromium.launch();
+  } catch {
+    throw new Error(
+      'Chromium is not installed for Playwright. Run `pnpm --filter web exec playwright install chromium`, then this again.',
+    );
+  }
+
+  const report = [];
+  try {
+    if (only !== 'exercises') report.push(await printDeck({ browser, args, baseUrl, out, masters, card, bleed, layout, locales }));
+    if (only !== 'deck') report.push(await printExercises({ browser, baseUrl, out, masters: exerciseMasters, card, bleed, layout, locales }));
+  } finally {
+    await browser.close();
+  }
+
+  console.log(`${report.join('\n\n')}\n\nQR codes point at ${baseUrl}`);
+}
+
+/** The deck, as it always was — two faces per card, both languages on each. */
+async function printDeck({ browser, args, baseUrl, out, masters, card, bleed, layout, locales }) {
   const deck = assertDeck(await readDeck());
   let cards = ordered(deck);
 
@@ -657,48 +909,18 @@ async function main() {
      pointing a camera at and the other is a contact sheet, and neither is a
      printed card. All three encode the identical url. */
   const qr = new Map();
-  for (const c of cards) qr.set(c.id, stamp(scanLink(c.code, baseUrl)));
-
-  /**
-   * IS THE CORNER SQUARE STILL A MACHINE'S TARGET? Asked, not assumed.
-   *
-   * The two numbers that decide it move independently. The printed size is
-   * fixed in millimetres by the card, and the module count grows with the URL
-   * — and print day runs this command with a `--base-url` nobody has typed
-   * yet (the domain is still open; BUILD-PLAN.md's blocker table). So a deck
-   * that scans perfectly against `localhost:5173` can come back from the press
-   * unscannable on the front, and the way that gets discovered is a tester
-   * holding a card.
-   *
-   * The encoder's grid excludes the quiet zone; the SVG adds `margin: 2` each
-   * side and the two share one physical box, so the four go into the divisor.
-   */
-  const stampMm = stampSize(card);
-  let widest = 0;
   for (const c of cards) {
-    widest = Math.max(
-      widest,
-      QRCode.create(scanLink(c.code, baseUrl), {}).modules.size + STAMP_QUIET * 2,
-    );
+    const url = scanLink(c.code, baseUrl);
+    qr.set(c.id, { url, svg: stamp(url) });
   }
-  const moduleMm = stampMm / widest;
-  if (moduleMm < MIN_MODULE_MM) {
-    console.warn(
-      `[musie] the stamp prints at ${moduleMm.toFixed(2)} mm per module ` +
-        `(${widest} modules across ${stampMm.toFixed(1)} mm), under the ${MIN_MODULE_MM} mm a ` +
-        `phone needs to resolve one. THIS IS NOW THE DECK'S ONLY CODE — the front has none ` +
-        `— so a card that fails here cannot be scanned at all. A shorter --base-url is the ` +
-        `cheap fix; raising STAMP_FRACTION is the other one.`,
-    );
-  }
+
+  warnIfTooFine(cards.map((c) => c.code), baseUrl, card);
 
   /**
    * WHICH CARDS HAVE A PICTURE, resolved against the file system rather than
    * trusted from the column.
    *
-   * `cards.image_url` is a path, and a path in a database is a claim. The nine
-   * currently claim `assets/web/method-card.png`, which has never existed on
-   * disk — so believing the column would print nine broken images. Checking
+   * `cards.image_url` is a path, and a path in a database is a claim. Checking
    * means a card falls back to its word for exactly one reason: there is no
    * file there.
    */
@@ -740,48 +962,86 @@ async function main() {
       : singlePages(cards.flatMap((c) => [renderFront(c), renderBack(c)]), card, bleed);
 
   const page = document_(html, css, card, { title: `deck for ${baseUrl}` });
-
-  await mkdir(out, { recursive: true });
-  const htmlPath = join(out, 'deck.html');
-  const pdfPath = join(out, 'deck.pdf');
-  await writeFile(htmlPath, page, 'utf8');
-
-  const { chromium } = await import('@playwright/test');
-  let browser;
-  try {
-    browser = await chromium.launch();
-  } catch {
-    throw new Error(
-      'Chromium is not installed for Playwright. Run `pnpm --filter web exec playwright install chromium`, ' +
-        `then this again. ${htmlPath} is already written — a browser can print it by hand meanwhile.`,
-    );
-  }
-
-  try {
-    const tab = await browser.newPage();
-    await tab.goto(pathToFileURL(htmlPath).href, { waitUntil: 'load' });
-    /* Waiting on the page's own fit pass, which waits on the webfonts — so this
-       covers both: without it the first page can print in a fallback face,
-       because @font-face is fetched lazily and `load` does not wait for it.
-
-       Expressions rather than functions, because these run in the PAGE and
-       everything else in this file runs in node — where `document` and
-       `window` are neither defined nor lintable (eslint.config.js hands
-       scripts/ node's globals and nothing else, on purpose). */
-    await tab.evaluate('document.fonts.ready');
-    await tab.waitForFunction('window.deckFitted === true');
-    await tab.pdf({ path: pdfPath, printBackground: true, preferCSSPageSize: true });
-  } finally {
-    await browser.close();
-  }
+  const printed = await printPage(browser, page, out, 'deck');
 
   const faces = layout === 'sheet' ? 'sheets' : 'pages';
-  console.log(
-    `${cards.length} cards · ${drawn.length} with artwork, ${cards.length - drawn.length} set in type · ` +
-      `${locales.join(' + ')} · ${layout} ${faces} · ${card.width}×${card.height}mm` +
-      `${layout === 'single' ? ` + ${bleed}mm bleed` : ''}\n` +
-      `QR codes point at ${baseUrl}\n\n  ${pdfPath}\n  ${htmlPath}`,
-  );
+  return `${cards.length} deck cards · ${drawn.length} with artwork, ${cards.length - drawn.length} set in type · ` +
+    `${locales.join(' + ')} · ${layout} ${faces} · ${card.width}×${card.height}mm` +
+    `${layout === 'single' ? ` + ${bleed}mm bleed` : ''} · ${printed.decoded} QR codes read back\n` +
+    `  ${printed.pdfPath}\n  ${printed.htmlPath}`;
+}
+
+/** The exercise cards: one PDF per language, from the database. */
+async function printExercises({ browser, baseUrl, out, masters, card, bleed, layout, locales }) {
+  const { named, url, exercises } = await readExercises();
+  if (exercises.length === 0) throw new Error(`No exercise has a code in ${named} (${url}).`);
+
+  warnIfTooFine(exercises.map((e) => e.code), baseUrl, card);
+
+  const lines = [];
+  for (const locale of locales) {
+    const rows = exercises.map((exercise) => {
+      const text = exercise.exercise_i18n.find((row) => row.locale === locale);
+      if (text === undefined) throw new Error(`${exercise.id} has no ${locale} copy.`);
+      const master = MASTER_EXT.map((ext) => join(masters, `${exercise.id}${ext}`)).find((f) => existsSync(f));
+      const web = exercise.image_url === null ? null : join(PUBLIC, exercise.image_url);
+      const picture = master ?? (web !== null && existsSync(web) ? web : null);
+      if (master === undefined) {
+        console.warn(`[musie] ${exercise.code} prints from the WEB copy of its picture. Put the master in ${masters}.`);
+      }
+      const link = scanLink(exercise.code, baseUrl);
+      return {
+        id: exercise.id,
+        code: exercise.code,
+        name: text.name,
+        description: text.description,
+        alt: text.image_alt,
+        min: exercise.timeframe_min,
+        max: exercise.timeframe_max,
+        picture: picture === null ? null : pathToFileURL(picture).href,
+        qr: { url: link, svg: stamp(link) },
+      };
+    });
+
+    const renderFront = (row) => exerciseFront(row, locale, row.picture);
+    const renderBack = (row) => exerciseBack(row, locale, row.qr);
+    const { css, html } =
+      layout === 'sheet'
+        ? sheetPages(rows, renderFront, renderBack, card)
+        : singlePages(rows.flatMap((row) => [renderFront(row), renderBack(row)]), card, bleed);
+
+    const page = document_(html, css, card, { title: `exercise cards (${locale}) for ${baseUrl}`, lang: locale });
+    const printed = await printPage(browser, page, out, `exercises-${locale}`);
+    lines.push(
+      `${rows.length} exercise cards (${locale}) · from ${named} · ${printed.decoded} QR codes read back` +
+        `${printed.shortened > 0 ? ` · ${printed.shortened} description${printed.shortened === 1 ? '' : 's'} cut to the first sentence` : ''}\n` +
+        `  ${printed.pdfPath}\n  ${printed.htmlPath}`,
+    );
+  }
+  return lines.join('\n');
+}
+
+/**
+ * IS THE CORNER SQUARE STILL A MACHINE'S TARGET? Asked, not assumed.
+ *
+ * The printed size is fixed in millimetres by the card, and the module count
+ * grows with the URL. The encoder's grid excludes the quiet zone; the SVG adds
+ * STAMP_QUIET each side and the two share one physical box.
+ */
+function warnIfTooFine(codes, baseUrl, card) {
+  const stampMm = stampSize(card);
+  let widest = 0;
+  for (const code of codes) {
+    widest = Math.max(widest, QRCode.create(scanLink(code, baseUrl), {}).modules.size + STAMP_QUIET * 2);
+  }
+  const moduleMm = stampMm / widest;
+  if (moduleMm < MIN_MODULE_MM) {
+    console.warn(
+      `[musie] the stamp prints at ${moduleMm.toFixed(2)} mm per module ` +
+        `(${widest} modules across ${stampMm.toFixed(1)} mm), under the ${MIN_MODULE_MM} mm a ` +
+        `phone needs to resolve one. A shorter --base-url is the cheap fix; raising STAMP_FRACTION is the other one.`,
+    );
+  }
 }
 
 main().catch((thrown) => {

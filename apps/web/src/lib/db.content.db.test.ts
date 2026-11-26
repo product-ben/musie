@@ -211,11 +211,12 @@ describe('tracks · the ids are opaque, and that is the security model', () => {
   /**
    * WHY THIS TEST EXISTS.
    *
-   * `exercise_tracks.track_id` IS granted to the client — it holds only ids,
-   * so it needs no column grant. That is only safe while `tracks.id` says
-   * nothing. Seed a recording as `morgenlicht` instead of `trk-01` and the
-   * client can read the title straight off the join, through a table the
-   * column grant does not cover and was never meant to.
+   * Track ids ARE readable by the client — `sessions.track_id`, and a card's
+   * two pieces — because they are only ids. (`exercise_tracks` carried them
+   * too until 2026-11-23.) That is only safe while `tracks.id` says nothing.
+   * Seed a recording as `morgenlicht` instead of `trk-01` and the client can
+   * read the title straight off the id, which the column grant on `tracks`
+   * does not cover and was never meant to.
    *
    * So the grant and the id scheme are two halves of one mechanism, and the
    * half that has no constraint behind it is this one. Read with the SERVICE
@@ -365,26 +366,25 @@ describe('exercises · the listen gate', () => {
        user out today. It asserts the SEED is coherent without that safety
        net — if this goes red, somebody has set a gate that only the cap is
        saving, and the cap is a fallback rather than the design. */
-    const { client } = await testUser();
-    const { data: pairs } = await client
-      .from('exercise_tracks')
-      .select('exercise_id, track_id, exercises(listen_gate_seconds), tracks(duration_seconds)');
+    /* Every piece a card can play — its activation and its relax piece —
+       against every card exercise's gate. Read from the card since
+       2026-11-23: `exercise_tracks`, which paired them before, is gone. */
+    const service = serviceClient();
+    const { data: gates } = await service
+      .from('exercises').select('listen_gate_seconds').eq('kind', 'card_based');
+    const { data: cards } = await service
+      .from('cards').select('activation_track_id, relax_track_id').is('archived_at', null);
+    const pieces = [...new Set((cards ?? []).flatMap((card) =>
+      [card.activation_track_id, card.relax_track_id].filter((id): id is string => id !== null)))];
+    const { data: tracks } = await service
+      .from('tracks').select('id, duration_seconds').in('id', pieces);
 
-    expect(pairs?.length).toBeGreaterThan(0);
-    for (const pair of pairs ?? []) {
-      /* PostgREST returns an OBJECT for a to-one embed and supabase-js infers
-         an ARRAY from the generated relationship — the same mismatch
-         `diary.ts` documents at `Embedded<T>`. Collapsed through `unknown`,
-         because the two shapes genuinely do not overlap. */
-      const one = <T,>(embed: unknown): T | null => {
-        if (embed === null || embed === undefined) return null;
-        return (Array.isArray(embed) ? embed[0] ?? null : embed) as T | null;
-      };
-      const gate = one<{ listen_gate_seconds: number }>(pair.exercises);
-      const track = one<{ duration_seconds: number }>(pair.tracks);
-      expect(gate).not.toBeNull();
-      expect(track).not.toBeNull();
-      expect(gate!.listen_gate_seconds).toBeLessThan(track!.duration_seconds);
+    expect(gates?.length).toBeGreaterThan(0);
+    expect(tracks?.length).toBeGreaterThan(0);
+    const longestGate = Math.max(...(gates ?? []).map((row) => row.listen_gate_seconds));
+    for (const track of tracks ?? []) {
+      expect(longestGate, `${track.id} is shorter than a card exercise's gate`)
+        .toBeLessThan(track.duration_seconds);
     }
   });
 });

@@ -176,15 +176,18 @@ camelCase was considered and rejected: unlike `needs_cards` → `needsCards`, th
 **value** would move too, so a grep for `listening_only` would find the schema
 or the app but never both.
 
-## `needs_cards` is a mirror, not a second answer
+## `needs_cards` is gone, and `code` arrived
 
-```sql
-constraint exercises_cards_match_kind check ((kind = 'card_based') = needs_cards)
-```
+`needs_cards` was a mirror of `kind = 'card_based'`, held equal by a check
+constraint and kept for other branches' sake. Nothing read it, and it was
+dropped on 2026-11-23 together with its constraint
+(`20261123100000_exercise_cards.sql`).
 
-Equality in both directions, so neither column can move alone. `needs_cards` is
-kept for rule 9's sake — a column other branches already read — and is now
-derived in fact if not in form.
+The same migration added `exercises.code` — `EX-01` … `EX-08`, the code
+printed on each exercise card beside its QR code. `/s/EX-02` starts the
+exercise ([scanning a card](/features/scan)). Assigned once and never reused,
+because the card is paper; EX-03 is reserved for Atementspannung, which is not
+built yet.
 
 ## `listen_gate_seconds` lives on the exercise
 

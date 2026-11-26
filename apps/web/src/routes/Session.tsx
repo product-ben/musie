@@ -73,7 +73,7 @@ import { UnderstandSheet } from '../components/UnderstandSheet';
 import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import { warmTrackBytes } from '../lib/audio';
-import { getCard, getCards, getExercise, getListenAudio, getTrack } from '../lib/content';
+import { getCard, getCardByCode, getCards, getExercise, getGoals, getListenAudio, getTrack } from '../lib/content';
 import { analyticsReady, posthog } from '../lib/posthog';
 import { posthogLog } from '../lib/posthogLogs';
 import { SHEET_OPEN, dealtCards, withSheetOpen, withToken } from '../lib/digitalCards';
@@ -87,9 +87,10 @@ import { FOCUS_FEELINGS, FOCUS_THOUGHTS, FOCUS_UNDERSTAND, REFLECT_SHEETS, hasAn
 import type { ReflectMode, ReflectSheet } from '../lib/reflect';
 import { scanCardInto } from '../lib/scan';
 import {
-  completedBefore, endSession, readSession, saveCard, saveDigitalCards,
+  completedBefore, endSession, readSession, saveCard, saveDigitalCards, saveGoal,
   saveListeningAnswers, savePlay, saveReflection, saveStep,
 } from '../lib/session';
+import { goalsOffered, readStartedVia } from '../lib/startedVia';
 /* `saveFeelingChange` and `FeelingChange` left this file on 2026-10-16 with
    the mood scale. Diary.tsx imports them now — the function and the column
    are unchanged, only the screen that asks has moved. */
@@ -169,6 +170,8 @@ interface SessionData {
   exercise: Exercise;
   card: Card | null;
   track: Track | null;
+  /** Which read this is — see `jump` below. */
+  version: number;
 }
 
 export function Session() {
@@ -194,7 +197,30 @@ export function Session() {
    * fetching nine cards and their translations to show one.
    */
   const [version, setVersion] = React.useState(0);
+  /* The version a read was started for, read inside `run` rather than closed
+     over: `run` is memoised on the id and the locale only. */
+  const versionRef = React.useRef(version);
+  versionRef.current = version;
+
+  /**
+   * ── A JUMP OVER A STEP, AFTER THE ROW HAS MOVED — 2026-11-23 ────────────
+   * A deck card scanned with the phone's camera skips the scan step: „Weiter"
+   * on the intro writes the card and moves the ROW to `listen` (PRD
+   * „Übungskarten mit QR-Code", D2). The screen must follow without the step
+   * machine ever seeing `listen` while it still stands on `intro` — it would
+   * refuse it and send the person back — and without the reconciliation
+   * writing the old step over the new one, which a navigation inside the run
+   * did (measured: the row read `intro` again). So the run hands the jump up
+   * here: the session is read again, and only a read at least as new as the
+   * jump navigates. The run then mounts on the row's own step.
+   */
+  const [jump, setJump] = React.useState<{ step: StepId; version: number } | null>(null);
+  React.useEffect(() => {
+    if (jump !== null && urlStep === jump.step) setJump(null);
+  }, [jump, urlStep]);
+
   const run = React.useCallback(async (): Promise<SessionData | null> => {
+    const startedFor = versionRef.current;
     const row = await readSession(id);
     if (row === null) return null;
 
@@ -215,7 +241,7 @@ export function Session() {
       exercise.kind === 'card_based' ? getTrack(row.trackId) : Promise.resolve(null),
     ]);
 
-    return { row, exercise, card, track };
+    return { row, exercise, card, track, version: startedFor };
   }, [id, locale]);
 
   const { data, loading, error } = useAsync(run, `session:${id}:${locale}:${version}`);
@@ -274,6 +300,11 @@ export function Session() {
    * on every advance, and remounting there would throw away `listened`, the
    * typed answer and the reflect mode every time somebody moved.
    */
+  if (jump !== null) {
+    if (data.version < jump.version) return <p className="musie-note">{t('content.loading')}</p>;
+    if (urlStep !== jump.step) return <Navigate to={`/session/${encodeURIComponent(id)}/${jump.step}`} />;
+  }
+
   return (
     <SessionRun
       key={data.row.id}
@@ -281,6 +312,11 @@ export function Session() {
       id={id}
       urlStep={urlStep}
       onRescan={() => setVersion((n) => n + 1)}
+      onJump={(step) => {
+        const next = version + 1;
+        setVersion(next);
+        setJump({ step, version: next });
+      }}
     />
   );
 }
@@ -292,9 +328,11 @@ interface SessionRunProps {
   urlStep: StepId;
   /** A scan changes the row's card and track, so the read has to happen again. */
   onRescan: () => void;
+  /** The row has already moved to `step`: read again, then go there. */
+  onJump: (step: StepId) => void;
 }
 
-function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
+function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
   const t = useT();
   const { locale } = useLocale();
   const navigate = useNavigate();
@@ -430,6 +468,38 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   const [ending, setEnding] = React.useState<Ending>(
     isEnding(data.row.ending) ? data.row.ending : DEFAULT_ENDING,
   );
+
+  /* ── A RUN STARTED FROM A PRINTED CARD — 2026-11-23 ─────────────────────
+     PRD „Übungskarten mit QR-Code". The intro's address says how the run
+     began (`lib/startedVia.ts`, V3); the library's runs carry nothing.
+
+     THE QUESTION „Was brauchst du gerade?" is put on a CARD EXERCISE started
+     from a printed card (D6, D7 — by the kind, not a column: V1), when the
+     exercise serves at least two goals (D8). The answers are the goal
+     sheet's, in its order; the answer is the session's goal, which decides
+     which of the card's two pieces plays. Held locally and written on the way
+     out, like the other intro answers — and BEFORE the card (D11).
+
+     A DECK CARD (`?via=deck-card&card=MC-04`) stands in the intro with its
+     picture, and „Weiter" writes it and goes straight to the music (D2). */
+  const startedVia = readStartedVia(searchParams);
+  const fromPrintedCard = startedVia.via !== 'library' && data.exercise.kind === 'card_based';
+  const deckCode = fromPrintedCard && startedVia.via === 'deck-card' ? startedVia.cardCode : null;
+  const { data: goalList } = useAsync(
+    () => (fromPrintedCard ? getGoals(locale) : Promise.resolve(null)),
+    `intro-goals:${locale}:${String(fromPrintedCard)}`,
+  );
+  const offeredGoals = React.useMemo(
+    () => (goalList === null ? [] : goalsOffered(data.exercise, goalList)),
+    [goalList, data.exercise],
+  );
+  const asksGoal = fromPrintedCard && offeredGoals.length >= 2;
+  const [goal, setGoal] = React.useState<string | null>(data.row.goalId);
+  const { data: scannedCard } = useAsync(
+    () => (deckCode === null ? Promise.resolve(null) : getCardByCode(deckCode, locale)),
+    `intro-card:${locale}:${deckCode ?? ''}`,
+  );
+  const deckStart = deckCode !== null && data.row.cardId === null;
 
   /* ── AN INSTRUMENT'S TWO SETTINGS — 2026-11-09 ──────────────────────────
      Held HERE, not in the step: the step draws them, the focus sheet reads
@@ -858,6 +928,50 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   }
 
   /**
+   * „Weiter" on the intro of a run started from a PRINTED CARD — 2026-11-23.
+   *
+   * The goal first, awaited: the database picks the card's piece from the
+   * goal at the moment the card is written (`sessions_card_plays()`), so the
+   * order is the whole of D11.
+   *
+   * After a DECK card the card is written here and the scan step is done with
+   * it (D2): the row goes to `listen` BEFORE the screen does, and the session
+   * screen re-reads and then follows (`onJump`, and `Session`'s note on why
+   * the run cannot navigate there itself). Not `advance()` twice: that would
+   * show the scan step on the way.
+   *
+   * A card that will not write (a hand-edited address) falls back to the
+   * ordinary way on, the scan step, where the card can be named in Musie.
+   */
+  async function leaveIntro() {
+    const goalChanged = asksGoal && goal !== null && goal !== data.row.goalId;
+    if (!goalChanged && !deckStart) {
+      advance();
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (goalChanged) await saveGoal(id, goal);
+      if (deckStart && deckCode !== null) {
+        const outcome = await scanCardInto(id, deckCode, locale);
+        if (outcome.kind === 'applied') {
+          await saveStep(id, 'listen');
+          onJump('listen');
+          return;
+        }
+        console.error(`[musie] the scanned card ${deckCode} could not be written: ${outcome.kind}`);
+      }
+      advance();
+    } catch (thrown: unknown) {
+      console.error('[musie] could not leave the intro:', thrown);
+      advance();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
    * A CODE, AND THE CARD IT NAMES — E.1, and the end of the simulated draw.
    *
    * This used to pick one of the nine at random and write it. It now takes
@@ -1189,7 +1303,11 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     actions = (
       <>
         {back}
-        <Button onClick={advance}>
+        <Button
+          loading={busy}
+          loadingLabel={t('content.loading')}
+          onClick={() => { void leaveIntro(); }}
+        >
           {!digital
             ? t('common.continue')
             : (dealt === 1 ? t('session.intro.drawRandom') : t('session.intro.deal', { count }))}
@@ -1369,12 +1487,25 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                 icon: STEP_ICON[step],
               }))}
               current={state.step}
-              completed={[...state.completed]}
+              /* AFTER A DECK CARD THE SCAN IS ALREADY DONE (Ben, 2026-11-24):
+                 the card is in the person's hand, so the rail checks
+                 „Scannen“ off while they are still on the intro. Display
+                 only — the card is written on „Weiter“ (D11), and pressing
+                 the checked step does what „Weiter“ does. */
+              completed={deckStart && state.step === 'intro'
+                ? [...state.completed, 'scan']
+                : [...state.completed]}
               skipped={skipped}
               /* The rail proposes; the URL disposes. Navigating rather than
                  dispatching keeps one path into a step, so a rail tap and a
                  pasted URL behave identically. */
-              onStepChange={(next) => go(next as StepId)}
+              onStepChange={(next) => {
+                if (deckStart && state.step === 'intro' && next !== 'intro') {
+                  void leaveIntro();
+                  return;
+                }
+                go(next as StepId);
+              }}
             />
         }
         actions={actions}
@@ -1419,10 +1550,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                  cannot tell it. Local state now, written on the way out of
                  this step by `advance`, which is the same timing the two
                  listening answers have. */
-              cardsPresent={asksForCards ? !digitalCards : undefined}
+              /* NOT after a deck card (D23): the card is already chosen, so
+                 the switch and the sentence about the stack do not apply. */
+              cardsPresent={asksForCards && !deckStart ? !digitalCards : undefined}
               /* LOCAL, so the rail relabels under the thumb rather than after
                  a round trip. */
               onCardsPresentChange={(present) => setDigitalCards(!present)}
+              /* „Was brauchst du gerade?" — printed-card runs only. Undefined
+                 where the question is not put, like the questions above. */
+              goal={asksGoal ? (goal ?? offeredGoals[0]?.id) : undefined}
+              goals={asksGoal ? offeredGoals : undefined}
+              onGoalChange={setGoal}
+              /* The deck card's picture where the exercise's would stand, and
+                 the intro without the stack (D2, D23). */
+              scannedCard={deckStart ? (scannedCard ?? undefined) : undefined}
+              leadOnly={deckStart}
               instrumentSettings={instrument === null ? undefined : {
                 mode: playMode,
                 onModeChange: setPlayMode,

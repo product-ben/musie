@@ -542,66 +542,16 @@ export type Database = {
           },
         ]
       }
-      exercise_tracks: {
-        Row: {
-          card_id: string | null
-          exercise_id: string
-          id: string
-          track_id: string
-        }
-        Insert: {
-          card_id?: string | null
-          exercise_id: string
-          id?: string
-          track_id: string
-        }
-        Update: {
-          card_id?: string | null
-          exercise_id?: string
-          id?: string
-          track_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "exercise_tracks_card_id_fkey"
-            columns: ["card_id"]
-            isOneToOne: false
-            referencedRelation: "cards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exercise_tracks_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "exercises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exercise_tracks_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "missing_cuts"
-            referencedColumns: ["exercise_id"]
-          },
-          {
-            foreignKeyName: "exercise_tracks_track_id_fkey"
-            columns: ["track_id"]
-            isOneToOne: false
-            referencedRelation: "tracks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       exercises: {
         Row: {
           asks_posture: boolean | null
           cards_dealt: number | null
+          code: string | null
           id: string
           image_url: string | null
           implemented: boolean
           kind: string
           listen_gate_seconds: number
-          needs_cards: boolean
           needs_sound: boolean
           sort: number
           timeframe_max: number
@@ -610,12 +560,12 @@ export type Database = {
         Insert: {
           asks_posture?: boolean | null
           cards_dealt?: number | null
+          code?: string | null
           id: string
           image_url?: string | null
           implemented?: boolean
           kind: string
           listen_gate_seconds?: number
-          needs_cards?: boolean
           needs_sound?: boolean
           sort: number
           timeframe_max: number
@@ -624,12 +574,12 @@ export type Database = {
         Update: {
           asks_posture?: boolean | null
           cards_dealt?: number | null
+          code?: string | null
           id?: string
           image_url?: string | null
           implemented?: boolean
           kind?: string
           listen_gate_seconds?: number
-          needs_cards?: boolean
           needs_sound?: boolean
           sort?: number
           timeframe_max?: number

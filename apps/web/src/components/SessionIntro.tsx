@@ -41,13 +41,14 @@
  * `RadioGroupText` would be right past four options; neither question will
  * have four.
  */
-import { Armchair, BedSingle, Layers, Moon, Sunrise } from 'lucide-react';
-import { SegmentedControl, Switch, WizardContent, WizardIntro } from '@musie/design-system';
+import { Armchair, BatteryCharging, BedSingle, Flower2, Layers, Moon, Smartphone, Sparkles, Sunrise, Waves } from 'lucide-react';
+import { SegmentedControl, WizardContent, WizardIntro } from '@musie/design-system';
 import { Markdown } from './Markdown';
 import { InstrumentIntro } from './InstrumentIntro';
 import type { InstrumentIntroProps } from './InstrumentIntro';
 import { useT } from '../i18n/localeContext';
-import type { Exercise } from '../lib/content';
+import type { MessageKey } from '../i18n';
+import type { Card, Exercise, Goal } from '../lib/content';
 import { fromRoot } from '../lib/assets';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
@@ -104,6 +105,29 @@ export interface SessionIntroProps {
    * is an instrument at all.
    */
   instrumentSettings?: Omit<InstrumentIntroProps, 'instrument'>;
+  /**
+   * ── „WAS BRAUCHST DU GERADE?" — 2026-11-23 ──────────────────────────────
+   * PRD „Übungskarten mit QR-Code" (D5–D9). A card exercise started from a
+   * printed card asks which goal this run is for; the answer decides which of
+   * the card's two pieces plays. The goal sheet's question and its goals, in
+   * its order. Absent where the question is not put — every run started
+   * from the library — exactly like the two questions above.
+   */
+  goal?: string;
+  goals?: readonly Goal[];
+  onGoalChange?: (goal: string) => void;
+  /**
+   * ── A DECK CARD, SCANNED WITH THE PHONE'S CAMERA (D2) ────────────────────
+   * Its picture stands where the exercise's would — the same image slot, the
+   * same crop — with its own description for a screen reader.
+   */
+  scannedCard?: Card;
+  /**
+   * Only the headline and its first sentence, with nothing about the stack
+   * under them (D23): after a deck card the card is already drawn. The shape
+   * every exercise without cards has today.
+   */
+  leadOnly?: boolean;
 }
 
 /** The glyph per option. A `Record`, so a third posture fails the typecheck
@@ -111,6 +135,30 @@ export interface SessionIntroProps {
 const POSTURE_GLYPH: Record<Posture, typeof Armchair> = {
   sitting: Armchair,
   lying: BedSingle,
+};
+
+/**
+ * THE GOALS' GLYPHS — 2026-11-23. Chosen here because the goals had none, and
+ * clear of the intro's other two questions (no armchair, bed, sunrise or
+ * moon): `Waves` for settling down, `BatteryCharging` for gathering energy,
+ * `Flower2` for attention. Keyed by goal id; a goal added later draws
+ * `Sparkles` until it is given its own.
+ */
+const GOAL_GLYPH: Readonly<Record<string, typeof Armchair>> = {
+  relax: Waves,
+  'wake-up': BatteryCharging,
+  mindfulness: Flower2,
+};
+
+/**
+ * What each answer does to the music, under the control while it is chosen
+ * (Ben, 2026-11-24). Keyed by goal id like the glyphs; a goal added later
+ * shows no sentence until it is given one.
+ */
+const GOAL_HINT: Readonly<Record<string, MessageKey>> = {
+  relax: 'session.intro.goalHint.relax',
+  'wake-up': 'session.intro.goalHint.wakeUp',
+  mindfulness: 'session.intro.goalHint.mindfulness',
 };
 
 /**
@@ -133,6 +181,7 @@ const ENDING_GLYPH: Record<Ending, typeof Armchair> = {
 export function SessionIntro({
   exercise, durationSeconds, posture, ending, onPostureChange, onEndingChange,
   cardsPresent, onCardsPresentChange, instrumentSettings,
+  goal, goals, onGoalChange, scannedCard, leadOnly = false,
 }: SessionIntroProps) {
   const t = useT();
   /* The picture's width on a tablet follows the copy's height (Ben,
@@ -163,6 +212,14 @@ export function SessionIntro({
      two questions above use, and for the same reason. */
   const asksForCards = cardsPresent !== undefined;
   const digital = asksForCards && cardsPresent === false;
+  const asksGoal = goal !== undefined && goals !== undefined && goals.length >= 2;
+
+  /* THE PICTURE: the exercise's, or the scanned deck card's in its place. */
+  const picture = scannedCard !== undefined && scannedCard.imageUrl !== null
+    ? { src: scannedCard.imageUrl, alt: scannedCard.imageAlt ?? '', exercise: undefined }
+    : exercise.imageUrl === null
+      ? null
+      : { src: exercise.imageUrl, alt: exercise.imageAlt, exercise: exercise.id };
 
   return (
     <>
@@ -198,18 +255,19 @@ export function SessionIntro({
           instructions about paper stay below it. */}
       <WizardIntro>
         <div className="musie-intro__head" ref={headRef}>
-          {asksForCards
+          {asksForCards || leadOnly
             ? <Markdown md={md} fallbackKey="session.intro.fallback" arrange={headingAndLead} />
             : <Markdown md={md} fallbackKey="session.intro.fallback" />}
-          {exercise.imageUrl !== null && (
+          {picture !== null && (
             <img
               className="musie-intro__image"
-              src={fromRoot(exercise.imageUrl)}
-              alt={exercise.imageAlt}
+              src={fromRoot(picture.src)}
+              alt={picture.alt}
               decoding="async"
               /* Which picture this is, for a crop that has to keep one part
-                 of it in view (shell.css: the body scan's head). */
-              data-exercise={exercise.id}
+                 of it in view (shell.css: the body scan's head). A deck card
+                 has no such rule and crops from the centre. */
+              data-exercise={picture.exercise}
             />
           )}
         </div>
@@ -220,20 +278,22 @@ export function SessionIntro({
       <WizardContent>
       {asksForCards && (
         <div className="musie-intro__cards">
-          {/* Rule 7: the label is passed. `Layers` / `Layers` would be one
-              glyph for two states, so the pair says what is switching — a pile
-              of cards on the table, or none. */}
-          {/* NO `reverse`. That prop pushes the label to the far edge of the
-              row — the settings-sheet layout — and this is not a settings row:
-              it is one control in a column of copy, and every other Switch in
-              the app (the music one on the listen sheet, the dark-mode one in
-              the menu) sits directly beside its own label. Ben, 2026-10-14. */}
-          <Switch
-            label={t('session.intro.cardsPresent')}
-            checked={cardsPresent}
-            onCheckedChange={(next) => onCardsPresentChange?.(next)}
-            onGlyph={Layers}
-            offGlyph={Layers}
+          {/* ── A QUESTION, NOT A SWITCH — Ben, 2026-11-24 ──────────────────
+              User testing: „Die analogen Karten liegen vor mir.“ was not
+              clear. It is asked now the way the intro's other questions are,
+              in the same component, in the switch's old place above the
+              paper instructions it governs — with the physical deck as the
+              default answer. `Layers` for the pile on the table, `Smartphone`
+              for the run on the screen. */}
+          <SegmentedControl
+            name="session-cards"
+            legend={t('session.intro.cards.legend')}
+            value={cardsPresent ? 'paper' : 'digital'}
+            onValueChange={(next) => onCardsPresentChange?.(next === 'paper')}
+            options={[
+              { value: 'paper', label: t('session.intro.cards.paper'), glyph: Layers },
+              { value: 'digital', label: t('session.intro.cards.digital'), glyph: Smartphone },
+            ]}
           />
 
           {/* NO LINE WHERE THE PAPER INSTRUCTION WAS. A one-card exercise in
@@ -298,6 +358,28 @@ export function SessionIntro({
                 label: t(`session.intro.ending.${option}`),
                 glyph: ENDING_GLYPH[option],
               }))}
+            />
+          )}
+
+          {/* The goal question, in the same slot and the same component as the
+              two above (D5) — „Kein neues Layout" (Ben, 2026-11-23). The
+              legend is the library's own question, `exercises.goal.question`,
+              and the labels are the goals' (D8). */}
+          {asksGoal && (
+            <SegmentedControl
+              name="session-goal"
+              legend={t('exercises.goal.question')}
+              value={goal}
+              onValueChange={(next) => { if (goals.some((g) => g.id === next)) onGoalChange?.(next); }}
+              options={goals.map((option) => {
+                const hint = GOAL_HINT[option.id];
+                return {
+                  value: option.id,
+                  label: option.label,
+                  glyph: GOAL_GLYPH[option.id] ?? Sparkles,
+                  description: hint === undefined ? undefined : t(hint),
+                };
+              })}
             />
           )}
 

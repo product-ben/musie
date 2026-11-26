@@ -345,12 +345,20 @@ export const de: Messages = {
      geschrieben, und so nennt das Tagebuch einen Lauf, der vor seiner
      Reflexion aufgehört hat. */
   'exercises.running.end': 'Session beenden',
-  /* Nur im Dialog, wo tatsächlich eine Wahl verlangt wird. Der letzte Satz ist
-     neu und ist der ehrliche: `session.close.text` sagt seit jeher, dass eine
-     beendete Session nicht wieder aufgenommen werden kann — der Dialog, dessen
-     zweiter Knopf genau das tut, sagte es nie. Gedankenstrich als
-     Halbgeviertstrich mit Leerzeichen (§7). */
-  'exercises.running.choice': 'Du kannst dort weitermachen oder sie beenden und stattdessen {name} starten – eine beendete Session lässt sich nicht wieder aufnehmen.',
+  /* ── DER DIALOG, 2026-11-23 — PRD „Übungskarten mit QR-Code“ (D13, D14) ──
+     Die neue Übung zu starten ist jetzt die primäre Antwort, hier und nach
+     einer gescannten Karte, und der Dialog hat einen eigenen Titel: Ben wollte
+     „Neue Übung starten?“ statt „… läuft noch“, das als Überschrift des
+     Hinweises über dem Stapel bleibt. Weil der Titel die laufende Übung nicht
+     mehr nennt, nennt der Satz beide — und sagt, was das Beenden kostet. */
+  'exercises.running.dialogTitle': 'Neue Übung starten?',
+  'exercises.running.replace': 'Wenn du {name} startest, wird {running} beendet. Eine beendete Session lässt sich nicht wieder aufnehmen.',
+  /* Die laufende Übung ließ sich nicht benennen (keine Zeile im Katalog). */
+  'exercises.running.replaceUnknown': 'Wenn du {name} startest, wird die laufende Session beendet. Eine beendete Session lässt sich nicht wieder aufnehmen.',
+  /* Die beiden Antworten nennen keine Übung mehr (Ben, 2026-11-24): Das tut
+     der Satz darüber. */
+  'exercises.running.start': 'Neue Übung starten',
+  'exercises.running.continue': 'Zurück zur aktuellen Übung',
   /* DIESELBEN WORTE WIE IM MENÜ (`menu.continueSession`), mit Absicht: zwei
      Türen zu einer laufenden Session, die sie verschieden benennen, sind zwei
      Türen, die man getrennt lernen muss. Zwei Schlüssel statt einem, weil es
@@ -358,11 +366,6 @@ export const de: Messages = {
      primäre Antwort eines Dialogs. Beim dritten Ort wandert der Satz nach
      `common.`. */
   'exercises.goToSession': 'Session fortsetzen',
-  /* Bens Wortlaut, 2026-09-24, gekürzt am 2026-10-05. Der Übungsname steht
-     weiter vorn, weil er das ist, wonach man den Knopf sucht. Weg ist die
-     Beschreibung der anderen Session — 'vorherige Session' —, seit die
-     Überschrift darüber sie beim Namen nennt. */
-  'exercises.endAndStart': '{name} starten und diese beenden',
   /* Passiv, weil hier niemand schuld ist: die Anfrage kam nicht durch. Kein
      „Fehler“ im Text — das Wort steht schon unsichtbar im Status-Präfix der
      Message, und zweimal gesagt klingt es nach mehr, als es ist. */
@@ -503,7 +506,6 @@ export const de: Messages = {
      cards. */
   'session.scan.codeUnknown': 'Keine Karte in diesem Set hat den Code {code}.',
   'session.scan.codeFailed': 'Das ließ sich gerade nicht prüfen. Versuch es gleich noch einmal.',
-  'session.scan.heldHint': 'Das ist die Karte, die du gescannt hast. Nimm sie, oder tippe einen anderen Code ein.',
   'session.scan.done': 'Karte gescannt',
   'session.scan.yourCard': 'Deine Karte',
   'session.scan.again': 'Andere Karte scannen',
@@ -547,7 +549,18 @@ export const de: Messages = {
   /* ── DIGITALE KARTEN ─────────────────────────────────────────────────────
      Siehe `en.ts` für die Begründungen. Register: §1 du und Imperativ
      Singular, §2 Satzanfang groß, §3 Verb zuerst, §7 Gedankenstrich. */
-  'session.intro.cardsPresent': 'Die analogen Karten liegen vor mir.',
+  /* Die Frage statt des Schalters (Ben, 2026-11-24, aus dem Nutzertest):
+     „Die analogen Karten liegen vor mir.“ war nicht klar. */
+  'session.intro.cards.legend': 'Wie möchtest du die Übung machen?',
+  'session.intro.cards.paper': 'Mit den physischen Bildkarten',
+  'session.intro.cards.digital': 'Komplett digital',
+  /* Unter „Was brauchst du gerade?“, zum gewählten Ziel (Ben, 2026-11-24).
+     Beim dritten steht „hilft, Achtsamkeit zu stärken“ statt Bens „beim
+     Achtsamkeit stärken hilft“: Ein Nominal-„beim“ verlangt „beim Stärken der
+     Achtsamkeit“, und das liest sich schwerer. */
+  'session.intro.goalHint.relax': 'Musie wählt für diese Übung Musik aus, die dir beim Entspannen hilft.',
+  'session.intro.goalHint.wakeUp': 'Musie wählt für diese Übung Musik aus, die dir beim Aktivieren hilft.',
+  'session.intro.goalHint.mindfulness': 'Musie wählt für diese Übung Musik aus, die dir hilft, Achtsamkeit zu stärken.',
   /* Bens Satz, auf den Standard gebracht (§7, §8): 'Bildschirmen' statt
      'Biuldschirmen', 'optimale' klein, 'Größe' mit ß, und das Komma vor dem
      Relativsatz. */
@@ -1137,21 +1150,16 @@ export const de: Messages = {
   'scan.route.title': 'Gescannte Karte',
   'scan.working': 'Die Karte wird gesucht…',
   'scan.malformed.title': 'Das ist kein Kartencode',
-  'scan.malformed.text': 'Der Code in diesem Link gehört nicht zu Musie. Ein Kartencode sieht aus wie MC-01.',
+  'scan.malformed.text': 'Der Code in diesem Link gehört nicht zu Musie. Ein Kartencode sieht aus wie MC-01 oder EX-01.',
   'scan.unknown.title': 'Keine Karte mit diesem Code',
   'scan.unknown.text': 'Den Code {code} gibt es in diesem Set nicht.',
-  'scan.noSession.title': 'Du hast {code} gescannt',
-  'scan.noSession.text': 'Es läuft noch nichts. Wähle eine Übung, dann wartet diese Karte beim Scannen auf dich.',
   'scan.chooseExercise': 'Übung wählen',
-  'scan.cardless.title': 'Diese Übung zieht keine Karten',
-  'scan.cardless.text': 'Die Session, in der du bist, arbeitet ohne das Kartenset – diese Karte hat dort keinen Platz.',
-  'scan.cardless.action': 'Zurück zur Session',
 
   /* ── Das Dev-Blatt mit den QR-Codes · E.0 ────────────────────────────────
      'Generator-Skript' with the hyphen (Durchkopplung, §8). */
-  'scan.dev.title': 'QR-Codes für das Kartenset',
+  'scan.dev.title': 'QR-Codes für das Kartenset und die Übungskarten',
   'scan.dev.text': 'Erzeugt aus {origin}: Jeder Code zeigt auf den Server zurück, der diese Seite ausgeliefert hat. Für den Druck nimmst du dieselben Codes aus dem Generator-Skript, mit der echten Adresse.',
-  'scan.dev.qrLabel': 'QR-Code für Karte {code}',
+  'scan.dev.qrLabel': 'QR-Code für {code}',
   /* ── Voice ───────────────────────────────────────────────────────────────
      Siehe en.ts für den Grund, warum diese Sätze hier stehen und nicht im
      Feature-Paket. */

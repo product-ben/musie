@@ -191,6 +191,14 @@ export interface SessionRow {
    */
   posture: string | null;
   ending: string | null;
+  /**
+   * The goal this run was started under — `sessions.goal_id`. It decides
+   * which of a card's two pieces plays (`sessions_card_plays()`), and since
+   * 2026-11-23 a run started from a printed card can change it on its intro
+   * („Was brauchst du gerade?", PRD „Übungskarten mit QR-Code"). Null where
+   * none was known.
+   */
+  goalId: string | null;
 }
 
 /**
@@ -231,6 +239,7 @@ function toRow(row: {
   listening_question_id: string | null; listening_question: string | null;
   rejected_question_ids: string[]; rejected_this_round: string[];
   posture: string | null; ending: string | null; digital_cards: boolean;
+  goal_id: string | null;
 }): SessionRow | null {
   if (row.status !== 'started' && row.status !== 'finished' && row.status !== 'abandoned') {
     console.error(`[musie] session ${row.id} has status "${row.status}" — dropped`);
@@ -259,10 +268,11 @@ function toRow(row: {
     posture: row.posture,
     ending: row.ending,
     digitalCards: row.digital_cards,
+    goalId: row.goal_id,
   };
 }
 
-const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, music_mode, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending, digital_cards';
+const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, music_mode, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending, digital_cards, goal_id';
 
 /**
  * One session by id. Null when there is no such row — which, under RLS, is
@@ -392,6 +402,26 @@ export async function saveCard(
     trackId: data.track_id,
     musicMode: isMusicMode(data.music_mode) ? data.music_mode : null,
   };
+}
+
+/**
+ * THE GOAL, CHANGED ON THE INTRO — 2026-11-23, PRD „Übungskarten mit QR-Code".
+ *
+ * A run started from a printed card asks „Was brauchst du gerade?" on its
+ * intro, and the answer is the session's goal. Written on the way OUT of
+ * `intro`, like the other intro answers, and BEFORE the card: the database
+ * picks the card's piece from the goal at the moment the card is written
+ * (`sessions_card_plays()`), so a goal written after the card would play the
+ * old goal's piece (D11).
+ *
+ * THROWS, like `saveListeningAnswers`: the person pressed Continue and is
+ * waiting for music chosen by their answer.
+ */
+export async function saveGoal(id: string, goalId: string): Promise<void> {
+  const { error } = await getSupabase().from('sessions').update({ goal_id: goalId }).eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not save the goal: ${error.message}`);
+  }
 }
 
 /**

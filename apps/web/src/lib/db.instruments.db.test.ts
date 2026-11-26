@@ -47,7 +47,7 @@ describe('instruments · the three exercises', () => {
   it('are of kind instruments, appended after the five, in the brief’s order', async () => {
     const { data, error } = await alice
       .from('exercises')
-      .select('id, kind, sort, implemented, needs_cards, listen_gate_seconds')
+      .select('id, kind, sort, implemented, cards_dealt, listen_gate_seconds')
       .order('sort');
     expect(error).toBeNull();
     const last = (data ?? []).slice(-3);
@@ -56,7 +56,9 @@ describe('instruments · the three exercises', () => {
     ]);
     for (const row of last) {
       expect(row.implemented).toBe(true);
-      expect(row.needs_cards).toBe(false);
+      /* No cards: `needs_cards` said so until 2026-11-23; the kind and
+         `cards_dealt` are what says it now. */
+      expect(row.cards_dealt).toBeNull();
       /* The timer, 1:30 (Ben's brief). */
       expect(row.listen_gate_seconds).toBe(90);
     }

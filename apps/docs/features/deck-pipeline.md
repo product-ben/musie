@@ -12,7 +12,7 @@ database the copy. It is the other way round now: the deck is edited at
 flowchart TD
   UI["/maintenance<br/>cards · tracks · artwork · the 5×5 grid"]
   UI -->|"content-admin → admin_write()"| DB["the database<br/>cards (picture + two pieces) · artworks · tracks"]
-  DB -->|"project_deck()"| P["cards.image_url · card_i18n.image_alt · exercise_tracks (activation)<br/>DERIVED, rewritten on every write"]
+  DB -->|"project_deck()"| P["cards.image_url · card_i18n.image_alt<br/>DERIVED, rewritten on every write"]
   DB -->|"pnpm content:export"| J["supabase/content/deck.json<br/>a readable snapshot, committed to git"]
   J -->|"pnpm deck:pdf"| PDF["deck.pdf + deck.html<br/>88×63mm, 3mm bleed, both faces"]
   J -->|"pnpm check"| T["deck.test.ts<br/>the file obeys every rule — no database"]
@@ -169,7 +169,9 @@ real edit through the UI.
 
 ## It does not own `tracks`
 
-`deck.json` owns `cards`, `card_i18n` and `exercise_tracks`. A recording is a
+`deck.json` owns `cards` and `card_i18n`; a card names its two pieces itself
+(`activation_track_id`, `relax_track_id`), and `exercise_tracks`, which used to
+pair them, was dropped on 2026-11-23. A recording is a
 file, a duration and a licence, and it arrives through
 [the music pipeline](/features/music-pipeline).
 

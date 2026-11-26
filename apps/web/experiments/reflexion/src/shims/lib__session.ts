@@ -46,6 +46,13 @@ export async function saveDigitalCards(id: string, digitalCards: boolean): Promi
   store.updateRow(id, { digitalCards });
 }
 
+/** The intro's goal question (printed cards, 2026-11-23) — asked only on a
+ *  QR start, which this page never is; held anyway so a call cannot reach the
+ *  throwing Supabase shim. */
+export async function saveGoal(id: string, goalId: string): Promise<void> {
+  store.updateRow(id, { goalId });
+}
+
 export async function saveListeningAnswers(id: string, posture: string | null, ending: string): Promise<void> {
   store.updateRow(id, { posture, ending });
 }

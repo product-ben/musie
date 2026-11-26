@@ -163,51 +163,12 @@ describe('the cuts and the pieces they credit', () => {
   });
 });
 
-describe('the card flow is untouched by any of this', () => {
-  /* THE REGRESSION TEST FOR THE WHOLE SHAPE. The listening type was built so
-     that `tracks` and `exercise_tracks` would not move; if a cut ever
-     starts writing a pairing row, or a listening exercise acquires one, this
-     is what says so. */
-  it('leaves exercise_tracks to the deck — every row has a card', async () => {
-    const { data, error } = await service
-      .from('exercise_tracks')
-      .select('exercise_id, card_id');
-
-    expect(error).toBeNull();
-    expect((data ?? []).filter((row) => row.card_id === null)).toEqual([]);
-  });
-
-  /* THE COUNT CAME OUT ON 2026-10-15, and it was `toHaveLength(18)` — in the
-     name of the test as well as in its body.
-   *
-   * It failed against hosted for the right reason: an operator added MC-10 at
-   * `/maintenance`, `project_deck()` paired it in both card exercises, and
-   * eighteen became twenty. Nothing was broken. A test that counts the deck
-   * asserts that nobody uses the product, which since rule 4.1 is a thing the
-   * product is FOR.
-   *
-   * Nothing is lost by removing it, and that is worth being explicit about
-   * because somebody will want to put a number back. The census belongs to
-   * `deck.db.test.ts`, which takes it from `deck.json` and so moves when the
-   * deck moves. What this describe block is actually for is the SHAPE — that a
-   * cut never writes a pairing row and a listening exercise never acquires one
-   * — and the count never tested either. The two assertions that do are the
-   * one above and the one below. */
-
-  it('gives no listening exercise a pairing row', async () => {
-    const { data, error } = await service
-      .from('exercise_tracks')
-      .select('exercise_id, exercises(kind)');
-
-    expect(error).toBeNull();
-    for (const row of data ?? []) {
-      const embed = row.exercises as unknown;
-      const exercise = (Array.isArray(embed) ? embed[0] : embed) as { kind: string } | null;
-      expect(exercise?.kind, `${row.exercise_id} is paired AND listening_only`)
-        .not.toBe('listening_only');
-    }
-  });
-});
+/* ── THE CARD FLOW'S TABLE IS GONE — 2026-11-23 ───────────────────────────
+   A describe block here held `exercise_tracks` to its shape: every row has a
+   card, and no listening exercise has one. The table was dropped
+   (`20261123100000_exercise_cards.sql`, V5): a card carries its two pieces
+   and a session stores the one it plays, so there is no pairing row left for
+   a cut to write by mistake. */
 
 describe('missing_cuts — the recording schedule', () => {
   it('reports every combination the library has not produced yet', async () => {
