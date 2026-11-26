@@ -10,6 +10,13 @@
  * Every slider default is the value a switch starts at when it is turned on.
  * They are GUESSES, not measurements: nobody has played them yet.
  *
+ * START is where a visitor begins: Ben's combination of 2026-11-26, sent as a
+ * link. It is NOT DEFAULTS, on purpose. The address and PostHog's
+ * `settings_key` stay relative to today, so every link already shared, and
+ * every event already recorded, keeps meaning what it meant. „Alles wie heute“
+ * is still one press away. All switches off now has its own address, `#heute`,
+ * because the bare address is START now.
+ *
  * The state lives in the address (`#…`), so a combination can be sent as a
  * link, and in localStorage, so a reload keeps it.
  */
@@ -37,6 +44,32 @@ export const FIGURE_TEXT: Record<FigureId, { label: string; hint: string }> = {
   lauf: { label: 'Lauf', hint: 'Ein Ton, dann ein schneller Lauf, der auf dem Grundton landet.' },
   vorschlag: { label: 'Vorschlag', hint: 'Ein kurzer Nachbarton vor ein, zwei Tönen der Antwort.' },
   zweiklang: { label: 'Zweiklang', hint: 'Der Schlusston klingt mit seiner Oktave oder Quarte.' },
+};
+
+/* ── chords: when Musie plays one, and which kind ── */
+
+export const CHORD_MOMENTS = ['anfang', 'schluss', 'lang', 'jeder', 'allein', 'begleitung'] as const;
+export type ChordMoment = (typeof CHORD_MOMENTS)[number];
+
+export const CHORD_MOMENT_TEXT: Record<ChordMoment, { label: string; hint: string }> = {
+  anfang: { label: 'Zu Beginn', hint: 'Der erste Ton der Antwort.' },
+  schluss: { label: 'Am Schluss', hint: 'Der letzte Ton der Antwort.' },
+  lang: { label: 'Auf langen Tönen', hint: 'Wo nach einem Ton eine längere Pause kommt, so dass der Akkord ausklingen kann.' },
+  jeder: { label: 'Auf jedem Ton', hint: 'Die ganze Antwort in Akkorden, wie ein Choral.' },
+  allein: { label: 'Ein Akkord als Antwort', hint: 'Spielst du nur einen oder zwei Töne, antwortet Musie mit einem einzigen Akkord.' },
+  begleitung: { label: 'Unter deinem Spiel', hint: 'Musie legt einen leisen Akkord unter deinen ersten Ton, während du spielst.' },
+};
+
+export const CHORD_KINDS = ['oktave', 'quinte', 'dreiklang', 'vierklang', 'schwebend', 'schimmernd'] as const;
+export type ChordKind = (typeof CHORD_KINDS)[number];
+
+export const CHORD_KIND_TEXT: Record<ChordKind, { label: string; hint: string }> = {
+  oktave: { label: 'Oktave', hint: 'Der Ton mit sich selbst, eine Oktave tiefer. Klar und ruhig. Die Harfe hat dafür nur auf d und e Platz.' },
+  quinte: { label: 'Quinte', hint: 'Der Ton mit seiner Quinte darunter, auf g mit der Quarte. Leer und offen, wie ein Dudelsack.' },
+  dreiklang: { label: 'Dreiklang', hint: 'G-Dur oder e-Moll, je nach Ton; auf a ein D mit Quarte statt Terz. Wie in einem Lied.' },
+  vierklang: { label: 'Vierklang', hint: 'e, g, h und d zusammen: G-Dur mit Sexte. Weich, wie ein Wiegenlied.' },
+  schwebend: { label: 'Schwebend', hint: 'Je zwei Leitertöne Abstand, meist Quarten. Offen und schwebend.' },
+  schimmernd: { label: 'Schimmernd', hint: 'Die zwei Nachbartöne darunter, dicht wie ein Windspiel.' },
 };
 
 export interface Settings {
@@ -87,6 +120,25 @@ export interface Settings {
   figureShare: number;
   /** How often each checked ornament is added, 0 … 1. */
   ornamentChance: number;
+
+  /* ── Akkorde ── */
+  /** When a chord may come. None checked: none comes, as today. */
+  chordWhen: Record<ChordMoment, boolean>;
+  /** Which chords; one of the checked per chord. None checked: none comes. */
+  chordKinds: Record<ChordKind, boolean>;
+  /** How often a chord comes where one may, 0 … 1. */
+  chordChance: number;
+  /** Broken: ms between the chord's notes, low to high. 0 is together. */
+  chordSpread: number;
+  /** The chord's other notes, relative to the melody note. */
+  chordVolume: number;
+  /* Where they fit (chords.ts): each makes chords rarer, and each for a reason. */
+  /** Of the places the moments allow, only the strongest: the end, else the longest note. */
+  chordOne: boolean;
+  /** Only on g, h and d — the notes of G-Dur — and the triad there is G-Dur. */
+  chordRest: boolean;
+  /** Only where the whole chord fits under the melody note. */
+  chordBelow: boolean;
 }
 
 export type BoolKey = {
@@ -97,6 +149,8 @@ export type NumberKey = {
 }[keyof Settings];
 
 const noFigures = Object.fromEntries(FIGURE_IDS.map((id) => [id, false])) as Record<FigureId, boolean>;
+const noMoments = Object.fromEntries(CHORD_MOMENTS.map((id) => [id, false])) as Record<ChordMoment, boolean>;
+const noKinds = Object.fromEntries(CHORD_KINDS.map((id) => [id, false])) as Record<ChordKind, boolean>;
 
 export const DEFAULTS: Settings = {
   instrument: 'harp',
@@ -114,11 +168,38 @@ export const DEFAULTS: Settings = {
   figures: noFigures,
   figureShare: 1,
   ornamentChance: 0.5,
+  chordWhen: noMoments,
+  chordKinds: noKinds,
+  /* GUESSES, like every slider here. 0.75 is the Zweiklang's partner. */
+  chordChance: 1,
+  chordSpread: 0,
+  chordVolume: 0.75,
+  chordOne: false,
+  chordRest: false,
+  chordBelow: false,
+};
+
+/**
+ * Ben's link of 2026-11-26, the third one (the first had no chords, the
+ * second all six figures and „Wie viel länger“ at 3):
+ * #on=faster,followTempo,longer,growing,noTiny,wider&timesYours=2.5&maxNotes=9&growRounds=4&fig=frage,pendel&wann=schluss,lang,allein&akk=quinte,dreiklang
+ */
+export const START: Settings = {
+  ...DEFAULTS,
+  faster: true,
+  followTempo: true,
+  longer: true, timesYours: 2.5, maxNotes: 9,
+  growing: true, growRounds: 4,
+  noTiny: true,
+  wider: true,
+  figures: { ...noFigures, frage: true, pendel: true },
+  chordWhen: { ...noMoments, schluss: true, lang: true, allein: true },
+  chordKinds: { ...noKinds, quinte: true, dreiklang: true },
 };
 
 export const BOOL_KEYS: readonly BoolKey[] = [
   'faster', 'onLift', 'phraseEnd', 'learn', 'keepRhythm', 'followTempo', 'followDynamics',
-  'longer', 'growing', 'noTiny', 'wider',
+  'longer', 'growing', 'noTiny', 'wider', 'chordOne', 'chordRest', 'chordBelow',
 ];
 
 /** [min, max, step] for every slider. */
@@ -131,6 +212,9 @@ export const RANGES: Record<NumberKey, readonly [number, number, number]> = {
   widerBy: [1, 5, 1],
   figureShare: [0, 1, 0.05],
   ornamentChance: [0, 1, 0.05],
+  chordChance: [0, 1, 0.05],
+  chordSpread: [0, 200, 10],
+  chordVolume: [0.3, 1, 0.05],
 };
 const NUMBER_KEYS = Object.keys(RANGES) as NumberKey[];
 
@@ -147,12 +231,21 @@ export function encode(s: Settings): string {
   for (const k of NUMBER_KEYS) if (s[k] !== DEFAULTS[k]) p.set(k, String(s[k]));
   const fig = FIGURE_IDS.filter((id) => s.figures[id]);
   if (fig.length) p.set('fig', fig.join(','));
+  const wann = CHORD_MOMENTS.filter((id) => s.chordWhen[id]);
+  if (wann.length) p.set('wann', wann.join(','));
+  const akk = CHORD_KINDS.filter((id) => s.chordKinds[id]);
+  if (akk.length) p.set('akk', akk.join(','));
   return p.toString().replace(/%2C/g, ',');
 }
 
 export function decode(text: string): Settings {
   const p = new URLSearchParams(text.replace(/^#/, ''));
-  const s: Settings = { ...DEFAULTS, figures: { ...DEFAULTS.figures } };
+  const s: Settings = {
+    ...DEFAULTS,
+    figures: { ...DEFAULTS.figures },
+    chordWhen: { ...DEFAULTS.chordWhen },
+    chordKinds: { ...DEFAULTS.chordKinds },
+  };
   const i = p.get('i');
   if (i !== null && (INSTRUMENTS as readonly string[]).includes(i)) s.instrument = i as InstrumentId;
   const on = new Set((p.get('on') ?? '').split(',').filter(Boolean));
@@ -166,6 +259,10 @@ export function decode(text: string): Settings {
   }
   const fig = new Set((p.get('fig') ?? '').split(',').filter(Boolean));
   for (const id of FIGURE_IDS) s.figures[id] = fig.has(id);
+  const wann = new Set((p.get('wann') ?? '').split(',').filter(Boolean));
+  for (const id of CHORD_MOMENTS) s.chordWhen[id] = wann.has(id);
+  const akk = new Set((p.get('akk') ?? '').split(',').filter(Boolean));
+  for (const id of CHORD_KINDS) s.chordKinds[id] = akk.has(id);
   return s;
 }
 
@@ -180,9 +277,9 @@ function initial(): Settings {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored !== null) return decode(stored);
   } catch {
-    /* private mode: start from today */
+    /* private mode: start from START */
   }
-  return DEFAULTS;
+  return START;
 }
 
 let current: Settings = initial();
@@ -196,7 +293,8 @@ export function setSettings(next: Settings | ((s: Settings) => Settings)): void 
   current = typeof next === 'function' ? next(current) : next;
   if (typeof window !== 'undefined') {
     const text = encode(current);
-    const url = `${window.location.pathname}${window.location.search}${text ? `#${text}` : ''}`;
+    /* Today encodes to nothing, and nothing is START now, so today says so. */
+    const url = `${window.location.pathname}${window.location.search}#${text || 'heute'}`;
     window.history.replaceState(null, '', url);
     try {
       window.localStorage.setItem(STORAGE_KEY, text);

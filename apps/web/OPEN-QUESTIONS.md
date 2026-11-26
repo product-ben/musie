@@ -13042,23 +13042,130 @@ What I need from Ben:
   physisch…“), like the three goals above — same component request.
 
 
-# Exercise length — 2026-11-26
+## Experiment „Duett 01“ starts at Ben's combination (2026-11-26)
 
-## Exercise length — card and instrument exercises run as long as the person chooses — RESOLVED
-Where: `src/lib/exerciseLength.ts` (kinds, bounds, step, start), `src/components/SessionIntro.tsx` (the `Slider`, last), `src/routes/Session.tsx` (state, `saveLength`, the play clock), `src/components/SessionListen.tsx` + `src/lib/mixer.ts` (laps), `supabase/migrations/20261126100000_session_length.sql`
-What I checked: Ben, from user testing — some found an exercise too long, some too short. First brief: „min 1:30, max = the length of the track". The data said no: a card exercise's piece is picked by the CARD (`sessions_card_plays()`), which is drawn after Einsteigen; the pieces run 1:40–3:11; an instrument has no track. Asked twice; Ben: „Dann statisch: Max 10 min, min 1:30", start „1:30 wie heute", and when the time is up „wie heute".
-What I did: `card_based` and `instruments` ask, as the last setting on Einsteigen, „Wie lange soll die Übung dauern?" — 1:30 to 10:00 in half minutes, starting at the exercise's own `listen_gate_seconds` (1:30 for all five). The answer is the step's minimum: the listen step's clock, the play step's timer. It is written to `sessions.length_seconds` on the way out of Einsteigen, so a resumed run keeps it (measured: a resumed harp run at 3:00 shows 03:00). The listen step REPEATS the piece until the length is filled and lets the pass it is in finish — `useMix` plays every lap but the last with the element's own `loop`, so there is no gap and no `play()` outside a gesture; measured with a real 6-second file on a private stack: the file time ran 1.9 → 5.9 → 1.8 → 5.8 without a pause while the clock counted 1:30 → 1:19 across the seam. The intro sentence „die nächsten 2/3 Minuten" became `{minutes}` (migration, by kind) and follows the slider: „die nächsten 5 Minuten" at 5:00.
-Why: Ben's numbers and his „wie heute"; the repeat is his „zwei Mal abgespielt" carried to a 10-minute ceiling.
-What I need from Ben:
-- **Kalimba and Marimba too?** He wrote „Bei der Harfe min 1:30, max 10 min"; the brief was the instrument KIND, so all three ask. One line in `exerciseLength.ts` if not.
-- **The reflexion experiment shows the slider now** (Freie Bahn, Harfe): it renders the real Session (rule 10). Its shims store the answer; nothing breaks — but it changes what that experiment measures. Keep, or hide it there?
-- **After the minimum the pass finishes**, so a run can be up to one piece longer than chosen (5:00 on a 2:48 piece plays 5:36). That is „wie heute" — say if it should stop at the chosen time instead.
-- **The intro sentence on the HOSTED rows** is rewritten by the migration with a pattern (`nächsten [0-9]+ Minuten`), so it holds even if a number was edited there; `pnpm db:sync` after merge, as always.
+Where: `apps/web/experiments/duett/src/settings.ts` (`START`, `initial`,
+`setSettings`), one test in `answer2.test.ts`.
 
-### Follow-up, 2026-11-26 — Ben on localhost: 1:00 minimum, 2:00 start, an eighth note
+What I checked: Ben sent a link and asked for it to be the default:
+`#on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel`.
 
 What I did:
-- **„Min length ist 1 min überall, default ist 2 min"**: `LENGTH_MIN_SECONDS` 60, `LENGTH_DEFAULT_SECONDS` 120, for all five; the start no longer comes from `listen_gate_seconds` at all (that column keeps serving the kinds that do not ask). Replaces „1:30 wie heute" above.
-- **The intro sentence at one minute.** `{minutes}` would have read „die nächsten 1 Minuten". The migration (not yet applied anywhere hosted, so edited rather than stacked) now writes the whole phrase as `{nextMinutes}`, and the catalogue holds „die nächste Minute" / „die nächsten {minutes} Minuten" (EN: „the next minute" / „the next {minutes} minutes"). Measured: 1:00 → „die nächste Minute", 1:30 and 2:00 → „die nächsten 2 Minuten".
-- **„anstatt den schwarzen Strich … eighth-note"**: Lucide has no icon of that name; its single eighth note is `music-2` (note head, stem, flag — `music` is two beamed eighths). The thumb carries `Music2` at `md` in the segment's ink, as a `glyph` prop with that default.
-What I need from Ben: nothing — say if `music-2` is not the note you meant.
+- **The page opens on that combination**, which is a new constant called
+  `START`. A visitor's own last combination (localStorage) and any `#…` in the
+  address still win, as before.
+- **`DEFAULTS` stays „wie heute“, on purpose.** It is three things at once:
+  the state the tests prove is the app note for note, the slider values a
+  switch starts at, and the reference every address and every PostHog
+  `settings_key` is written against. Moving it would have changed what every
+  link already sent and every event already recorded means; `on=longer`
+  would have silently gone from 1.5 × to 3 ×. Kept relative to today, Ben's
+  link is exactly the encoding of `START`, and the test says so.
+- **Today got an address of its own, `#heute`.** It used to be the bare
+  address, which is `START` now. „Alles wie heute“ writes `#heute`, so it
+  survives a reload and „Link kopieren“ still shares it. PostHog already
+  called it `heute`.
+
+Why: one sentence from Ben, and the cheapest version of it that breaks no
+link and no recorded data.
+
+What I need from Ben:
+- **Nothing to decide.** One thing to know: anyone who has already changed a
+  switch on a device keeps their own combination there, because localStorage
+  wins over `START`. To start fresh, open the link itself.
+
+## Experiment „Duett 01“ gets a section „Akkorde“ (2026-11-26)
+
+Where: `apps/web/experiments/duett/src/chords.ts` (new), `chords.test.ts`
+(new), and `settings.ts`, `answer2.ts`, `conversation.ts`, `Panel.tsx`,
+`run.ts`, `track.ts` beside it.
+
+What I checked: Ben, 2026-11-26: „a new section to experiment with which kind
+of chords Musie plays and when it plays them.“ Today Musie never plays two
+notes at once; only the Zweiklang figure adds a second note, on the last
+note. All three instruments play the pentatonic d e g a h, whose only triads
+are G-Dur and e-Moll; a stands in neither.
+
+What I did:
+- **Wann**, checkboxes that combine: zu Beginn · am Schluss · auf langen Tönen
+  (the gap after the note ≥ 1.4 × the answer's middle gap and ≥ 350 ms) · auf
+  jedem Ton · ein Akkord als Antwort (to 1–2 notes, one home note and its
+  chord, logged as the figure „Ein Akkord“) · unter deinem Spiel (a soft
+  chord under the first note of each of the person's phrases, at once; not an
+  answer, so nothing waits for it and nothing interrupts it).
+- **Welche**, checkboxes, one picked per chord: Oktave · Quinte (on g the
+  fourth, as there is no c) · Dreiklang (G-Dur or e-Moll by note; on a, d g a)
+  · Vierklang (e g h d, G with a sixth) · Schwebend (two and four scale steps
+  away, mostly fourths) · Schimmernd (the two neighbours). All are built from
+  the scale's own notes, below the melody note, and above it only where the
+  instrument has no room below. The harp's seven strings hold an octave only
+  on d and e; elsewhere another ticked kind steps in.
+- **Regler:** how often (where a chord may come) · gebrochen (0–200 ms, low to
+  high, never more than half the gap to the next note) · the chord notes'
+  volume relative to the melody note.
+- **Nothing ticked is the answer as before**, draw for draw — tested against
+  the untouched section, and the 400-phrase test still holds every switch off
+  to the app. New address keys `wann` and `akk`, so every existing link and
+  PostHog `settings_key` keeps its meaning. PostHog gets the chord settings and,
+  per answer, `chords` and `under`.
+- **Fixed on the way:** with Vorschlag and Zweiklang both on, the Zweiklang
+  paired the last grace note instead of the answer's last note, because the
+  graces were appended after the melody. The ornaments now read the melody
+  only; a test holds it.
+- **Every number is a GUESS** and is marked so in `chords.ts`.
+
+Why: the question is by ear, so the panel offers kinds and moments to combine
+rather than one decided chord rule. The scale makes it safe: nothing can clash.
+
+What I need from Ben:
+- **Play it** after merging. The link of a combination you like is the spec,
+  as before.
+- **Lucia's ear** on the voicings: whether the melody note belongs on top and
+  whether the a-chord (d g a) sounds right are a musician's calls, not mine.
+
+### Follow-up, 2026-11-26 — chords in the default, a pill, and where chords fit
+
+What I did:
+- **`START` is Ben's second link**, the first plus `wann=schluss,lang,allein`
+  and `akk=quinte,dreiklang`; the test holds it to the link.
+- **A pill at the foot of the instrument** names what Musie plays while it
+  plays: the figure (or „Wie heute“ / „Ein Akkord“), its ornaments, its
+  chords; „Unter deinem Ton · …“ for 1.5 s when a chord is laid under theirs.
+  It goes when the answer has rung out or is interrupted.
+- **Ben: „Akkorde passen nicht immer. Seltener, aber an den richtigen
+  Stellen?“** Measured over 400 random phrases per instrument with his
+  default: every answer had a chord (1.64 per answer, „Am Schluss“ fires every
+  time); in 29 % the melody note was not on top — answers often end on the
+  lowest d, the chord had to go above it, and the ear takes the chord's top
+  note (h, a) for the last note, so the answer stops sounding home; 18 % fell
+  on e or a, passing notes; 7 % of final chords were e-Moll.
+- **Three switches under „Wo sie passen“, off in `START`** so the default is
+  exactly Ben's link:
+  - Melodie bleibt oben (`chordBelow`): only where the whole chord fits under
+    the melody note → 29 % → 0 %.
+  - Nur auf Ruhetönen (`chordRest`): only on g, h, d, and the triad there is
+    G-Dur → e/a 18 % → 0 %, e-Moll endings → 0 %.
+  - Höchstens einer pro Antwort (`chordOne`): the strongest place only — the
+    end, else the longest note — and „Wie oft“ then counts per answer →
+    1.64 → 1.00 per answer.
+  - All three: 0.89 per answer; with „Wie oft“ at 60 %: 0.58, about every
+    other answer, always on a rest note with the melody on top.
+  „Ein Akkord als Antwort“ picks a home note a chord fits on under the rules.
+
+What I need from Ben:
+- **Compare by ear**, his default against the three switches, and send the
+  link of the one that fits. These are measurements of where chords land, not
+  of how they sound.
+
+### Follow-up, 2026-11-26 — a third link: two figures, a little shorter
+
+Ben sent a third link to make the default:
+`#on=faster,followTempo,longer,growing,noTiny,wider&timesYours=2.5&maxNotes=9&growRounds=4&fig=frage,pendel&wann=schluss,lang,allein&akk=quinte,dreiklang`.
+
+- **Against the second:** only Frage and Pendel are left of the six figures
+  (Sequenz, Spiegel, Erinnerung, Bogen are off), and „Bis zu“ under „Darf
+  länger spielen“ is 2.5 × their length instead of 3 ×. The chords are
+  unchanged, and the three rules under „Wo sie passen“ stay off.
+- **`START` is that link**; the test holds it to the link. A browser that kept
+  an older state (localStorage) reopens on that state, not on `START`, until
+  the link is opened.

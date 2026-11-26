@@ -19,6 +19,9 @@
  * of whatever was composed, and stack. Every figure ends on a home degree, as
  * today's answer does, and never exceeds the note cap the length switches set.
  *
+ * Chords (section „Akkorde“) are chords.ts: laid under the finished melody,
+ * before the ornaments, and inert with nothing checked.
+ *
  * The three instruments share one scale, the pentatonic d e g a h (the
  * kalimba's two low tines A H below it), five degrees to the octave: that is
  * what makes `OCTAVE = 5` and the Zweiklang's intervals hold for all three.
@@ -28,8 +31,9 @@
 import { gapsOf, pauseMs } from '../../../src/instruments/engine/answer';
 import type { AnswerNote, Random } from '../../../src/instruments/engine/answer';
 import type { AnswerConfig, Stroke } from '../../../src/instruments/types';
+import { ALONE_UP_TO, chordFits, chordsAt, harmonise } from './chords';
 import { SHAPES } from './settings';
-import type { FigureId, Settings, ShapeId } from './settings';
+import type { ChordKind, FigureId, Settings, ShapeId } from './settings';
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const mean = (a: readonly number[]) => a.reduce((s, v) => s + v, 0) / a.length;
@@ -106,8 +110,11 @@ export interface Composed {
   length: number;
   /** The note cap the length switches allowed. */
   cap: number;
-  figure: ShapeId | 'heute';
+  /** `akkord`: „Ein Akkord als Antwort“ — one note and its chord. */
+  figure: ShapeId | 'heute' | 'akkord';
   ornaments: FigureId[];
+  /** One per chord in the answer, in order (chords.ts). */
+  chords: ChordKind[];
   /** `erinnerung`: the round the motif came from. */
   fromRound?: number;
 }
@@ -666,10 +673,10 @@ export const SHAPE_FUNCTIONS: Record<ShapeId, Shape> = { echo, frage, sequenz, s
 
 /* ═══ the two ornaments ════════════════════════════════════════════════════ */
 
-/** A quick neighbour, from above where there is one, before one or two notes. */
+/** A quick neighbour, from above where there is one, before one or two notes. Returns the graces. */
 function vorschlag(w: Work, notes: AnswerNote[]): AnswerNote[] {
   const room = notes.map((nt, k) => k).filter((k) => k > 0 && notes[k].t - notes[k - 1].t >= GRACE.roomMs);
-  if (!room.length) return notes;
+  if (!room.length) return [];
   const howMany = notes.length > 5 && room.length > 1 ? 2 : 1;
   const chosen = new Set<number>();
   while (chosen.size < howMany) chosen.add(w.pick(room));
@@ -680,15 +687,18 @@ function vorschlag(w: Work, notes: AnswerNote[]): AnswerNote[] {
     const degree = above && (!below || w.random() < 0.7) ? target.degree + 1 : target.degree - 1;
     return { degree, t: target.t - GRACE.beforeMs, velocity: target.velocity * GRACE.velocity, roll: false };
   });
-  return [...notes, ...graces];
+  return graces;
 }
 
-/** The last note with its octave, or else its fourth below or fifth above. */
-function zweiklang(w: Work, notes: AnswerNote[]): AnswerNote[] {
-  const last = notes[notes.length - 1];
-  const partner = [-OCTAVE, OCTAVE, -2, 3].map((v) => last.degree + v).find((d) => d >= 0 && d <= w.n - 1);
-  if (partner === undefined) return notes;
-  return [...notes, { degree: partner, t: last.t, velocity: last.velocity * CHORD_VELOCITY, roll: false }];
+/**
+ * The melody's last note with its octave, or else its fourth below or fifth
+ * above — none a chord already put there. Returns the partner.
+ */
+function zweiklang(w: Work, melody: AnswerNote[], taken: readonly number[]): AnswerNote | null {
+  const last = melody[melody.length - 1];
+  const partner = [-OCTAVE, OCTAVE, -2, 3].map((v) => last.degree + v).find((d) => d >= 0 && d <= w.n - 1 && !taken.includes(d));
+  if (partner === undefined) return null;
+  return { degree: partner, t: last.t, velocity: last.velocity * CHORD_VELOCITY, roll: false };
 }
 
 /* ═══ compose ══════════════════════════════════════════════════════════════ */
@@ -701,14 +711,27 @@ export function compose2(
   s: Settings,
   ctx: ComposeContext,
 ): Composed {
-  if (phrase.length === 0) return { notes: [], length: 0, cap: 0, figure: 'heute', ornaments: [] };
+  if (phrase.length === 0) return { notes: [], length: 0, cap: 0, figure: 'heute', ornaments: [], chords: [] };
   const w = work(phrase, config, degrees, random, s, ctx);
 
-  let figure: ShapeId | 'heute' = 'heute';
+  let figure: Composed['figure'] = 'heute';
   let notes: AnswerNote[] | null = null;
   let fromRound: number | undefined;
+  /** Melody notes that carry a chord whatever the moments say. */
+  const always: number[] = [];
+  /* „Ein Akkord als Antwort“: to a very short phrase, one note at home and its chord. */
+  if (chordsAt(s, 'allein') && phrase.length <= ALONE_UP_TO && random() < s.chordChance) {
+    /* The home nearest their last note — among those a chord fits on, under the rules, when there is one. */
+    const last = w.degs[w.degs.length - 1];
+    const roomy = w.homes.filter((h) => chordFits(h, config, degrees, s));
+    const near = Math.min(...(roomy.length ? roomy : w.homes).map((h) => Math.abs(h - last)));
+    const degree = roomy.length ? w.pick(roomy.filter((h) => Math.abs(h - last) === near)) : w.nearestHome(last);
+    notes = [{ degree, t: 0, velocity: velocities(w)(0, 1), roll: w.endsInRoll }];
+    figure = 'akkord';
+    always.push(0);
+  }
   const checked = SHAPES.filter((id) => s.figures[id]);
-  if (checked.length && random() < s.figureShare) {
+  if (notes === null && checked.length && random() < s.figureShare) {
     /* In random order, the first that fits this phrase. */
     const order = [...checked];
     for (let k = order.length - 1; k > 0; k -= 1) {
@@ -727,18 +750,29 @@ export function compose2(
   notes ??= base(w);
   const length = notes.length;
 
+  /* Chords first: a broken one may move its melody note a little later. */
+  const harm = harmonise(notes, config, degrees, random, s, always);
+  const melody = harm.melody;
+
+  /* The ornaments read the melody alone — not each other's notes, not the chords'. */
   const ornaments: FigureId[] = [];
+  const extra: AnswerNote[] = [];
   if (s.figures.vorschlag && random() < s.ornamentChance) {
-    const before = notes.length;
-    notes = vorschlag(w, notes);
-    if (notes.length > before) ornaments.push('vorschlag');
+    const graces = vorschlag(w, melody);
+    if (graces.length) {
+      extra.push(...graces);
+      ornaments.push('vorschlag');
+    }
   }
   if (s.figures.zweiklang && random() < s.ornamentChance) {
-    const before = notes.length;
-    notes = zweiklang(w, notes);
-    if (notes.length > before) ornaments.push('zweiklang');
+    const partner = zweiklang(w, melody, harm.under.get(melody.length - 1) ?? []);
+    if (partner !== null) {
+      extra.push(partner);
+      ornaments.push('zweiklang');
+    }
   }
-  if (ornaments.length) notes = [...notes].sort((a, b) => a.t - b.t);
+  let all = [...melody, ...extra, ...harm.tones];
+  if (all.length > melody.length) all = all.sort((a, b) => a.t - b.t);
 
-  return { notes, length, cap: w.cap, figure, ornaments, fromRound };
+  return { notes: all, length, cap: w.cap, figure, ornaments, chords: harm.kinds, fromRound };
 }

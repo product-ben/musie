@@ -8,7 +8,7 @@
  * with `onRunEvent`, so the conversation stays testable in node.
  */
 import type { Ending, Motif } from './answer2';
-import type { FigureId, ShapeId } from './settings';
+import type { ChordKind, FigureId, ShapeId } from './settings';
 
 export interface Turn {
   /** From Musie's first note to the person's next one. */
@@ -21,8 +21,12 @@ export interface Turn {
 
 export interface AnswerEntry {
   round: number;
-  figure: ShapeId | 'heute';
+  figure: ShapeId | 'heute' | 'akkord';
   ornaments: FigureId[];
+  /** One per chord in the answer. */
+  chords: ChordKind[];
+  /** The chord „Unter deinem Spiel“ laid under the phrase's first note, if one was. */
+  under: ChordKind | null;
   fromRound?: number;
   /** Notes in the person's phrase. */
   heard: number;
@@ -38,11 +42,17 @@ export interface AnswerEntry {
   turn?: Turn;
 }
 
+/** What Musie is sounding right now, for the pill under the instrument. */
+export type NowPlaying =
+  | { kind: 'answer'; entry: AnswerEntry }
+  | { kind: 'under'; chord: ChordKind };
+
 export interface RunState {
   round: number;
   learn: number;
   memory: readonly Motif[];
   entries: readonly AnswerEntry[];
+  playing: NowPlaying | null;
 }
 
 export type RunEvent =
@@ -50,7 +60,7 @@ export type RunEvent =
   | { type: 'turn'; entry: AnswerEntry; turn: Turn };
 
 const KEEP = 12;
-const fresh = (): RunState => ({ round: 0, learn: 1, memory: [], entries: [] });
+const fresh = (): RunState => ({ round: 0, learn: 1, memory: [], entries: [], playing: null });
 
 let state: RunState = fresh();
 const listeners = new Set<() => void>();
@@ -62,7 +72,7 @@ export function runState(): RunState {
   return state;
 }
 
-export function updateRun(patch: Partial<Pick<RunState, 'round' | 'learn' | 'memory'>>): void {
+export function updateRun(patch: Partial<Pick<RunState, 'round' | 'learn' | 'memory' | 'playing'>>): void {
   state = { ...state, ...patch };
   notify();
 }

@@ -13,7 +13,7 @@ import * as React from 'react';
 import { InstrumentStage } from '../../../src/components/InstrumentStage';
 import { unlockNow } from '../../../src/instruments/engine/audio';
 import { DEFINITIONS, INSTRUMENT_NAMES } from './instruments';
-import { Panel, useSettings } from './Panel';
+import { NowPlaying, Panel, useSettings } from './Panel';
 import { startTracking } from './track';
 
 const PLAY_SECONDS = 3600;
@@ -77,6 +77,7 @@ export function App() {
           </div>
         )}
         {failed && <p className="duett__error" role="alert">Die Töne konnten nicht geladen werden. Lade die Seite neu.</p>}
+        {started ? <NowPlaying /> : null}
       </main>
       <Panel />
     </div>
