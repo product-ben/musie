@@ -451,9 +451,9 @@ describe('the address', () => {
     expect(decode('#minMs=99999&i=piano').minMs).toBe(1800);
   });
 
-  it('starts at the link Ben sent on 2026-11-26 (the second, with chords), and today keeps an address of its own', () => {
+  it('starts at the link Ben sent on 2026-11-26 (the third: Frage and Pendel only), and today keeps an address of its own', () => {
     const link =
-      'on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel' +
+      'on=faster,followTempo,longer,growing,noTiny,wider&timesYours=2.5&maxNotes=9&growRounds=4&fig=frage,pendel' +
       '&wann=schluss,lang,allein&akk=quinte,dreiklang';
     expect(encode(START)).toBe(link);
     expect(decode(`#${link}`)).toEqual(START);

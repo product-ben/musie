@@ -13156,3 +13156,16 @@ What I need from Ben:
 - **Compare by ear**, his default against the three switches, and send the
   link of the one that fits. These are measurements of where chords land, not
   of how they sound.
+
+### Follow-up, 2026-11-26 — a third link: two figures, a little shorter
+
+Ben sent a third link to make the default:
+`#on=faster,followTempo,longer,growing,noTiny,wider&timesYours=2.5&maxNotes=9&growRounds=4&fig=frage,pendel&wann=schluss,lang,allein&akk=quinte,dreiklang`.
+
+- **Against the second:** only Frage and Pendel are left of the six figures
+  (Sequenz, Spiegel, Erinnerung, Bogen are off), and „Bis zu“ under „Darf
+  länger spielen“ is 2.5 × their length instead of 3 ×. The chords are
+  unchanged, and the three rules under „Wo sie passen“ stay off.
+- **`START` is that link**; the test holds it to the link. A browser that kept
+  an older state (localStorage) reopens on that state, not on `START`, until
+  the link is opened.

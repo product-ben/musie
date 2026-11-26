@@ -180,21 +180,19 @@ export const DEFAULTS: Settings = {
 };
 
 /**
- * Ben's link of 2026-11-26, the second one (the first had no chords):
- * #on=faster,followTempo,longer,growing,noTiny,wider&timesYours=3&maxNotes=9&growRounds=4&fig=frage,sequenz,spiegel,erinnerung,bogen,pendel&wann=schluss,lang,allein&akk=quinte,dreiklang
+ * Ben's link of 2026-11-26, the third one (the first had no chords, the
+ * second all six figures and „Wie viel länger“ at 3):
+ * #on=faster,followTempo,longer,growing,noTiny,wider&timesYours=2.5&maxNotes=9&growRounds=4&fig=frage,pendel&wann=schluss,lang,allein&akk=quinte,dreiklang
  */
 export const START: Settings = {
   ...DEFAULTS,
   faster: true,
   followTempo: true,
-  longer: true, timesYours: 3, maxNotes: 9,
+  longer: true, timesYours: 2.5, maxNotes: 9,
   growing: true, growRounds: 4,
   noTiny: true,
   wider: true,
-  figures: {
-    ...noFigures,
-    frage: true, sequenz: true, spiegel: true, erinnerung: true, bogen: true, pendel: true,
-  },
+  figures: { ...noFigures, frage: true, pendel: true },
   chordWhen: { ...noMoments, schluss: true, lang: true, allein: true },
   chordKinds: { ...noKinds, quinte: true, dreiklang: true },
 };
