@@ -1,0 +1,29 @@
+/* Gemeinsamer Rahmen der Effekt-Seiten (Musie-Experiment, CLAUDE.md Regel 10).
+   Kopf mit Aufgabe und Hinweis, darunter die Bühne mit dem Bild, unten Musik und Knöpfe. */
+:root {
+  --sand-1: #FAF7F1; --sand-2: #F3EEE4; --sand-3: #E5E3D9; --sand-6: #CFCEC2; --sand-11: #62645E; --sand-12: #1A1F1C;
+  --green-9: #2B5340;
+  --font-ui: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--sand-1); color: var(--sand-12);
+  font-family: var(--font-ui); overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent; }
+header { padding: calc(env(safe-area-inset-top, 0px) + 16px) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
+h1 { margin: 0; max-width: 34ch; font-family: var(--font-text); font-weight: 400; font-size: 1.375rem; line-height: 1.3; text-wrap: balance; }
+.hint { margin: 6px 0 0; max-width: 60ch; font-size: .9375rem; line-height: 1.45; color: var(--sand-11); text-wrap: pretty; }
+#stage { position: relative; min-height: 0; overflow: hidden; touch-action: none; background: var(--sand-3); }
+#stage canvas, #stage .layer { position: absolute; top: 0; display: block; touch-action: none; }
+.notice { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 16px; text-align: center; color: var(--sand-11); }
+footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 12px) max(16px, env(safe-area-inset-left, 0px)); }
+button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--sand-6);
+  border-radius: 999px; background: var(--sand-2); color: var(--sand-12); font: inherit; font-size: .9375rem; cursor: pointer; }
+button svg { width: 18px; height: 18px; flex: none; }
+button.primary { background: var(--green-9); border-color: var(--green-9); color: var(--sand-1); }
+button[aria-pressed="true"] { background: var(--sand-12); border-color: var(--sand-12); color: var(--sand-1); }
+button:focus-visible { outline: 3px solid var(--green-9); outline-offset: 2px; }
+.time { margin-inline-end: auto; color: var(--sand-11); font-size: .9375rem; font-variant-numeric: tabular-nums; }

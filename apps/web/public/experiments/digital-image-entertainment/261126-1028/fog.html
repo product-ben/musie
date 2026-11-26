@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Nebel aufdecken</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Nebel aufdecken: das Bild liegt unter
+     einem Nebel aus sich selbst (verschwommen, aufgehellt); der Finger legt es frei. Jeder Strich deckt
+     nur einen Teil auf, ein ruhender Finger nach und nach mehr. Aus „Aufdecken“ 261126-0948, ohne Kohle. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Leg das Bild frei, während du zuhörst.</h1>
+  <p class="hint">Das Bild liegt im Nebel. Fahr langsam darüber – je länger du an einer Stelle bleibst, desto mehr siehst du.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script>
+const BRUSH_R = 0.065;  // Radius des Fingers, Anteil der kürzeren Bildseite
+const REVEAL = 0.1;     // wie viel ein Tupfer aufdeckt – ein Strich legt also nur etwa die Hälfte frei
+const SPACING = 0.3;    // Abstand der Tupfer, Anteil des Radius
+const LINGER = 0.7;     // wie viel ein ruhender Finger je Sekunde aufdeckt
+const FOG_BLUR = 40;    // Stärke des Nebels: Weichzeichner-Radius als Bruchteil der kürzeren Seite
+const FOG_VEIL = 0.62;  // wie hell der Nebel darüber liegt
+
+const base = document.createElement('canvas');
+const cover = document.createElement('canvas');
+stage.append(base, cover);
+const bctx = base.getContext('2d');
+const cctx = cover.getContext('2d');
+const brush = document.createElement('canvas');
+let R = 0;
+let ready = false;
+const fingers = new Map();
+
+function lay() {
+  const w = cover.width;
+  const h = cover.height;
+  cctx.globalCompositeOperation = 'source-over';
+  cctx.globalAlpha = 1;
+  cctx.fillStyle = '#FAF7F1';
+  cctx.fillRect(0, 0, w, h);
+  if ('filter' in cctx) {
+    cctx.filter = `blur(${Math.round((Math.min(w, h) / FOG_BLUR) * 1.5)}px)`;
+    cctx.drawImage(base, 0, 0);
+    cctx.filter = 'none';
+  } else {
+    // Ohne Canvas-Filter: zweimal verkleinern und wieder vergrößern.
+    const tiny = makeCanvas(Math.max(2, w / FOG_BLUR), Math.max(2, h / FOG_BLUR));
+    const mid = makeCanvas(Math.max(4, w / 8), Math.max(4, h / 8));
+    tiny.getContext('2d').drawImage(base, 0, 0, tiny.width, tiny.height);
+    mid.getContext('2d').drawImage(tiny, 0, 0, mid.width, mid.height);
+    cctx.imageSmoothingQuality = 'high';
+    cctx.drawImage(mid, 0, 0, w, h);
+  }
+  cctx.fillStyle = `rgba(250, 247, 241, ${FOG_VEIL})`;
+  cctx.fillRect(0, 0, w, h);
+}
+
+function dab(x, y, alpha) {
+  cctx.globalCompositeOperation = 'destination-out';
+  cctx.globalAlpha = Math.min(1, alpha);
+  cctx.drawImage(brush, x - R, y - R);
+  cctx.globalAlpha = 1;
+  cctx.globalCompositeOperation = 'source-over';
+}
+
+const effect = {
+  setImage(im) {
+    const g = fit(im);
+    for (const c of [base, cover]) {
+      place(c, g);
+      c.width = Math.round(g.cssW * DPR);
+      c.height = Math.round(g.cssH * DPR);
+    }
+    bctx.imageSmoothingQuality = 'high';
+    bctx.drawImage(im, g.sx, g.sy, g.sw, g.sh, 0, 0, base.width, base.height);
+    R = Math.round(Math.max(14, BRUSH_R * Math.min(g.cssW, g.cssH)) * DPR);
+    brush.width = R * 2;
+    brush.height = R * 2;
+    const b = brush.getContext('2d');
+    const grad = b.createRadialGradient(R, R, 0, R, R, R);
+    grad.addColorStop(0, 'rgba(0,0,0,1)');
+    grad.addColorStop(0.5, 'rgba(0,0,0,0.6)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    b.fillStyle = grad;
+    b.fillRect(0, 0, R * 2, R * 2);
+    fingers.clear();
+    lay();
+    ready = true;
+  },
+  reset() { if (ready) lay(); },
+};
+
+track(cover, {
+  down(id, cx, cy) {
+    const x = cx * DPR;
+    const y = cy * DPR;
+    fingers.set(id, { x, y, rest: 0, still: 0 });
+    dab(x, y, REVEAL);
+  },
+  move(id, cx, cy) {
+    const f = fingers.get(id);
+    if (!f) return;
+    const x = cx * DPR;
+    const y = cy * DPR;
+    const dx = x - f.x;
+    const dy = y - f.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 0.5) return;
+    const step = Math.max(1, R * SPACING);
+    let t = step - f.rest;
+    while (t <= dist) {
+      dab(f.x + (dx * t) / dist, f.y + (dy * t) / dist, REVEAL);
+      t += step;
+    }
+    f.rest = dist - (t - step);
+    f.x = x;
+    f.y = y;
+    f.still = 0;
+  },
+  up(id) { fingers.delete(id); },
+});
+
+/* Ein Finger, der liegen bleibt, deckt weiter auf – erst nach einem kurzen Moment, damit ein
+   gewöhnlicher Strich nicht an jedem Halt ein Loch hinterlässt. */
+loop((dt) => {
+  for (const f of fingers.values()) {
+    f.still += dt;
+    if (f.still > 0.25) dab(f.x, f.y, LINGER * dt);
+  }
+});
+
+boot(effect);
+</script>
+</body>
+</html>

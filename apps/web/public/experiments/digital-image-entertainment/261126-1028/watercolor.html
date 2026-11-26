@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Aquarell-Blüten</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Aquarell-Blüten: jedes Tippen setzt einen
+     Tropfen Wasser. Die Farbe darunter löst sich (das Bild wird dort weich), blüht in einer unregelmäßigen
+     Form nach außen und trocknet mit dem dunkleren Rand, den Aquarelle haben. Ziehen setzt kleine Tropfen.
+     So gebaut: Canvas 2D. Wachsende Blüten liegen auf einer eigenen Ebene und werden erst getrocknet ins
+     Bild übernommen; „weich“ ist eine weichgezeichnete Kopie des Bildes, nach jeder Blüte erneuert.
+     Ben, 2026-11-26: keine Kette aus Tropfen beim Ziehen, immer nur einer – und dessen Rand lässt sich formen.
+     Solange der Finger liegt, bleibt die Blüte nass, und ihr Rand folgt dem Finger (PULL); der Umriss ist
+     eine glatte Kurve, kein Vieleck. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Lass die Farben aufblühen, während du zuhörst.</h1>
+  <p class="hint">Tippe aufs Bild: Ein Tropfen Wasser löst die Farbe und blüht auf. Zieh den Finger, um ihren Rand zu formen.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="reset" type="button">Zurücksetzen</button>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script>
+const BLOOM_R = 0.12;     // Radius einer Blüte, Anteil der kürzeren Bildseite (± 35 %)
+const GROW_MIN = 1.3;     // Sekunden, bis eine Blüte ausgelaufen ist …
+const GROW_MAX = 2.4;
+const PULL = 0.4;         // wie stark der Rand je Bewegung dem Finger folgt …
+const PULL_SPREAD = 0.4;  // … und wie breit (Winkel in rad) er mitgeht
+const SOFTEN = 0.018;     // wie weich die Farbe im Tropfen wird, Anteil der kürzeren Seite
+const OUTLINE = 72;       // Punkte des unregelmäßigen Umrisses
+
+const paint = document.createElement('canvas'); // das Bild mit allen getrockneten Blüten
+const wet = document.createElement('canvas');   // Blüten, die noch wachsen
+stage.append(paint, wet);
+const ctx = paint.getContext('2d', { willReadFrequently: true });
+const wctx = wet.getContext('2d');
+let soft = null;      // weichgezeichnete Kopie von paint
+let pristine = null;
+let minSide = 0;
+let softDirty = false;
+const blooms = [];
+const fingers = new Map();
+
+function soften() {
+  const w = paint.width; const h = paint.height;
+  const sc = soft.getContext('2d');
+  const r = Math.round(SOFTEN * Math.min(w, h));
+  if ('filter' in sc) {
+    sc.filter = `blur(${r}px)`;
+    sc.drawImage(paint, 0, 0);
+    sc.filter = 'none';
+  } else {
+    const small = makeCanvas(w / 6, h / 6);
+    small.getContext('2d').drawImage(paint, 0, 0, small.width, small.height);
+    sc.imageSmoothingQuality = 'high';
+    sc.drawImage(small, 0, 0, w, h);
+  }
+  softDirty = false;
+}
+
+function bloomAt(x, y, scale) {
+  const d = ctx.getImageData(Math.round(x) - 2, Math.round(y) - 2, 5, 5).data;
+  let r = 0; let gr = 0; let b = 0;
+  for (let i = 0; i < d.length; i += 4) { r += d[i]; gr += d[i + 1]; b += d[i + 2]; }
+  r /= 25; gr /= 25; b /= 25;
+  // ein unregelmäßiger, aber ruhiger Umriss: drei langsame Wellen um den Kreis
+  const waves = [2, 3, 5].map((f) => [f, Math.random() * Math.PI * 2, 0.04 + Math.random() * 0.07]);
+  const shape = new Float32Array(OUTLINE);
+  for (let k = 0; k < OUTLINE; k++) {
+    const a = (k / OUTLINE) * Math.PI * 2;
+    shape[k] = 1 + waves.reduce((s, [f, ph, amp]) => s + amp * Math.sin(f * a + ph), 0);
+  }
+  const bloom = {
+    x, y, shape, t: 0, held: true,
+    R: BLOOM_R * minSide * scale * (0.65 + Math.random() * 0.7),
+    dur: GROW_MIN + Math.random() * (GROW_MAX - GROW_MIN),
+    wash: `${Math.round(r + (255 - r) * 0.35)},${Math.round(gr + (255 - gr) * 0.35)},${Math.round(b + (255 - b) * 0.35)}`,
+    tint: `${Math.round(r)},${Math.round(gr)},${Math.round(b)}`,
+    edge: `${Math.round(r * 0.62)},${Math.round(gr * 0.62)},${Math.round(b * 0.62)}`,
+  };
+  blooms.push(bloom);
+  return bloom;
+}
+
+/* Der Rand folgt dem Finger: die Umrisspunkte in seiner Richtung rücken auf seinen Abstand. */
+function pull(bloom, x, y) {
+  const dx = x - bloom.x; const dy = y - bloom.y;
+  const d = Math.hypot(dx, dy);
+  if (d < bloom.R * 0.25) return; // in der Mitte gibt es keinen Rand zu greifen
+  const target = clamp(d / bloom.R, 0.35, 2.6);
+  const at = Math.atan2(dy, dx);
+  for (let k = 0; k < OUTLINE; k++) {
+    let da = (k / OUTLINE) * Math.PI * 2 - at;
+    da = Math.atan2(Math.sin(da), Math.cos(da));
+    bloom.shape[k] += (target - bloom.shape[k]) * PULL * Math.exp(-(da * da) / (2 * PULL_SPREAD ** 2));
+  }
+}
+
+/* Eine glatte geschlossene Kurve durch die Umrisspunkte (Mittelpunkte als Anker, Punkte als Kontrolle). */
+function outline(c, b, radius) {
+  const P = (k) => {
+    const a = (k / OUTLINE) * Math.PI * 2;
+    const rr = radius * b.shape[k % OUTLINE];
+    return [b.x + Math.cos(a) * rr, b.y + Math.sin(a) * rr];
+  };
+  const [x0, y0] = P(0); const [x1, y1] = P(1);
+  c.beginPath();
+  c.moveTo((x0 + x1) / 2, (y0 + y1) / 2);
+  for (let k = 1; k <= OUTLINE; k++) {
+    const [xa, ya] = P(k); const [xb, yb] = P(k + 1);
+    c.quadraticCurveTo(xa, ya, (xa + xb) / 2, (ya + yb) / 2);
+  }
+  c.closePath();
+}
+
+function drawBloom(c, b, e) {
+  const radius = b.R * e;
+  if (radius < 1) return;
+  c.save();
+  outline(c, b, radius);
+  c.clip();
+  c.globalAlpha = 0.75;
+  c.drawImage(soft, 0, 0);           // die Farbe darunter löst sich
+  c.globalAlpha = 1;
+  const reach = radius * Math.max(...b.shape) * 1.05; // gezogene Ränder reichen weiter
+  const grad = c.createRadialGradient(b.x, b.y, 0, b.x, b.y, reach);
+  grad.addColorStop(0, `rgba(${b.wash},0.2)`);    // innen ausgewaschen …
+  grad.addColorStop(0.75, `rgba(${b.tint},0.1)`);
+  grad.addColorStop(1, `rgba(${b.edge},0.32)`);   // … das Pigment sammelt sich am Rand
+  c.fillStyle = grad;
+  c.fillRect(b.x - reach * 1.1, b.y - reach * 1.1, reach * 2.2, reach * 2.2);
+  c.restore();
+  outline(c, b, radius);
+  c.lineJoin = 'round';
+  c.strokeStyle = `rgba(${b.edge},0.16)`;
+  c.lineWidth = 5 * DPR;
+  c.stroke();
+  c.strokeStyle = `rgba(${b.edge},0.5)`;
+  c.lineWidth = 1.3 * DPR;
+  c.stroke();
+}
+
+const effect = {
+  setImage(im) {
+    const g = fit(im);
+    for (const c of [paint, wet]) {
+      place(c, g);
+      c.width = Math.round(g.cssW * DPR);
+      c.height = Math.round(g.cssH * DPR);
+    }
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(im, g.sx, g.sy, g.sw, g.sh, 0, 0, paint.width, paint.height);
+    pristine = makeCanvas(paint.width, paint.height);
+    pristine.getContext('2d').drawImage(paint, 0, 0);
+    soft = makeCanvas(paint.width, paint.height);
+    minSide = Math.min(paint.width, paint.height);
+    blooms.length = 0;
+    fingers.clear();
+    soften();
+  },
+  reset() {
+    if (!pristine) return;
+    blooms.length = 0;
+    ctx.drawImage(pristine, 0, 0);
+    soften();
+  },
+};
+
+track(wet, {
+  down(id, cx, cy) {
+    fingers.set(id, { bloom: bloomAt(cx * DPR, cy * DPR, 1) }); // ein Tropfen je Berührung, nie eine Kette
+  },
+  move(id, cx, cy) {
+    const f = fingers.get(id);
+    if (f) pull(f.bloom, cx * DPR, cy * DPR);
+  },
+  up(id) {
+    const f = fingers.get(id);
+    if (f) f.bloom.held = false; // jetzt darf sie trocknen
+    fingers.delete(id);
+  },
+});
+
+loop((dt) => {
+  if (!soft) return;
+  wctx.clearRect(0, 0, wet.width, wet.height);
+  for (let i = blooms.length - 1; i >= 0; i--) {
+    const b = blooms[i];
+    b.t = Math.min(1, b.t + dt / b.dur);
+    const e = 1 - (1 - b.t) ** 3; // schnell an, langsam aus – wie Wasser, das sich im Papier verliert
+    if (b.t >= 1 && !b.held) {
+      drawBloom(ctx, b, 1);         // getrocknet: ins Bild übernehmen
+      blooms.splice(i, 1);
+      softDirty = true;
+    } else {
+      drawBloom(wctx, b, e);
+    }
+  }
+  if (softDirty) soften();
+});
+
+boot(effect);
+</script>
+</body>
+</html>

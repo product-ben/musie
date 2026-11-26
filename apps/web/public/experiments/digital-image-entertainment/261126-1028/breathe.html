@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Das Bild atmet</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Das Bild atmet: leg den Finger aufs Bild,
+     und es wölbt sich unter ihm im Tempo eines ruhigen Einatmens (INHALE); lässt du los, sinkt es im Tempo
+     des Ausatmens (EXHALE) zurück. Ein Wort führt durch den Atemzug (Ben, 2026-11-26: ohne den weißen Ring). Die einzige der Ideen,
+     die auch führt.
+     So gebaut: ein Shader, der das Bild unter dem Finger zu einer Kuppel vergrößert und von oben links
+     beleuchtet. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+<style>
+.guide { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); margin: 0; padding: 8px 18px;
+  border-radius: 999px; background: rgba(250, 247, 241, .9); color: var(--sand-12); font-family: var(--font-text);
+  font-size: 1.125rem; white-space: nowrap; pointer-events: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Atme mit dem Bild, während du zuhörst.</h1>
+  <p class="hint">Leg den Finger aufs Bild und atme ein, solange es sich wölbt. Lass los und atme aus.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script src="gl.js"></script>
+<script>
+const INHALE = 4;        // Sekunden Einatmen
+const EXHALE = 6;        // Sekunden Ausatmen
+const DOME = 0.34;       // Radius der Wölbung, Anteil der kürzeren Seite
+const LIFT = 0.42;       // wie stark die Mitte vergrößert wird
+const WORDS = {
+  idle: 'Leg den Finger aufs Bild.',
+  in: 'Einatmen …',
+  full: 'Lass los und atme aus.',
+  out: 'Ausatmen …',
+  again: 'Noch einmal? Leg den Finger wieder auf.',
+};
+
+const FS = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 outColor;
+${PICTURE_GLSL}
+uniform vec2 uSize; uniform vec2 uC; uniform float uR; uniform float uA; uniform float uLift;
+void main() {
+  vec2 d = vUv * uSize - uC;
+  float r = length(d) / uR;
+  if (r >= 1.0 || uA <= 0.0) { outColor = vec4(picture(vUv), 1.0); return; }
+  float f = (1.0 - r * r); f *= f;
+  vec3 c = picture((uC + d * (1.0 - uLift * uA * f)) / uSize);    // die Mitte rückt näher
+  float slope = 4.0 * r * (1.0 - r * r);                           // 0 in der Mitte und am Rand
+  float lit = dot(d / max(length(d), 1e-3), normalize(vec2(-0.6, -0.8)));
+  outColor = vec4(c * (1.0 + 0.16 * uA * slope * lit), 1.0);
+}`;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const guide = document.createElement('p');
+guide.className = 'guide';
+guide.setAttribute('aria-live', 'polite');
+stage.append(guide);
+const gl = glContext(canvas);
+let prog; let quad; let imgTex;
+if (gl) {
+  prog = glProgram(gl, FS);
+  quad = glQuad(gl);
+  imgTex = glTexture(gl);
+}
+
+let g = null;
+let phase = 'idle';      // idle → in → full → out → idle
+let p = 0;               // Fortschritt der Phase, 0…1
+let a = 0;               // Wölbung, 0…1
+let from = 0;            // Wölbung zu Beginn des Ausatmens
+let cx = 0; let cy = 0;
+const fingers = new Set();
+
+function say(key) { if (guide.textContent !== WORDS[key]) guide.textContent = WORDS[key]; }
+say('idle');
+
+const effect = {
+  setImage(im) {
+    if (!gl) return;
+    g = fit(im);
+    glFit(gl, canvas, im, g, prog);
+    glImage(gl, imgTex, im);
+    gl.uniform2f(prog.u('uSize'), g.cssW, g.cssH);
+    gl.uniform1f(prog.u('uR'), DOME * Math.min(g.cssW, g.cssH));
+    gl.uniform1f(prog.u('uLift'), LIFT);
+    phase = 'idle'; a = 0; say('idle');
+    fingers.clear();
+  },
+};
+
+track(canvas, {
+  down(id, x, y) {
+    fingers.add(id);
+    if (phase === 'idle' || phase === 'out') {
+      // ein neuer Atemzug beginnt dort, wo der Finger liegt, und dort, wo die Wölbung gerade ist
+      if (phase === 'idle') { cx = x; cy = y; }
+      phase = 'in';
+      p = Math.asin(Math.sqrt(clamp(a, 0, 1))) / (Math.PI / 2); // weiter, wo das Ausatmen stand
+    }
+  },
+  move() {},
+  up(id) {
+    fingers.delete(id);
+    if (fingers.size === 0 && (phase === 'in' || phase === 'full')) { phase = 'out'; p = 0; from = a; }
+  },
+});
+
+if (gl) {
+  loop((dt) => {
+    if (!g) return;
+    if (phase === 'in') {
+      p = Math.min(1, p + dt / INHALE);
+      a = Math.sin((p * Math.PI) / 2) ** 2;         // sanft an, sanft aus
+      say('in');
+      if (p >= 1) phase = 'full';
+    } else if (phase === 'full') {
+      a = 1;
+      say('full');
+    } else if (phase === 'out') {
+      p = Math.min(1, p + dt / EXHALE);
+      a = from * (1 - Math.sin((p * Math.PI) / 2) ** 2);
+      say('out');
+      if (p >= 1) { phase = 'idle'; a = 0; say('again'); }
+    }
+    gl.useProgram(prog);
+    gl.uniform2f(prog.u('uC'), cx, cy);
+    gl.uniform1f(prog.u('uA'), a);
+    glBind(gl, prog, 'uImg', 0, imgTex);
+    quad.draw();
+  });
+}
+
+boot(effect);
+</script>
+</body>
+</html>

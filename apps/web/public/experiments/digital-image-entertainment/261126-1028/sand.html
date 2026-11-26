@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Sand</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Sand: der Finger zieht Furchen ins Bild,
+     die Körner türmen sich am Rand, bleiben liegen und rieseln dann zurück.
+     Ben, 2026-11-26, zur ersten Fassung: das Loch glatt statt pixelig, die Körner rund und in den Farben
+     ihrer Umgebung, und der Rückweg mit sanftem Anfang und Ende.
+     So gebaut: ein Korn je Zelle eines Rasters. Ruhende Körner werden nicht gezeichnet – dort liegt das
+     Bild selbst, scharf. Das Loch ist eine Maske je Zelle, weich hochskaliert und mit einer Schwelle
+     geglättet; bewegte Körner sind runde Punkte (WebGL). Ein Korn färbt sich mit dem Mittel seiner Zelle. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&family=Literata:opsz,wght@7..72,400&display=swap">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<header>
+  <h1>Zieh Spuren durch das Bild, während du zuhörst.</h1>
+  <p class="hint">Das Bild ist aus Sand. Was du beiseiteschiebst, rieselt langsam zurück.</p>
+</header>
+<main id="stage"></main>
+<footer>
+  <button id="play" class="primary" type="button"></button>
+  <span id="time" class="time">0:00</span>
+  <button id="next" type="button">Andere Karte</button>
+</footer>
+<script src="shell.js"></script>
+<script src="gl.js"></script>
+<script>
+const MAX_GRAINS = 90000;  // Obergrenze; daraus ergibt sich die Rasterweite (mindestens 2 CSS-Pixel)
+const PUSH_R = 0.06;       // größte halbe Breite der Furche, Anteil der kürzeren Bildseite …
+const START = 2 / 3;       // … ein Finger beginnt mit zwei Dritteln davon (Ben, 2026-11-26) …
+const DWELL = 1.5;         // … und braucht so viele Sekunden an einer Stelle bis zum vollen Radius
+const DWELL_PX = 30;       // Bewegung kostet Verweilen: eine Sekunde je so viele CSS-Pixel Weg
+const SPREAD = 0.9;        // wie weit hinter den Rand die Körner fliegen, Anteil des Radius
+const REST_MIN = 0.4;      // Sekunden, die ein verschobenes Korn liegen bleibt … (vorher 2,5–7 s:
+const REST_MAX = 1.6;      // … Ben fand die Pause nach dem Absetzen zu lang)
+const BACK_MIN = 0.7;      // Sekunden für den Rückweg, mit sanftem Anfang und Ende …
+const BACK_MAX = 1.3;      // … je Korn verschieden
+const GRAIN = 1.5;         // Durchmesser eines Korns in Rasterweiten – Körner überlappen wie echter Sand
+const GROUND = [0xE5 / 255, 0xE3 / 255, 0xD9 / 255]; // was unter dem Sand liegt (sand-3)
+
+const FS_GROUND = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 outColor;
+${PICTURE_GLSL}
+uniform sampler2D uHole;
+uniform vec2 uHoleScale;
+uniform vec2 uHoleTexel;
+uniform vec3 uGround;
+void main() {
+  vec3 c = picture(vUv);
+  // fünf Proben statt einer: einzelne Zellen, die sich gerade schließen, werden zu runden Tupfen statt Quadraten
+  vec2 q = vUv * uHoleScale;
+  vec2 o = uHoleTexel * 0.75;
+  float h = (2.0 * texture(uHole, q).r + texture(uHole, q + vec2(o.x, o.y)).r + texture(uHole, q + vec2(-o.x, o.y)).r
+           + texture(uHole, q + vec2(o.x, -o.y)).r + texture(uHole, q - o).r) / 6.0;
+  float a = smoothstep(0.25, 0.75, h);         // weich hochskaliert, dann geglättet: ein runder Rand
+  float rim = 1.0 - abs(2.0 * h - 1.0);        // am Rand ein Hauch Schatten, wie eine Kante im Sand
+  outColor = vec4(mix(c, uGround * (1.0 - 0.1 * rim), a), 1.0);
+}`;
+const VS_GRAIN = `#version 300 es
+layout(location = 0) in vec2 aPos;
+layout(location = 1) in vec4 aCol;
+uniform vec2 uSize;
+uniform float uPoint;
+out vec4 vCol;
+void main() {
+  vCol = aCol;
+  gl_Position = vec4(aPos.x / uSize.x * 2.0 - 1.0, 1.0 - aPos.y / uSize.y * 2.0, 0.0, 1.0);
+  gl_PointSize = uPoint;
+}`;
+const FS_GRAIN = `#version 300 es
+precision highp float;
+in vec4 vCol;
+out vec4 outColor;
+void main() {
+  vec2 p = gl_PointCoord - 0.5;
+  float edge = 1.0 - smoothstep(0.34, 0.5, length(p));
+  float light = 1.0 + 0.12 * (-p.x - p.y);     // Licht von oben links: rund statt flach
+  outColor = vec4(vCol.rgb * light, vCol.a * edge);
+}`;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const gl = glContext(canvas);
+let ground;
+let grains;
+let quad;
+let imgTex;
+let holeTex;
+let pointVao;
+let pointBuf;
+if (gl) {
+  ground = glProgram(gl, FS_GROUND);
+  grains = glProgram(gl, FS_GRAIN, VS_GRAIN);
+  quad = glQuad(gl);
+  imgTex = glTexture(gl);
+  holeTex = glTexture(gl);
+  pointVao = gl.createVertexArray();
+  gl.bindVertexArray(pointVao);
+  pointBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(1);
+  gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 24, 8);
+  gl.bindVertexArray(null);
+}
+
+let W = 0;
+let H = 0;
+let s = 2;
+let cols = 0;
+let rows = 0;
+let N = 0;
+let pushR = 20;
+let hx; let hy; let px; let py; let sx; let sy;
+let t; let dur; let rest; let awake; let list; let listPos; let colour; let hole; let points;
+let listN = 0;
+let dirty = false;
+const fingers = new Map();
+
+function wake(i) {
+  if (awake[i]) return;
+  awake[i] = 1;
+  listPos[i] = listN;
+  list[listN++] = i;
+  px[i] = hx[i];
+  py[i] = hy[i];
+}
+function sleep(i) {
+  awake[i] = 0;
+  const p = listPos[i];
+  const lastI = list[--listN];
+  list[p] = lastI;
+  listPos[lastI] = p;
+}
+
+/* Der Finger ist eine Kapsel von (x0, y0) nach (x1, y1). Jedes Korn darin wird senkrecht zur
+   Bahn hinausgeschoben, bis hinter den Rand – dort häuft es sich zum Wall. */
+function plough(x0, y0, x1, y1, R) {
+  const R2 = R * R;
+  const vx = x1 - x0;
+  const vy = y1 - y0;
+  const L2 = vx * vx + vy * vy;
+  const minX = Math.min(x0, x1) - R;
+  const maxX = Math.max(x0, x1) + R;
+  const minY = Math.min(y0, y1) - R;
+  const maxY = Math.max(y0, y1) + R;
+  const hit = (i, x, y) => {
+    let k = L2 > 0 ? ((x - x0) * vx + (y - y0) * vy) / L2 : 0;
+    k = clamp(k, 0, 1);
+    const dx = x - (x0 + vx * k);
+    const dy = y - (y0 + vy * k);
+    const d2 = dx * dx + dy * dy;
+    if (d2 >= R2) return;
+    let d = Math.sqrt(d2);
+    let nx;
+    let ny;
+    if (d < 1e-3) {
+      const a = Math.random() * Math.PI * 2;
+      nx = Math.cos(a);
+      ny = Math.sin(a);
+      d = 0;
+    } else {
+      nx = dx / d;
+      ny = dy / d;
+    }
+    const out = R - d + R * SPREAD * Math.random() ** 2;
+    wake(i);
+    px[i] = x + nx * out + vx * 0.15;
+    py[i] = y + ny * out + vy * 0.15;
+    t[i] = -1;
+    rest[i] = REST_MIN + Math.random() * (REST_MAX - REST_MIN);
+  };
+  const before = listN; // Körner, die erst jetzt aufwachen, nicht zweimal schieben
+  const c0 = Math.max(0, Math.floor(minX / s));
+  const c1 = Math.min(cols - 1, Math.floor(maxX / s));
+  const r0 = Math.max(0, Math.floor(minY / s));
+  const r1 = Math.min(rows - 1, Math.floor(maxY / s));
+  for (let r = r0; r <= r1; r++) {
+    for (let c = c0; c <= c1; c++) {
+      const i = r * cols + c;
+      if (!awake[i]) hit(i, hx[i], hy[i]);
+    }
+  }
+  for (let k = 0; k < before; k++) {
+    const i = list[k];
+    if (px[i] < minX || px[i] > maxX || py[i] < minY || py[i] > maxY) continue;
+    hit(i, px[i], py[i]);
+  }
+}
+
+const effect = {
+  setImage(im) {
+    if (!gl) return;
+    const g = fit(im);
+    glFit(gl, canvas, im, g, ground);
+    glImage(gl, imgTex, im);
+    W = g.cssW;
+    H = g.cssH;
+    s = Math.max(2, Math.round(Math.sqrt((W * H) / MAX_GRAINS)));
+    cols = Math.ceil(W / s);
+    rows = Math.ceil(H / s);
+    N = cols * rows;
+    pushR = Math.max(12, PUSH_R * Math.min(W, H));
+    const src = pictureCanvas(im, g, W, H).getContext('2d').getImageData(0, 0, W, H).data;
+    hx = new Float32Array(N); hy = new Float32Array(N); px = new Float32Array(N); py = new Float32Array(N);
+    sx = new Float32Array(N); sy = new Float32Array(N); t = new Float32Array(N); dur = new Float32Array(N);
+    rest = new Float32Array(N); awake = new Uint8Array(N); list = new Int32Array(N); listPos = new Int32Array(N);
+    colour = new Float32Array(N * 3); hole = new Uint8Array(N); points = new Float32Array(N * 6);
+    listN = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        hx[i] = (c + 0.5) * s;
+        hy[i] = (r + 0.5) * s;
+        // das Mittel der eigenen Zelle: so passt das Korn zu den Pixeln um es herum
+        let sr = 0; let sg = 0; let sb = 0; let n = 0;
+        for (let y = r * s; y < Math.min(H, (r + 1) * s); y++) {
+          for (let x = c * s; x < Math.min(W, (c + 1) * s); x++) {
+            const o = (y * W + x) * 4;
+            sr += src[o]; sg += src[o + 1]; sb += src[o + 2]; n++;
+          }
+        }
+        const v = (1 + (Math.random() - 0.5) * 0.06) / (255 * Math.max(1, n)); // ein wenig Streuung
+        colour[i * 3] = sr * v; colour[i * 3 + 1] = sg * v; colour[i * 3 + 2] = sb * v;
+      }
+    }
+    glFieldR8(gl, holeTex, cols, rows, hole);
+    gl.useProgram(ground);
+    gl.uniform2f(ground.u('uHoleScale'), W / (cols * s), H / (rows * s));
+    gl.uniform2f(ground.u('uHoleTexel'), 1 / cols, 1 / rows);
+    gl.uniform3f(ground.u('uGround'), ...GROUND);
+    gl.useProgram(grains);
+    gl.uniform2f(grains.u('uSize'), W, H);
+    gl.uniform1f(grains.u('uPoint'), GRAIN * s * DPR);
+    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, points.byteLength, gl.DYNAMIC_DRAW);
+    fingers.clear();
+    dirty = true;
+  },
+};
+
+/* Der Radius wächst, je länger der Finger an einer Stelle bleibt: von START bis zum vollen PUSH_R. */
+const radius = (f) => pushR * (START + (1 - START) * easeInOut(clamp(f.dwell / DWELL, 0, 1)));
+/* Liegt die Heimat eines Korns noch unter einem Finger, wartet es – sonst flöge es hinein und wieder hinaus. */
+function underFinger(i) {
+  for (const f of fingers.values()) if ((hx[i] - f.x) ** 2 + (hy[i] - f.y) ** 2 < (radius(f) + 2) ** 2) return true;
+  return false;
+}
+
+track(canvas, {
+  down(id, x, y) {
+    const f = { x, y, dwell: 0 };
+    fingers.set(id, f);
+    if (N) plough(x, y, x, y, radius(f));
+  },
+  move(id, x, y) {
+    const f = fingers.get(id);
+    if (!f || !N) return;
+    const d = Math.hypot(x - f.x, y - f.y);
+    if (d < 1) return;
+    f.dwell = Math.max(0, f.dwell - d / DWELL_PX);
+    plough(f.x, f.y, x, y, radius(f));
+    f.x = x;
+    f.y = y;
+  },
+  up(id) { fingers.delete(id); },
+});
+
+if (gl) {
+  loop((dt) => {
+    if (!N || (listN === 0 && !dirty && fingers.size === 0)) return;
+    for (const f of fingers.values()) {
+      f.dwell += dt;
+      plough(f.x, f.y, f.x, f.y, radius(f)); // ein ruhender Finger gräbt sich weiter ein
+    }
+    for (let j = listN - 1; j >= 0; j--) {
+      const i = list[j];
+      if (t[i] < 0) {
+        rest[i] -= dt;
+        if (rest[i] <= 0 && fingers.size && underFinger(i)) rest[i] = 0.15;
+        if (rest[i] <= 0) {
+          t[i] = 0;
+          sx[i] = px[i];
+          sy[i] = py[i];
+          dur[i] = BACK_MIN + Math.random() * (BACK_MAX - BACK_MIN);
+        }
+        continue;
+      }
+      t[i] += dt / dur[i];
+      if (t[i] >= 1) { sleep(i); continue; }
+      const e = easeInOut(t[i]);
+      px[i] = sx[i] + (hx[i] - sx[i]) * e;
+      py[i] = sy[i] + (hy[i] - sy[i]) * e;
+    }
+    hole.fill(0);
+    for (let j = 0; j < listN; j++) {
+      const i = list[j];
+      const ti = t[i];
+      // das Loch schließt sich in der zweiten Hälfte des Rückwegs, das Korn blendet am Ziel aus
+      hole[i] = ti < 0 ? 255 : Math.round(255 * (1 - easeInOut(clamp((ti - 0.4) / 0.6, 0, 1))));
+      const o = j * 6;
+      points[o] = px[i];
+      points[o + 1] = py[i];
+      points[o + 2] = colour[i * 3];
+      points[o + 3] = colour[i * 3 + 1];
+      points[o + 4] = colour[i * 3 + 2];
+      points[o + 5] = ti < 0.75 ? 1 : 1 - (ti - 0.75) / 0.25;
+    }
+    gl.disable(gl.BLEND);
+    gl.useProgram(ground);
+    glUpdateR8(gl, holeTex, cols, rows, hole);
+    glBind(gl, ground, 'uImg', 0, imgTex);
+    glBind(gl, ground, 'uHole', 1, holeTex);
+    quad.draw();
+    if (listN > 0) {
+      gl.enable(gl.BLEND);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(grains);
+      gl.bindVertexArray(pointVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, points, 0, listN * 6);
+      gl.drawArrays(gl.POINTS, 0, listN);
+      gl.bindVertexArray(null);
+    }
+    dirty = listN > 0;
+  });
+}
+
+boot(effect);
+</script>
+</body>
+</html>
