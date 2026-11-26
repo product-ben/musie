@@ -18,7 +18,11 @@
  * because the bare address is START now.
  *
  * The state lives in the address (`#…`), so a combination can be sent as a
- * link, and in localStorage, so a reload keeps it.
+ * link, and in localStorage, so a reload keeps it — until START changes. A
+ * stored state remembers the START it was made under, and when that is no
+ * longer the START, the page opens on the new one (Ben, 2026-11-26: the third
+ * link was live, and a browser that had visited before still showed six
+ * figures). A link still opens on what it says.
  */
 import type { InstrumentId } from '../../../src/instruments/types';
 
@@ -268,14 +272,18 @@ export function decode(text: string): Settings {
 
 /* ── the store ───────────────────────────────────────────────────────────── */
 
-const STORAGE_KEY = 'duett-settings';
+export const STORAGE_KEY = 'duett-settings';
+/** The START a stored state was made under, as its address. */
+export const STORAGE_START_KEY = 'duett-start';
 
 function initial(): Settings {
   if (typeof window === 'undefined') return DEFAULTS;
   if (window.location.hash.length > 1) return decode(window.location.hash);
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored !== null) return decode(stored);
+    /* A state stored before START last changed — or before this key existed —
+       is dropped: the visitor gets the new start, not the one they left. */
+    if (stored !== null && window.localStorage.getItem(STORAGE_START_KEY) === encode(START)) return decode(stored);
   } catch {
     /* private mode: start from START */
   }
@@ -298,6 +306,7 @@ export function setSettings(next: Settings | ((s: Settings) => Settings)): void 
     window.history.replaceState(null, '', url);
     try {
       window.localStorage.setItem(STORAGE_KEY, text);
+      window.localStorage.setItem(STORAGE_START_KEY, encode(START));
     } catch {
       /* the address still carries it */
     }
