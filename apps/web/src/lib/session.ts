@@ -487,7 +487,7 @@ export async function saveDigitalCards(id: string, digitalCards: boolean): Promi
  *
  * `saveListeningAnswers`' timing and its reason: one request on the way out
  * rather than one per step of a drag. Written whether or not the slider was
- * moved, because the question was PUT, and leaving it at 1:30 is an answer —
+ * moved, because the question was PUT, and leaving it at 2:00 is an answer —
  * the column records what was chosen, and a report about lengths would read a
  * missing row as "never asked".
  *

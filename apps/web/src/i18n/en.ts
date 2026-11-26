@@ -756,6 +756,11 @@ export const en = {
   'session.intro.length.oneMinute': '1 minute',
   'session.intro.length.minutesSeconds': '{minutes} minutes {seconds} seconds',
   'session.intro.length.oneMinuteSeconds': '1 minute {seconds} seconds',
+  /* The intro sentence's `{nextMinutes}` — the phrase and not only the
+     number, because the minimum is one minute and „the next 1 minutes" is
+     not English. One/other by hand. */
+  'session.intro.nextMinutes': 'the next {minutes} minutes',
+  'session.intro.nextMinute': 'the next minute',
 
   /* ── A SMALL SCREEN, SAID ONCE AND WITHOUT A GATE ────────────────────────
      Only in digital mode, and only below 850px — the width is a CSS decision

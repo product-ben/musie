@@ -10,18 +10,20 @@
  * the instrument goes on until the person goes on (Ben: „wie heute").
  *
  * ── STATIC BOUNDS, AND WHY ───────────────────────────────────────────────
- * 1:30 to 10:00 for both kinds. The first idea was "up to the length of the
+ * 1:00 to 10:00 for both kinds. The first idea was "up to the length of the
  * track", and it does not survive the data: a card exercise's piece is
  * chosen by the CARD, which is drawn after Einsteigen, and the pieces run
  * 1:40–3:11, so the range would have been one or two steps wide — and an
  * instrument has no track at all. Ben, 2026-11-26: „Dann statisch: Max 10
- * min, min 1:30". The listen step repeats the piece until the length is
- * reached (`SessionListen`, `useMix`'s laps).
+ * min", and the same day „Min length ist 1 min überall". The listen step
+ * repeats the piece until the length is reached (`SessionListen`, `useMix`'s
+ * laps).
  *
- * ── THE START IS TODAY ───────────────────────────────────────────────────
- * The slider starts where the run used to be fixed — the exercise's own
- * `listen_gate_seconds`, 1:30 for all five — so somebody who touches nothing
- * gets the exercise they would have had (Ben: „1:30 wie heute").
+ * ── THE START IS 2:00, FOR EVERY ONE ─────────────────────────────────────
+ * Ben, 2026-11-26: „default ist 2 min". It replaced „1:30 wie heute" — the
+ * exercises' own `listen_gate_seconds` — the same day, so the start no longer
+ * comes from the exercise at all; that column goes on serving the kinds that
+ * do not ask.
  *
  * PURE: no React, no Supabase, no i18n. The words a screen reader hears are
  * chosen here as catalogue KEYS, and the screen looks them up.
@@ -29,12 +31,14 @@
 import type { ExerciseKind } from './exerciseKind';
 import type { MessageKey } from '../i18n';
 
-/** The shortest run: 1:30. */
-export const LENGTH_MIN_SECONDS = 90;
+/** The shortest run: 1:00. */
+export const LENGTH_MIN_SECONDS = 60;
 /** The longest run: 10:00. */
 export const LENGTH_MAX_SECONDS = 600;
 /** The slider settles on half minutes. */
 export const LENGTH_STEP_SECONDS = 30;
+/** Where the slider starts when the run has no length yet: 2:00. */
+export const LENGTH_DEFAULT_SECONDS = 120;
 
 /** The two kinds whose length the person sets. */
 const VARIABLE: ReadonlySet<ExerciseKind> = new Set<ExerciseKind>(['card_based', 'instruments']);
@@ -59,13 +63,13 @@ export function clampLength(seconds: number): number {
 
 /**
  * Where the slider starts: the length stored for this run when it has one
- * (a resumed run keeps its answer), the exercise's own minimum otherwise.
+ * (a resumed run keeps its answer), 2:00 otherwise.
  */
-export function initialLength(stored: number | null, exerciseGateSeconds: number): number {
-  return clampLength(stored ?? exerciseGateSeconds);
+export function initialLength(stored: number | null): number {
+  return clampLength(stored ?? LENGTH_DEFAULT_SECONDS);
 }
 
-/** M:SS, the minutes unpadded — "1:30", "10:00". How a length is written. */
+/** M:SS, the minutes unpadded — "1:00", "10:00". How a length is written. */
 export function lengthClock(seconds: number): string {
   const whole = Math.max(0, Math.round(seconds));
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;

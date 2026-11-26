@@ -7,8 +7,8 @@
  *   1. A session remembers the length chosen on Einsteigen, only its owner
  *      can write it, and a length is a length (positive).
  *   2. The five exercises that ask for a length quote it in their intro
- *      sentence through `{minutes}`, in both languages — the fixed „2" and
- *      „3 Minuten" that stood above the slider are gone.
+ *      sentence through `{nextMinutes}`, in both languages — the fixed „2"
+ *      and „3 Minuten" that stood above the slider are gone.
  *
  * Every refusal is paired with a positive control, as in db.security.
  */
@@ -86,7 +86,7 @@ describe('length · a session remembers how long it is', () => {
 });
 
 describe('length · the intro sentence quotes it', () => {
-  it('reads {minutes} in every card and instrument intro, in both languages', async () => {
+  it('reads {nextMinutes} in every card and instrument intro, in both languages', async () => {
     const { data: exercises, error: kindsError } = await alice
       .from('exercises')
       .select('id')
@@ -103,7 +103,7 @@ describe('length · the intro sentence quotes it', () => {
     expect(data).toHaveLength(ids.length * 2);
     for (const row of data ?? []) {
       const where = `${row.exercise_id}/${row.locale}`;
-      expect(row.intro_md, where).toContain(row.locale === 'de' ? 'die nächsten {minutes} Minuten' : 'the next {minutes} minutes');
+      expect(row.intro_md, where).toContain(row.locale === 'de' ? 'Stell sicher, dass {nextMinutes} keine' : 'Make sure that for {nextMinutes} no');
       expect(row.intro_md, where).not.toMatch(/nächsten [0-9]+ Minuten|next [0-9]+ minutes/);
     }
   });

@@ -573,6 +573,11 @@ export const de: Messages = {
   'session.intro.length.oneMinute': '1 Minute',
   'session.intro.length.minutesSeconds': '{minutes} Minuten {seconds} Sekunden',
   'session.intro.length.oneMinuteSeconds': '1 Minute {seconds} Sekunden',
+  /* Das `{nextMinutes}` im Intro-Satz — die ganze Wortgruppe, nicht nur die
+     Zahl, denn das Minimum ist eine Minute, und „die nächsten 1 Minuten" ist
+     kein Deutsch. */
+  'session.intro.nextMinutes': 'die nächsten {minutes} Minuten',
+  'session.intro.nextMinute': 'die nächste Minute',
   /* Bens Satz, auf den Standard gebracht (§7, §8): 'Bildschirmen' statt
      'Biuldschirmen', 'optimale' klein, 'Größe' mit ß, und das Komma vor dem
      Relativsatz. */

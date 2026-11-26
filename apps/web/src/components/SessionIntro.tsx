@@ -37,7 +37,8 @@
  *
  * ── HOW LONG THE RUN IS, LAST — Ben, 2026-11-26 ──────────────────────────
  * A card or instrument exercise asks, below every other setting, how long
- * this run should be: a `Slider` from 1:30 to 10:00 in half minutes
+ * this run should be: a `Slider` from 1:00 to 10:00 in half minutes,
+ * starting at 2:00
  * (`lib/exerciseLength.ts`). It is the last thing on the screen because it is
  * the last thing to decide — what the run is comes first, how long it lasts
  * after. The intro sentence's `{minutes}` follows it as it moves.
@@ -222,9 +223,20 @@ export function SessionIntro({
      is better than writing a zero into a sentence — and it is visible rather
      than silent, so a missing duration shows up as `{minutes}` on screen the
      first time somebody looks, instead of as a confident wrong number. */
-  const md = durationSeconds === null || durationSeconds === undefined
+  const minutes = durationSeconds === null || durationSeconds === undefined
+    ? null
+    : Math.ceil(durationSeconds / 60);
+  /* `{nextMinutes}` (2026-11-26) is the whole phrase, from the catalogue —
+     „die nächste Minute" at one, „die nächsten 5 Minuten" above. The card and
+     instrument intros use it, because their length starts at one minute;
+     `{minutes}` stays the bare number for the recordings that never do. */
+  const md = minutes === null
     ? exercise.introMd
-    : exercise.introMd.replaceAll('{minutes}', String(Math.ceil(durationSeconds / 60)));
+    : exercise.introMd
+      .replaceAll('{minutes}', String(minutes))
+      .replaceAll('{nextMinutes}', minutes === 1
+        ? t('session.intro.nextMinute')
+        : t('session.intro.nextMinutes', { minutes: String(minutes) }));
 
   /* ONE FLAG, read off the prop that carries the answer — the same shape the
      two questions above use, and for the same reason. */

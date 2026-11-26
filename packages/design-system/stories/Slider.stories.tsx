@@ -14,10 +14,10 @@ import { SegmentedControl } from '../src/SegmentedControl';
 import { User, Users } from 'lucide-react';
 import { bothThemes, Stack } from './_decorators';
 
-/* The exercise length the slider was built for: 1:30 up to the length of the
-   piece. 8:12 stands in for a piece; the app passes the real one. */
-const MIN = 90;
-const MAX = 492;
+/* The exercise length as the app asks it (`apps/web/src/lib/exerciseLength.ts`):
+   1:00 to 10:00 in half minutes, starting at 2:00. */
+const MIN = 60;
+const MAX = 600;
 
 /** M:SS — the app's own form of a duration (SessionListen's clock). */
 const clock = (seconds: number) => {
@@ -48,8 +48,7 @@ const meta = {
           'ONE value on a continuous range, chosen by dragging, pressing the track',
           'or the arrow keys. Built for how long an exercise runs: in user testing',
           'some people found an exercise too long and some too short, so the length',
-          'became something the person sets — from 1:30 up to the length of the',
-          'piece that plays.',
+          'became something the person sets — 1:00 to 10:00, starting at 2:00.',
           '',
           '**The segmented control\'s primitives, not the music player\'s** (Ben,',
           '2026-11-26). The label is the segmented control\'s legend — the same',
@@ -101,7 +100,7 @@ const meta = {
     min: MIN,
     max: MAX,
     step: 30,
-    defaultValue: 270,
+    defaultValue: 120,
     formatValue: clock,
     valueText: spoken,
   },
@@ -124,8 +123,9 @@ const meta = {
     accent: {
       control: 'inline-radio',
       options: ['primary', 'accent'],
-      description: 'Solved accent family — the readout’s and the grip’s ink. `primary` by default.',
+      description: 'Solved accent family — the current value’s and the glyph’s ink. `primary` by default.',
     },
+    glyph: { control: false, description: 'The glyph on the thumb. An eighth note (Lucide `Music2`) by default.' },
     disabled: { control: 'boolean', description: 'Disables the slider.' },
     name: { control: 'text', description: 'Identifies the value when a form is submitted.' },
     className: { control: false },
@@ -136,13 +136,13 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * The exercise length: 1:30 to the length of the piece. Drag it: the thumb
+ * The exercise length: 1:00 to 10:00, starting at 2:00. Drag it: the thumb
  * moves freely, the figure counts in 30 s steps, and on release the thumb
- * glides onto the step the figure showed. 8:12 is a step of its own.
+ * glides onto the step the figure showed.
  */
 export const Default: Story = {};
 
-/** Both accent families. Only the current value's and the grip's ink changes. */
+/** Both accent families. Only the current value's and the glyph's ink changes. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>

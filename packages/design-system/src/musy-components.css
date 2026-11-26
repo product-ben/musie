@@ -3269,7 +3269,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    unglued. Colour and opacity fade on --motion-toggle, as §15's do.       */
 
 .musy-slider {
-  /* The chosen segment's ink: the current value and the grip. */
+  /* The chosen segment's ink: the current value and the thumb's glyph. */
   --musy-slider-ink: var(--interactive-primary-on-subtle);
   /* The thumb is the target, so it is the lane's own height, square. */
   --musy-slider-thumb: var(--target-primary);
@@ -3354,18 +3354,12 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   background-color: var(--surface-raised);
   color: var(--musy-slider-ink);
 }
-/* THE GRIP. A bar a glyph high — `--icon-size-md`, the glyph a `primary`
-   segment carries — in the chosen segment's ink. It is the only mark on the
-   control that says it moves; without it the thumb is a blank circle at the
-   end of a pill. Drawn, not a Lucide glyph: the six-dot grip is
-   DraggableList's, and means "reorder". */
-.musy-slider__thumb::after {
-  content: '';
-  inline-size: var(--sp-1);
-  block-size: var(--icon-size-md);
-  border-radius: var(--radius-full);
-  background-color: currentColor;
-}
+/* THE GLYPH. An eighth note by default (`Slider.glyph`), at `md` — the glyph
+   a `primary` segment carries — in the chosen segment's ink, which the Icon
+   takes from `color` above. It replaced a drawn grip bar (Ben, 2026-11-26):
+   the note says what the slider sets, and a thumb with a glyph on it still
+   reads as the thing to take hold of. Never shrunk by the grid. */
+.musy-slider__thumb > .musy-icon { flex: none; }
 /* The focusable element is base-ui's <input type="range"> INSIDE the thumb,
    so the ring is drawn on the thumb when it holds focus. A rule of its own,
    not a line in §0's list: one selector a browser cannot parse voids the
@@ -3504,13 +3498,13 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 }
 
 /* Forced colours discard the raised fill, so the chosen part takes Highlight
-   — §21's escape for its played portion — and the grip HighlightText. The
+   — §21's escape for its played portion — and the glyph HighlightText. The
    current value's pill is a fill too; while moving it keeps its shape as an
    outline instead. */
 @media (forced-colors: active) {
   .musy-slider__indicator,
   .musy-slider__thumb { background-color: Highlight; }
-  .musy-slider__thumb { color: HighlightText; }
+  .musy-slider__thumb { color: HighlightText; }  /* the glyph */
   .musy-slider[data-held] .musy-slider__current { outline: var(--border-width-hairline) var(--border-style-solid) CanvasText; }
   .musy-slider[data-disabled] .musy-slider__indicator,
   .musy-slider[data-disabled] .musy-slider__thumb { background-color: GrayText; }

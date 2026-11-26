@@ -13054,3 +13054,11 @@ What I need from Ben:
 - **The reflexion experiment shows the slider now** (Freie Bahn, Harfe): it renders the real Session (rule 10). Its shims store the answer; nothing breaks — but it changes what that experiment measures. Keep, or hide it there?
 - **After the minimum the pass finishes**, so a run can be up to one piece longer than chosen (5:00 on a 2:48 piece plays 5:36). That is „wie heute" — say if it should stop at the chosen time instead.
 - **The intro sentence on the HOSTED rows** is rewritten by the migration with a pattern (`nächsten [0-9]+ Minuten`), so it holds even if a number was edited there; `pnpm db:sync` after merge, as always.
+
+### Follow-up, 2026-11-26 — Ben on localhost: 1:00 minimum, 2:00 start, an eighth note
+
+What I did:
+- **„Min length ist 1 min überall, default ist 2 min"**: `LENGTH_MIN_SECONDS` 60, `LENGTH_DEFAULT_SECONDS` 120, for all five; the start no longer comes from `listen_gate_seconds` at all (that column keeps serving the kinds that do not ask). Replaces „1:30 wie heute" above.
+- **The intro sentence at one minute.** `{minutes}` would have read „die nächsten 1 Minuten". The migration (not yet applied anywhere hosted, so edited rather than stacked) now writes the whole phrase as `{nextMinutes}`, and the catalogue holds „die nächste Minute" / „die nächsten {minutes} Minuten" (EN: „the next minute" / „the next {minutes} minutes"). Measured: 1:00 → „die nächste Minute", 1:30 and 2:00 → „die nächsten 2 Minuten".
+- **„anstatt den schwarzen Strich … eighth-note"**: Lucide has no icon of that name; its single eighth note is `music-2` (note head, stem, flag — `music` is two beamed eighths). The thumb carries `Music2` at `md` in the segment's ink, as a `glyph` prop with that default.
+What I need from Ben: nothing — say if `music-2` is not the note you meant.

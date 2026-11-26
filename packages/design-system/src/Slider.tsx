@@ -7,8 +7,8 @@
  * ONE value on a continuous range, chosen by dragging, pressing the track or
  * the arrow keys. Built for how long an exercise runs (Ben, 2026-11-26): in
  * user testing some people found an exercise too long and some too short, so
- * the length became something the person sets — from 1:30 up to the length of
- * the piece that plays.
+ * the length became something the person sets — 1:00 to 10:00, starting at
+ * 2:00 (Ben, 2026-11-26; the numbers are the app's, `lib/exerciseLength.ts`).
  *
  * ── THE SEGMENTED CONTROL'S PRIMITIVES, NOT THE MUSIC PLAYER'S ────────────
  * Ben, 2026-11-26, choosing between a thin rail and this. The slider sits
@@ -22,6 +22,9 @@
  *   · the CHOSEN PART is the chosen segment — raised fill and the
  *     primary-on-subtle ink — stretched from the start of the track to the
  *     thumb. At the minimum it is exactly one segment's square;
+ *   · the THUMB carries a glyph, as a segment does — an eighth note by
+ *     default (Ben, 2026-11-26: „anstatt den schwarzen Strich … eighth-note",
+ *     which is Lucide's `music-2`). It replaced a drawn grip bar;
  *   · the values under the track are set like an unchosen segment's word —
  *     label-md.
  *
@@ -98,6 +101,9 @@
  */
 import * as React from 'react';
 import { Slider as BaseSlider } from '@base-ui/react/slider';
+import { Music2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { Icon } from './Icon';
 
 /** The steps the label may take — the segmented control's `legendStep`. */
 export type SliderLabelStep = 'label-lg' | 'label-md';
@@ -168,6 +174,12 @@ export interface SliderProps {
   /** The same, before the maximum's value at the end of the track. */
   maxLabel?: string;
   accent?: SliderAccent;
+  /**
+   * The glyph on the thumb, at the size a `primary` segment's glyph is.
+   * An eighth note by default (`Music2`) — every slider in the product so far
+   * sets how long music plays. Decorative: the label names the slider.
+   */
+  glyph?: LucideIcon;
   disabled?: boolean;
   /** Identifies the value when a form is submitted. */
   name?: string;
@@ -207,7 +219,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
   function Slider({
     label, labelHidden = false, labelStep = 'label-lg', min, max, step = 1, largeStep,
     value, defaultValue, onValueChange, onValueCommitted, formatValue, valueText,
-    minLabel, maxLabel, accent = 'primary', disabled = false, name, className,
+    minLabel, maxLabel, accent = 'primary', glyph = Music2, disabled = false, name, className,
   }, ref) {
     if (process.env.NODE_ENV !== 'production' && !(max > min)) {
       console.warn(`Slider "${label}": max (${max}) must be greater than min (${min}).`);
@@ -381,7 +393,9 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
                 ref={thumbRef}
                 className="musy-slider__thumb"
                 getAriaValueText={(_formatted, v) => (valueText ?? formatValue)(snap(v))}
-              />
+              >
+                <Icon glyph={glyph} size="md" />
+              </BaseSlider.Thumb>
             </BaseSlider.Track>
           </BaseSlider.Control>
         </div>

@@ -4,9 +4,10 @@
 --
 -- User testing: some people found an exercise too long, some too short. So a
 -- card exercise and an instrument exercise ask, as the last setting on
--- Einsteigen, how long this run should be — a slider from 1:30 to 10:00 in
--- 30-second steps, starting at 1:30, which is what every one of them was
--- before (`exercises.listen_gate_seconds`, 90 for all five).
+-- Einsteigen, how long this run should be — a slider from 1:00 to 10:00 in
+-- 30-second steps, starting at 2:00 (Ben, the same day: „Min length ist 1 min
+-- überall, default ist 2 min"). Every one of them was fixed at 1:30 before
+-- (`exercises.listen_gate_seconds`), which goes on serving the other kinds.
 --
 -- What the length IS did not change: it is the time the step's clock counts
 -- down before „Weiter" opens. The listen step repeats the card's piece until
@@ -48,19 +49,23 @@ comment on column public.sessions.length_seconds is
 
 -- ═══ 2 · THE INTRO SENTENCE NAMES THE CHOSEN LENGTH ════════════════════════
 -- „Stell sicher, dass die nächsten 2 Minuten …" stood directly above a slider
--- that can say 8:00. `{minutes}` is the placeholder the Klangreise and the
--- Bodyscan already use (20261012100000_listening_steps.sql), filled by
--- Einsteigen — here from the chosen length, rounded up, as the slider moves.
+-- that can say 8:00. The whole phrase becomes `{nextMinutes}`, which
+-- Einsteigen fills from the chosen length, rounded up, as the slider moves —
+-- the phrase and not just the number, because at 1:00 the number alone reads
+-- „die nächsten 1 Minuten": the app's catalogue holds „die nächste Minute"
+-- and „die nächsten {minutes} Minuten" (`session.intro.nextMinute(s)`).
+-- The Klangreise's and the Bodyscan's `{minutes}` (20261012100000) is left as
+-- it is: their recordings never run a single minute.
 -- By kind, like the app's rule, so the five cannot be named twice.
 update public.exercise_i18n as i
-set intro_md = regexp_replace(i.intro_md, 'die nächsten [0-9]+ Minuten', 'die nächsten {minutes} Minuten')
+set intro_md = regexp_replace(i.intro_md, 'die nächsten [0-9]+ Minuten', '{nextMinutes}')
 from public.exercises as e
 where e.id = i.exercise_id
   and e.kind in ('card_based', 'instruments')
   and i.locale = 'de';
 
 update public.exercise_i18n as i
-set intro_md = regexp_replace(i.intro_md, 'the next [0-9]+ minutes', 'the next {minutes} minutes')
+set intro_md = regexp_replace(i.intro_md, 'the next [0-9]+ minutes', '{nextMinutes}')
 from public.exercises as e
 where e.id = i.exercise_id
   and e.kind in ('card_based', 'instruments')

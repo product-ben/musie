@@ -507,11 +507,10 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
      (`lib/exerciseLength.ts`). Held HERE, like the other intro answers: the
      intro draws it, the listen step's minimum and the play step's timer count
      it down, and the row stores it on the way out of Einsteigen. Seeded from
-     the row, so a resumed run keeps its length; from the exercise's own
-     minimum otherwise, which is where every run used to be fixed. */
+     the row, so a resumed run keeps its length; 2:00 otherwise (Ben). */
   const variableLength = hasVariableLength(data.exercise.kind);
   const [lengthSeconds, setLengthSeconds] = React.useState<number>(
-    () => initialLength(data.row.lengthSeconds, data.exercise.listenGateSeconds),
+    () => initialLength(data.row.lengthSeconds),
   );
   /** What the listen step and the play step count down: the chosen length
    *  where there was a choice, the exercise's own minimum everywhere else. */
@@ -921,7 +920,7 @@ function SessionRun({ data, id, urlStep, onRescan, onJump }: SessionRunProps) {
 
     /* HOW LONG THIS RUN IS, on the same way out and for the same reason —
        one write, whether or not the slider moved: the question was put, and
-       1:30 left alone is an answer (`saveLength`). */
+       2:00 left alone is an answer (`saveLength`). */
     if (state.step === 'intro' && variableLength) {
       void saveLength(id, lengthSeconds);
     }
