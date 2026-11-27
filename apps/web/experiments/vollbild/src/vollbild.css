@@ -82,27 +82,6 @@
   touch-action: none;
 }
 
-/* THE CORNER UNDER THE X — Ben, 2026-11-27: „lass uns bei 40 % bleiben“.
-   MEASURED on all nine cards at 393 × 852: under the X's glyph eight of nine
-   fall below 3:1 against the dark palette's light X (mc-08's worst pixel
-   1.1:1). 40 % black brings every pixel of every card to at least 3.1:1
-   (mc-08); 46 % would hold for anything, pure white included — the effects
-   can push light colour under the X, and that case is knowingly left open.
-   The glyph lies 32–60 px from the corner, so full strength holds to 60 px;
-   the fade after it is a GUESS, by eye. Over card and effect, under the
-   controls, and it takes no touches. */
-.musie-hoeren__scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 100% 0,
-    rgb(0 0 0 / 0.4) 0 60px,
-    rgb(0 0 0 / 0.28) 85px,
-    rgb(0 0 0 / 0.14) 110px,
-    rgb(0 0 0 / 0.04) 135px,
-    rgb(0 0 0 / 0) 150px);
-}
-
 /* Over the card's top edge: the bar, then the X in its 44px target — at
    Figma's exact insets („consider spacing here“, „consider the exact gap“):
    10 from the top, 22 from the left, 11 from the right. The X's glyph sits

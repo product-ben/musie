@@ -13365,3 +13365,11 @@ Ben asked what gradient from the top right keeps the X visible, then chose
   reaches the effect.
 - **Not covered:** the progress bar, which has the same light-on-light
   problem and runs outside the corner.
+
+### Follow-up, 2026-11-27 — the gradient under the X is gone again
+
+Ben: „mach den shadow weg“. The only shadow in the listening view was that
+corner gradient (checked: nothing else there paints a box-shadow, filter or
+gradient), so it came out — element and rule. The X is back to the measured
+state above: below 3:1 under its glyph on eight of nine cards. The numbers
+stay in the entry before this one, for whenever it comes back up.

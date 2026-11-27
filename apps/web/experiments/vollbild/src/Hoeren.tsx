@@ -161,8 +161,6 @@ export function Hoeren({
             />
           )}
         </div>
-        {/* Darkens the corner under the X so it keeps 3:1 (Ben: 40 %). */}
-        <div className="musie-hoeren__scrim" aria-hidden="true" />
         <div className="musie-hoeren__head">
           <div
             className="musie-hoeren__progress"
