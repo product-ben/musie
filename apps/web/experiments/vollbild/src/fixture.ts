@@ -63,7 +63,10 @@ export const EXERCISE: Exercise = {
   needs: 'Mindfulness-Karten-Set',
   introMd: '## Lass uns mit Freier Bahn beginnen',
   scanMd: '## Wähle eine Karte aus',
-  listenMd: '## Nimm die Klänge wahr und sieh dir dabei die Karte intensiv an\n\nLass dich von ihnen mitnehmen. Lass Gedanken kommen und gehen.',
+  /* Ben, 2026-11-27, in place of „Nimm die Klänge wahr und sieh dir dabei die
+     Karte intensiv an“. The old body („Lass dich von ihnen mitnehmen …“) went
+     with it: its „ihnen“ were the Klänge of the old headline. */
+  listenMd: '## Achte beim Hören darauf, welches Bild vor deinem inneren Auge entsteht. Wenn du magst, interagiere dabei mit dem Bild.',
   reflectMd: '## Spüre und reflektiere',
   reflectPlaceholder: null,
   imageAlt: 'Ein Stapel Mindfulness-Karten, davor steht eine einzelne Karte aufrecht, umgeben von ringförmigen Wellen',

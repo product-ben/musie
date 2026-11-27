@@ -13274,3 +13274,38 @@ comments) … Quick and dirty to allow me to test it“ — Layer 1 file, page 3
   German only, strings inline.
 - Verified in Chromium at 393 × 852, with and without the Fullscreen API.
   Not on a phone.
+
+### Follow-up, 2026-11-27 — a new headline, and the picture can be played with
+
+Ben: the headline „Nimm die Klänge wahr und sieh dir dabei die Karte intensiv
+an“ becomes „Achte beim Hören darauf, welches Bild vor deinem inneren Auge
+entsteht. Wenn du magst, interagiere dabei mit dem Bild“; and four effects of
+„Mit dem Bild spielen“ — Wasser, Morphen, Farbe verrühren, Marmorieren — one
+at random per session, discarded with the tab, a new draw next time.
+
+- **The headline** is the fixture's `listenMd`, with a closing full stop (the
+  first sentence has one). Its old body „Lass dich von ihnen mitnehmen …“ went
+  too: its „ihnen“ were the Klänge of the old headline.
+- **The effects run as they were, in an iframe** over the card:
+  `apps/web/public/experiments/vollbild/effects/{water,morph,stir,marble}.html`
+  are copies of the originals without header and buttons; the effect scripts
+  are byte-for-byte the same. `embed.js` is `shell.js` without the music, the
+  buttons and „Andere Karte“, and its `fit` crops like `object-fit: cover`, so
+  the effect shows exactly the crop of the card under it. `gl.js` is copied,
+  so this page does not break when that experiment is deleted.
+- **Per tab = `sessionStorage`** (`effect.ts`): a reload and closing/opening
+  the view keep the draw; a new tab draws again (eight new tabs drew all
+  four). `?effekt=wasser|morphen|verruehren|marmorieren` forces one, for
+  trying all four. The status line names the tab's effect.
+- **The mask is now a mask.** Card and effect sit in a layer as tall as the
+  box is with the instruction closed, computed from the view rather than the
+  box; opening the instruction cuts the layer off at the bottom. Before, the
+  card rescaled (cover) — and a resized iframe would have restarted its
+  effect and lost what was played. Measured: iframe 765 px with the
+  instruction closed and open, box 765 → 694, canvas unchanged.
+- **The bar and X no longer catch touches**, except the X itself: the picture
+  under the bar can be played with.
+
+Verified in Chromium (SwiftShader WebGL 2) at 393 × 852: each effect draws
+(no „WebGL 2 fehlt“), a drag changes the picture, the instruction toggle keeps
+it. Not on a phone — the effects' cost there is the originals' cost.

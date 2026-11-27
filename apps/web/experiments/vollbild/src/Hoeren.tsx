@@ -18,6 +18,17 @@
  * The progress bar is the share of the minimum time listened (Figma
  * „Progress“: it replaces the countdown figure). Continuous here; the 10 %
  * steps are only how Figma can draw it.
+ *
+ * ── THE PICTURE CAN BE PLAYED WITH (2026-11-27) ──────────────────────────
+ * Over the card lies one of four effects from „Mit dem Bild spielen“, picked
+ * per tab (`effect.ts`), in an iframe. The card `<img>` stays underneath: it
+ * shows until the effect has drawn, and the X's tone is measured from it.
+ *
+ * THE MASK IS A MASK NOW. Card and effect sit in a LAYER as tall as the card
+ * is with the instruction closed; opening the instruction shortens the box
+ * and the layer is cut off at the bottom — nothing rescales. That is Ben's
+ * comment taken literally, and it is also what keeps the effect alive: a
+ * resized iframe would start its effect over and lose what was played.
  */
 import * as React from 'react';
 import { Info, Pause, Play, RotateCcw, X } from 'lucide-react';
@@ -63,6 +74,10 @@ function toneUnder(img: HTMLImageElement, media: DOMRect, box: DOMRect): Tone {
 export interface HoerenProps {
   imageSrc: string;
   imageAlt: string;
+  /** The embedded effect page over the card, or null for the plain card. */
+  effectSrc: string | null;
+  /** What the effect is, for the iframe's accessible name. */
+  effectName: string;
   instruction: string;
   /** 0–1: the share of the minimum time listened. */
   progress: number;
@@ -70,28 +85,47 @@ export interface HoerenProps {
   onClose: () => void;
 }
 
-export function Hoeren({ imageSrc, imageAlt, instruction, progress, player, onClose }: HoerenProps) {
+export function Hoeren({
+  imageSrc, imageAlt, effectSrc, effectName, instruction, progress, player, onClose,
+}: HoerenProps) {
   const [showInstruction, setShowInstruction] = React.useState(false);
   const [tone, setTone] = React.useState<Tone>('light');
+  /* The layer's height: what the card's box is with the instruction CLOSED.
+     Null until measured, and then the layer simply fills the box. */
+  const [layerHeight, setLayerHeight] = React.useState<number | null>(null);
+  const rootRef = React.useRef<HTMLDivElement>(null);
   const mediaRef = React.useRef<HTMLDivElement>(null);
   const imgRef = React.useRef<HTMLImageElement>(null);
   const closeRef = React.useRef<HTMLButtonElement>(null);
+  const actionsRef = React.useRef<HTMLDivElement>(null);
 
-  /* The X's tone, again whenever the crop changes: the image loading, the
-     window resizing (fullscreen is a resize), the instruction opening. */
+  /* The X's tone, from the card as the layer draws it — which is the same
+     crop the effect shows (its `fit` is cover too). */
   const measure = React.useCallback(() => {
-    const media = mediaRef.current;
     const img = imgRef.current;
     const close = closeRef.current;
-    if (media === null || img === null || close === null || !img.complete) return;
-    setTone(toneUnder(img, media.getBoundingClientRect(), close.getBoundingClientRect()));
+    if (img === null || close === null || !img.complete) return;
+    setTone(toneUnder(img, img.getBoundingClientRect(), close.getBoundingClientRect()));
   }, []);
 
+  /* COMPUTED FROM THE VIEW, NOT FROM THE BOX: the view's inner height minus
+     the gap and the action row. So the instruction opening and closing does
+     not move it by even a pixel — a pixel would restart the effect. Again
+     only when the view itself resizes (fullscreen is a resize). */
   React.useEffect(() => {
-    const media = mediaRef.current;
-    if (media === null) return undefined;
-    const observer = new ResizeObserver(() => measure());
-    observer.observe(media);
+    const root = rootRef.current;
+    if (root === null) return undefined;
+    const update = () => {
+      const style = getComputedStyle(root);
+      const inner = root.clientHeight - Number.parseFloat(style.paddingTop) - Number.parseFloat(style.paddingBottom);
+      const gap = Number.parseFloat(style.rowGap) || 0;
+      const actions = actionsRef.current?.getBoundingClientRect().height ?? 0;
+      setLayerHeight(Math.round(inner - gap - actions));
+      measure();
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(root);
+    update();
     return () => observer.disconnect();
   }, [measure]);
 
@@ -120,9 +154,21 @@ export function Hoeren({ imageSrc, imageAlt, instruction, progress, player, onCl
   const percent = Math.round(Math.min(1, Math.max(0, progress)) * 100);
 
   return (
-    <div className="musie-hoeren" role="dialog" aria-modal="true" aria-label="Hören">
+    <div ref={rootRef} className="musie-hoeren" role="dialog" aria-modal="true" aria-label="Hören">
       <div ref={mediaRef} className="musie-hoeren__media">
-        <img ref={imgRef} src={imageSrc} alt={imageAlt} onLoad={measure} />
+        <div
+          className="musie-hoeren__layer"
+          style={layerHeight === null ? undefined : { blockSize: `${layerHeight}px` }}
+        >
+          <img ref={imgRef} src={imageSrc} alt={imageAlt} onLoad={measure} />
+          {effectSrc !== null && (
+            <iframe
+              className="musie-hoeren__effect"
+              src={effectSrc}
+              title={`Mit dem Bild spielen: ${effectName}`}
+            />
+          )}
+        </div>
         <div className="musie-hoeren__head">
           <div
             className="musie-hoeren__progress"
@@ -146,7 +192,7 @@ export function Hoeren({ imageSrc, imageAlt, instruction, progress, player, onCl
         </div>
       </div>
       <div className="musie-hoeren__foot">
-        <div className="musie-hoeren__actions">
+        <div ref={actionsRef} className="musie-hoeren__actions">
           <Button
             variant="ghost"
             size="min"

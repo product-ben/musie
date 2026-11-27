@@ -51,12 +51,34 @@
   border-radius: var(--radius-card);
 }
 
-.musie-hoeren__media > img {
+/* Card and effect, as tall as the box is with the instruction closed
+   (Hoeren.tsx sets the height). Anchored at the top, so opening the
+   instruction cuts it off at the bottom instead of rescaling it. */
+.musie-hoeren__layer {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 100%;
+}
+
+.musie-hoeren__layer > img,
+.musie-hoeren__effect {
   position: absolute;
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
+  border: 0;
+}
+
+.musie-hoeren__layer > img {
   object-fit: cover;
+}
+
+/* The effect page is transparent until it has drawn, so the card shows. */
+.musie-hoeren__effect {
+  display: block;
+  background: transparent;
+  touch-action: none;
 }
 
 /* Over the card's top edge: the bar, then the X in its 44px target. */
@@ -68,6 +90,12 @@
   align-items: center;
   gap: var(--sp-3);
   min-block-size: var(--target-primary);
+  /* The picture under the bar can be played with; only the X takes a tap. */
+  pointer-events: none;
+}
+
+.musie-hoeren__head > .musie-hoeren__close {
+  pointer-events: auto;
 }
 
 .musie-hoeren__progress {

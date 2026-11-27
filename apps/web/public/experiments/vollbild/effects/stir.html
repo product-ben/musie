@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<!-- Eingebettet ins Vollbild-Experiment (Ben, 2026-11-27): Kopie von
+     /experiments/digital-image-entertainment/261126-1028/stir.html ohne Kopf und Knöpfe;
+     der Effekt darunter ist unverändert. -->
+<title>Musie · Farbe verrühren</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Farbe verrühren: das Bild ist eine
+     Flüssigkeit. Der Finger rührt, die Farben verwirbeln und kommen langsam zur Ruhe; über die Zeit
+     fließt das Bild in seine Form zurück.
+     So gebaut: die Strömung ist eine kleine Simulation auf der CPU (Stam, „Stable Fluids“: Mitführen,
+     Druckausgleich), ihre Geschwindigkeit eine Textur. Auf der GPU trägt sie die Farben des Bildes mit
+     (zwei Ziele im Wechsel; RGBA16F, wo der Browser es kann, sonst RGBA8).
+     Ben, 2026-11-26: Radius 50 px, und das Verrührte baut sich stufenlos bis zum Original ab. Darum je Bild
+     ein Bruchteil des Weges zurück (RETURN_TAU). In 16 Bit mit einem kleinsten Schritt, damit es wirklich
+     ankommt; in 8 Bit ginge ein so kleiner Schritt beim Runden verloren, darum rundet ein Hauch Rauschen
+     im Mittel richtig. Die erste Fassung sprang alle halbe Sekunde und kam nie ganz an. -->
+<link rel="stylesheet" href="embed.css">
+</head>
+<body>
+<main id="stage"></main>
+<script src="embed.js"></script>
+<script src="gl.js"></script>
+<script>
+const CELL = 6;            // CSS-Pixel je Zelle der Strömung
+const FORCE = 55;          // wie stark der Finger die Flüssigkeit anschiebt
+const FORCE_R = 50;        // Radius des rührenden Fingers in CSS-Pixeln
+const DAMP = 0.992;        // je Schritt: die Wirbel kommen in einigen Sekunden zur Ruhe
+const PRESSURE_ITER = 20;  // Durchgänge des Druckausgleichs
+const RETURN_TAU = 6;      // Sekunden: so schnell baut sich das Verrührte zum Original ab (nach 3·TAU ist fast alles zurück)
+
+/* Render-Ziele stehen in GL auf dem Kopf (Zeile 0 = unten); fb() dreht beim Lesen zurück. */
+const FB = `vec2 fb(vec2 uv) { return vec2(uv.x, 1.0 - uv.y); }`;
+const FS_COPY_PICTURE = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 outColor;
+${PICTURE_GLSL}
+void main() { outColor = vec4(picture(vUv), 1.0); }`;
+const FS_ADVECT = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 outColor;
+${FB}
+uniform sampler2D uDye; uniform sampler2D uOrig; uniform sampler2D uVel;
+uniform vec2 uVelToUv; uniform float uDt; uniform float uReturn; uniform float uMinStep; uniform float uDither; uniform float uSeed;
+void main() {
+  vec2 v = texture(uVel, vUv).rg;
+  vec2 back = clamp(vUv - v * uVelToUv * uDt, vec2(0.0), vec2(1.0));
+  vec3 c = texture(uDye, fb(back)).rgb;
+  // stufenlos zurück: ein Bruchteil des Weges je Bild, am Ende mindestens uMinStep, damit es ankommt
+  vec3 diff = texture(uOrig, fb(vUv)).rgb - c;
+  vec3 prop = diff * uReturn;
+  vec3 least = sign(diff) * min(abs(diff), vec3(uMinStep));
+  c += mix(least, prop, step(vec3(uMinStep), abs(prop)));
+  // In 8 Bit rundet jedes Bild ein wenig, und die Fehler summieren sich je Kanal zu Regenbogenrändern.
+  // Ein Hauch Rauschen macht das Runden unparteiisch – und trägt auch den kleinen Rückweg je Bild,
+  // der sonst weggerundet würde. Mit Gleitkomma-Zielen ist uDither 0.
+  float n = fract(sin(dot(gl_FragCoord.xy + uSeed, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+  outColor = vec4(c + n * uDither, 1.0);
+}`;
+const FS_SHOW = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 outColor;
+${FB}
+uniform sampler2D uDye;
+void main() { outColor = vec4(texture(uDye, fb(vUv)).rgb, 1.0); }`;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const gl = glContext(canvas);
+let copyProg; let advectProg; let showProg; let quad; let imgTex; let velTex;
+if (gl) {
+  copyProg = glProgram(gl, FS_COPY_PICTURE);
+  advectProg = glProgram(gl, FS_ADVECT);
+  showProg = glProgram(gl, FS_SHOW);
+  quad = glQuad(gl);
+  imgTex = glTexture(gl);
+  velTex = glTexture(gl);
+}
+
+let g = null;
+let nx = 0; let ny = 0;
+let u; let v; let u0; let v0; let p; let div; let vel;
+let orig; let dyeA; let dyeB;
+const fingers = new Map();
+
+/* ── Die Strömung (CPU) ── */
+function sampleField(f, x, y) { // x, y in Zellen
+  x = clamp(x, 0, nx - 1.001);
+  y = clamp(y, 0, ny - 1.001);
+  const x0 = Math.floor(x); const y0 = Math.floor(y);
+  const tx = x - x0; const ty = y - y0;
+  const i = y0 * nx + x0;
+  return (f[i] * (1 - tx) + f[i + 1] * tx) * (1 - ty) + (f[i + nx] * (1 - tx) + f[i + nx + 1] * tx) * ty;
+}
+function walls() {
+  for (let x = 0; x < nx; x++) { u[x] = v[x] = 0; u[(ny - 1) * nx + x] = v[(ny - 1) * nx + x] = 0; }
+  for (let y = 0; y < ny; y++) { u[y * nx] = v[y * nx] = 0; u[y * nx + nx - 1] = v[y * nx + nx - 1] = 0; }
+}
+function stepFluid(dt) {
+  // mitführen
+  u0.set(u); v0.set(v);
+  for (let y = 1; y < ny - 1; y++) {
+    for (let x = 1; x < nx - 1; x++) {
+      const i = y * nx + x;
+      const bx = x - (u0[i] * dt) / CELL;
+      const by = y - (v0[i] * dt) / CELL;
+      u[i] = sampleField(u0, bx, by) * DAMP;
+      v[i] = sampleField(v0, bx, by) * DAMP;
+    }
+  }
+  walls();
+  // Druckausgleich: die Flüssigkeit lässt sich nicht zusammendrücken, also werden aus Schüben Wirbel
+  for (let y = 1; y < ny - 1; y++) {
+    for (let x = 1; x < nx - 1; x++) {
+      const i = y * nx + x;
+      div[i] = (u[i + 1] - u[i - 1] + v[i + nx] - v[i - nx]) * 0.5 * CELL;
+      p[i] = 0;
+    }
+  }
+  for (let k = 0; k < PRESSURE_ITER; k++) {
+    for (let y = 1; y < ny - 1; y++) {
+      for (let x = 1; x < nx - 1; x++) {
+        const i = y * nx + x;
+        p[i] = (p[i - 1] + p[i + 1] + p[i - nx] + p[i + nx] - div[i]) * 0.25;
+      }
+    }
+  }
+  for (let y = 1; y < ny - 1; y++) {
+    for (let x = 1; x < nx - 1; x++) {
+      const i = y * nx + x;
+      u[i] -= (p[i + 1] - p[i - 1]) / (2 * CELL);
+      v[i] -= (p[i + nx] - p[i - nx]) / (2 * CELL);
+    }
+  }
+  walls();
+}
+function stir(x0, y0, x1, y1) {
+  const dx = x1 - x0; const dy = y1 - y0;
+  const R = FORCE_R;
+  const sig2 = 2 * (R / 2) ** 2;
+  const cx0 = Math.max(1, Math.floor((x1 - R) / CELL)); const cx1 = Math.min(nx - 2, Math.ceil((x1 + R) / CELL));
+  const cy0 = Math.max(1, Math.floor((y1 - R) / CELL)); const cy1 = Math.min(ny - 2, Math.ceil((y1 + R) / CELL));
+  for (let y = cy0; y <= cy1; y++) {
+    for (let x = cx0; x <= cx1; x++) {
+      const d2 = ((x + 0.5) * CELL - x1) ** 2 + ((y + 0.5) * CELL - y1) ** 2;
+      const w = Math.exp(-d2 / sig2);
+      u[y * nx + x] += dx * FORCE * w;
+      v[y * nx + x] += dy * FORCE * w;
+    }
+  }
+}
+
+/* ── Die Farbe (GPU) ── */
+function drawInto(target, prog) {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.fbo : null);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.useProgram(prog);
+}
+function paintPicture() {
+  for (const t of [orig, dyeA]) {
+    drawInto(t, copyProg);
+    glBind(gl, copyProg, 'uImg', 0, imgTex);
+    quad.draw();
+  }
+}
+
+const effect = {
+  setImage(im) {
+    if (!gl) return;
+    g = fit(im);
+    glFit(gl, canvas, im, g, copyProg);
+    glImage(gl, imgTex, im);
+    nx = Math.max(8, Math.round(g.cssW / CELL));
+    ny = Math.max(8, Math.round(g.cssH / CELL));
+    const n = nx * ny;
+    u = new Float32Array(n); v = new Float32Array(n); u0 = new Float32Array(n);
+    v0 = new Float32Array(n); p = new Float32Array(n); div = new Float32Array(n);
+    vel = new Float32Array(n * 2);
+    glFieldRG(gl, velTex, nx, ny, vel);
+    for (const t of [orig, dyeA, dyeB]) if (t) { gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fbo); }
+    const float = glCanFloat(gl);
+    orig = glTarget(gl, canvas.width, canvas.height);
+    dyeA = glTarget(gl, canvas.width, canvas.height, float);
+    dyeB = glTarget(gl, canvas.width, canvas.height, float);
+    paintPicture();
+    gl.useProgram(advectProg);
+    gl.uniform2f(advectProg.u('uVelToUv'), 1 / g.cssW, 1 / g.cssH);
+    gl.uniform1f(advectProg.u('uDither'), float ? 0 : 1 / 255);
+    gl.uniform1f(advectProg.u('uMinStep'), float ? 1 / 2048 : 0); // eine Stufe von 16 Bit nahe 1
+    fingers.clear();
+  },
+  reset() {
+    if (!g) return;
+    u.fill(0); v.fill(0);
+    paintPicture();
+  },
+};
+
+track(canvas, {
+  down(id, x, y) { fingers.set(id, { x, y }); },
+  move(id, x, y) {
+    const f = fingers.get(id);
+    if (!f || !g) return;
+    stir(f.x, f.y, x, y);
+    f.x = x; f.y = y;
+  },
+  up(id) { fingers.delete(id); },
+});
+
+if (gl) {
+  loop((dt) => {
+    if (!g) return;
+    stepFluid(1 / 60);
+    for (let i = 0; i < nx * ny; i++) { vel[i * 2] = u[i]; vel[i * 2 + 1] = v[i]; }
+    glUpdateRG(gl, velTex, nx, ny, vel);
+    const ret = 1 - Math.exp(-dt / RETURN_TAU);
+    drawInto(dyeB, advectProg);
+    gl.uniform1f(advectProg.u('uDt'), dt);
+    gl.uniform1f(advectProg.u('uReturn'), ret);
+    gl.uniform1f(advectProg.u('uSeed'), Math.random() * 1000);
+    glBind(gl, advectProg, 'uDye', 0, dyeA.tex);
+    glBind(gl, advectProg, 'uOrig', 1, orig.tex);
+    glBind(gl, advectProg, 'uVel', 2, velTex);
+    quad.draw();
+    [dyeA, dyeB] = [dyeB, dyeA];
+    drawInto(null, showProg);
+    glBind(gl, showProg, 'uDye', 0, dyeA.tex);
+    quad.draw();
+  });
+}
+
+boot(effect);
+</script>
+</body>
+</html>

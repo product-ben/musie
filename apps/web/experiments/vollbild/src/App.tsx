@@ -42,6 +42,7 @@ import {
 } from './fullscreen';
 import { Hoeren } from './Hoeren';
 import { usePlayer } from './player';
+import { SESSION_EFFECT, effectUrl } from './effect';
 
 /** The view's token in the address — not `?focus`, which would open the step's own Sheet. */
 const HOEREN = 'hoeren';
@@ -105,6 +106,8 @@ function Status({ ended, fullscreen }: { ended: boolean; fullscreen: boolean }) 
     text = 'Dieser Browser kann kein Vollbild für Webseiten – Safari auf dem iPhone kann das nur für Videos. '
       + 'Die Karte öffnet deshalb mit den Leisten des Browsers.';
   }
+  /* Which of the four this tab drew — so a tester knows what they are trying. */
+  text += ` Effekt in diesem Tab: ${SESSION_EFFECT.name}.`;
   return <p className="musie-vollbild-status" role="status">{text}</p>;
 }
 
@@ -167,6 +170,8 @@ function ListenPage() {
         <Hoeren
           imageSrc={CARD.imageUrl ?? ''}
           imageAlt={CARD.imageAlt ?? ''}
+          effectSrc={CARD.imageUrl === null ? null : effectUrl(SESSION_EFFECT, CARD.imageUrl)}
+          effectName={SESSION_EFFECT.name}
           instruction={question.text?.listen ?? EXERCISE.name}
           progress={player.position / GATE_SECONDS}
           player={player}

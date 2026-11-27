@@ -1,0 +1,9 @@
+/* Eingebettete Effekte (Vollbild-Experiment): nur die Bühne, randlos. Durchsichtig, damit bis
+   zum ersten Bild die Karte der Hören-Ansicht darunter zu sehen ist. */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#stage { position: absolute; inset: 0; overflow: hidden; touch-action: none; }
+#stage canvas, #stage .layer { position: absolute; top: 0; display: block; touch-action: none; }
+.notice { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 16px; text-align: center;
+  font: 15px/1.45 ui-sans-serif, system-ui, sans-serif; color: #62645E; background: rgba(250, 247, 241, 0.85); }
