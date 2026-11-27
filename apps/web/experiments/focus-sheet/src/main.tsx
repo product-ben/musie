@@ -6,7 +6,7 @@ import '@musie/design-system/tokens/musy-foundations-amendments.css';
 import '@musie/design-system/musy-components.css';
 import '../../../src/styles.css';
 import '../../../src/shell.css';
-import './vollbild.css';
+import './focus-sheet.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

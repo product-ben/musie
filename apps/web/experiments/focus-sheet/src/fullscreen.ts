@@ -69,13 +69,13 @@ export function enterFullscreen(): void {
       /* `navigationUI: 'hide'` asks Chrome on Android to drop its own
          navigation bar as well; a browser that does not know it ignores it. */
       root.requestFullscreen({ navigationUI: 'hide' }).catch((error: unknown) => {
-        console.info('[vollbild] fullscreen refused', error);
+        console.info('[focus-sheet] fullscreen refused', error);
       });
     } else {
       root.webkitRequestFullscreen?.();
     }
   } catch (error) {
-    console.info('[vollbild] fullscreen refused', error);
+    console.info('[focus-sheet] fullscreen refused', error);
   }
 }
 

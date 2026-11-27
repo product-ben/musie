@@ -1,5 +1,5 @@
 /**
- * Experiment „Vollbild“ (Ben, 2026-11-26): the listen step's overview, and the
+ * Experiment „Fokus-Sheet“ (Ben, 2026-11-26; built as „Vollbild“): the listen step's overview, and the
  * focus sheet opening in the browser's REAL fullscreen — no address bar, no
  * tab bar, only the sheet. Its own Vite build, outside the app's route table,
  * the way Reflexion and Duett are built (Reflexion's vite.config.ts says why).
@@ -12,8 +12,8 @@
  * `apps/web/src/<path>` for every importer outside `src/shims/`, and a shim can
  * still `export * from` the real module to keep what it does not override.
  *
- * dev:   pnpm --filter web experiment:vollbild:dev  → http://localhost:5184/
- * build: chained into `pnpm --filter web build` → dist/experiments/vollbild/index.html
+ * dev:   pnpm --filter web experiment:focus-sheet:dev  → http://localhost:5184/
+ * build: chained into `pnpm --filter web build` → dist/experiments/focus-sheet/261127-1218/index.html
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,7 +26,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(HERE, '../..');
 const APP_SRC = path.join(APP_ROOT, 'src');
 const SHIMS = path.join(HERE, 'src', 'shims');
-const OUT = path.join(APP_ROOT, 'dist', 'experiments', 'vollbild');
+/** The version folder (CLAUDE.md rule 10: /experiments/<name>/<yymmdd-hhmm>/). The effect pages
+    live beside it in apps/web/public, at the same path — see src/effect.ts. */
+const STAMP = '261127-1218';
+const OUT = path.join(APP_ROOT, 'dist', 'experiments', 'focus-sheet', STAMP);
 
 function shimTable(): Map<string, string> {
   const table = new Map<string, string>();
@@ -39,7 +42,7 @@ function shimTable(): Map<string, string> {
 
 function shims(): Plugin {
   return {
-    name: 'vollbild-shims',
+    name: 'focus-sheet-shims',
     enforce: 'pre',
     async resolveId(source, importer, options) {
       if (importer === undefined || importer.startsWith(SHIMS)) return null;
@@ -58,7 +61,7 @@ export default defineConfig(({ command }) =>
     envDir: APP_ROOT,
     /* Dev serves at the site root so /assets and /experiments/reflexion/media
        resolve exactly as on musie.org; the build lives under its own folder. */
-    base: command === 'build' ? '/experiments/vollbild/' : '/',
+    base: command === 'build' ? `/experiments/focus-sheet/${STAMP}/` : '/',
     publicDir: command === 'build' ? false : path.join(APP_ROOT, 'public'),
     plugins: [shims()],
     server: { port: 5184, strictPort: true },

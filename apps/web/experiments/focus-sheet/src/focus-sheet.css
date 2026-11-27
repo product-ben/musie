@@ -7,7 +7,7 @@
    band stays, and the line that says what this browser can do lives in it,
    visible on the first screen. At the foot of the step it would be two full
    screens down. Type and colour are `.musie-session__context`'s. */
-.musie-vollbild-status {
+.musie-focus-sheet-status {
   position: absolute;
   inset-block-start: 0;
   inset-inline: 0;

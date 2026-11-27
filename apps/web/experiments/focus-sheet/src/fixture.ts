@@ -15,7 +15,7 @@
 import type { Card, Exercise, ListenAudio } from '../../../src/lib/content';
 import type { RevealedTrack } from '../../../src/lib/reveal';
 
-export const SESSION_ID = 'vollbild-experiment';
+export const SESSION_ID = 'focus-sheet-experiment';
 
 export const AUDIO_SRC = '/experiments/reflexion/media/aura.mp3';
 

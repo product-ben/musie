@@ -1,4 +1,4 @@
-/* Rahmen für die eingebetteten Effekte des Vollbild-Experiments (CLAUDE.md Regel 10).
+/* Rahmen für die eingebetteten Effekte des Fokus-Sheet-Experiments (CLAUDE.md Regel 10).
    Eine abgespeckte Kopie von /experiments/digital-image-entertainment/261126-1028/shell.js
    (Ben, 2026-11-27: „Implementiere dazu die Experimente Wasser, Morphen, Farbe verrühren und
    Marmorieren“). Gestrichen: Kopf, Knöpfe, „Andere Karte“ und die eigene Musik – die spielt die
@@ -56,7 +56,7 @@ function pictureCanvas(im, g, w, h) {
 
 /* Der Hören-Ansicht sagen, dass das Bild berührt wurde – sie zeigt dann „Bild zurücksetzen“. */
 function tell(type) {
-  if (window.parent !== window) window.parent.postMessage({ source: 'vollbild-effect', type }, location.origin);
+  if (window.parent !== window) window.parent.postMessage({ source: 'focus-sheet-effect', type }, location.origin);
 }
 
 /* Zeiger in CSS-Pixeln des Elements; mehrere Finger zugleich. */
@@ -117,7 +117,7 @@ function boot(effect) {
   /* „Bild zurücksetzen“ aus der Hören-Ansicht: der Effekt seine eigene Rücksetzung, wo er eine
      hat (Verrühren, Marmorieren), sonst von vorn mit demselben Bild (Wasser, Morphen). */
   window.addEventListener('message', (e) => {
-    if (e.origin !== location.origin || e.data?.source !== 'vollbild' || e.data.type !== 'reset' || !img) return;
+    if (e.origin !== location.origin || e.data?.source !== 'focus-sheet' || e.data.type !== 'reset' || !img) return;
     if (typeof effect.reset === 'function') effect.reset();
     else effect.setImage(img);
   });

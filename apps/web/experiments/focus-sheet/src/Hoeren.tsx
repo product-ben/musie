@@ -57,13 +57,13 @@ export interface HoerenProps {
 
 /** What the embedded effect page says (see `effects/embed.js`). */
 interface EffectMessage {
-  source: 'vollbild-effect';
+  source: 'focus-sheet-effect';
   type: 'touch' | 'release';
 }
 
 function isEffectMessage(data: unknown): data is EffectMessage {
   return typeof data === 'object' && data !== null
-    && (data as { source?: unknown }).source === 'vollbild-effect';
+    && (data as { source?: unknown }).source === 'focus-sheet-effect';
 }
 
 export function Hoeren({
@@ -116,7 +116,7 @@ export function Hoeren({
   }, [effectSettleMs]);
 
   const reset = React.useCallback(() => {
-    frameRef.current?.contentWindow?.postMessage({ source: 'vollbild', type: 'reset' }, window.location.origin);
+    frameRef.current?.contentWindow?.postMessage({ source: 'focus-sheet', type: 'reset' }, window.location.origin);
     setTouched(false);
   }, []);
 

@@ -1,4 +1,4 @@
-/* Eingebettete Effekte (Vollbild-Experiment): nur die Bühne, randlos. Durchsichtig, damit bis
+/* Eingebettete Effekte (Fokus-Sheet-Experiment): nur die Bühne, randlos. Durchsichtig, damit bis
    zum ersten Bild die Karte der Hören-Ansicht darunter zu sehen ist. */
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;

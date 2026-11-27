@@ -32,7 +32,7 @@ function hold(url: string): Promise<string> {
     /* Safari will not play a blob without a media type. */
     .then((blob) => URL.createObjectURL(blob.type === '' ? new Blob([blob], { type: 'audio/mpeg' }) : blob))
     .catch((error: unknown) => {
-      console.warn(`[vollbild] could not download "${url}" — streaming it instead`, error);
+      console.warn(`[focus-sheet] could not download "${url}" — streaming it instead`, error);
       held.delete(url);
       return url;
     });

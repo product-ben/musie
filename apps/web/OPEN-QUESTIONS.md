@@ -13373,3 +13373,22 @@ corner gradient (checked: nothing else there paints a box-shadow, filter or
 gradient), so it came out — element and rule. The X is back to the measured
 state above: below 3:1 under its glyph on eight of nine cards. The numbers
 stay in the entry before this one, for whenever it comes back up.
+
+### Follow-up, 2026-11-27 — renamed: /experiments/focus-sheet/261127-1218/
+
+Ben: „das bitte als Experiment-PR unter /experiments/focus-sheet/…“. The
+experiment „Vollbild“ is „Fokus-Sheet“ now, in rule 10's version folder.
+Every path above that says `vollbild` means this:
+
+- Source `apps/web/experiments/focus-sheet/` (was `…/vollbild/`); scripts
+  `experiment:focus-sheet:dev`, and the `build` / `typecheck` chains.
+- Built page `dist/experiments/focus-sheet/261127-1218/index.html`; the
+  effect pages beside it from `apps/web/public/experiments/focus-sheet/
+  261127-1218/effects/`. A later version gets a new stamp beside it.
+- Identifiers followed: the `sessionStorage` key `focus-sheet-effect`, the
+  `postMessage` sources, the console prefix, the status class. The German UI
+  words for fullscreen („Vollbild ist an“) stay — they describe the browser,
+  not the experiment.
+- Verified on the built `dist/`, served without `Range`: the page at the new
+  path, `noindex`, fullscreen on the press, the effect drawing, a touch, the
+  reset, close; no 4xx, no console error.

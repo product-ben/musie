@@ -108,7 +108,7 @@ function Status({ ended, fullscreen }: { ended: boolean; fullscreen: boolean }) 
   }
   /* Which of the four this tab drew — so a tester knows what they are trying. */
   text += ` Effekt in diesem Tab: ${SESSION_EFFECT.name}.`;
-  return <p className="musie-vollbild-status" role="status">{text}</p>;
+  return <p className="musie-focus-sheet-status" role="status">{text}</p>;
 }
 
 function ListenPage() {
@@ -235,7 +235,7 @@ if (typeof window !== 'undefined') {
 
 /* NO `basename`, because the one route matches every path: with one, the
    router dropped the folder's trailing slash on the first navigation
-   (`/experiments/vollbild?focus`). Without, the step's own `navigate({ search })`
+   (`/experiments/focus-sheet/261127-1218?focus`). Without, the step's own `navigate({ search })`
    keeps the path exactly as Cloudflare served it. */
 const router = createBrowserRouter([{ path: '*', element: <ListenPage /> }]);
 

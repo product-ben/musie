@@ -12,7 +12,8 @@
  *
  * The four are embedded copies of the „Mit dem Bild spielen“ experiment
  * (/experiments/digital-image-entertainment/261126-1028/), served from
- * `apps/web/public/experiments/vollbild/effects/`.
+ * `apps/web/public/experiments/focus-sheet/261127-1218/effects/` — beside
+ * the built page, in the same version folder.
  */
 
 /* `settleMs`: how long after the finger lifts the effect has healed by itself,
@@ -29,7 +30,7 @@ export const EFFECTS = [
 
 export type Effect = (typeof EFFECTS)[number];
 
-const KEY = 'vollbild-effect';
+const KEY = 'focus-sheet-effect';
 
 function find(value: string | null): Effect | null {
   if (value === null) return null;
@@ -60,5 +61,5 @@ export const SESSION_EFFECT: Effect = pick();
 
 /** The embedded page for an effect, playing with `imageSrc`. */
 export function effectUrl(effect: Effect, imageSrc: string): string {
-  return `/experiments/vollbild/effects/${effect.id}.html?src=${encodeURIComponent(imageSrc)}`;
+  return `/experiments/focus-sheet/261127-1218/effects/${effect.id}.html?src=${encodeURIComponent(imageSrc)}`;
 }

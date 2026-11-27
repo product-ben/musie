@@ -8,5 +8,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export function getSupabase(): SupabaseClient {
-  throw new Error('[vollbild] Supabase is not available in this experiment — a module is missing its shim.');
+  throw new Error('[focus-sheet] Supabase is not available in this experiment — a module is missing its shim.');
 }

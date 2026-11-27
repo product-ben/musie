@@ -61,7 +61,7 @@ export function usePlayer(src: string): Player {
     if (audio === null || audio.src === '') return;
     if (audio.ended) audio.currentTime = 0;
     audio.play().catch((error: unknown) => {
-      console.info('[vollbild] playback refused', error);
+      console.info('[focus-sheet] playback refused', error);
       setPlaying(false);
     });
   }, []);
