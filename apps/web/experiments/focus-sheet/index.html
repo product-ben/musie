@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- Experiment „Fokus-Sheet“ (CLAUDE.md rule 10). German only; light only. -->
+<html lang="de" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <script>
+      /* The measured viewport, as theme-init.js writes it: a full-height view
+         must not render at a guessed size on a phone and then jump. It also
+         follows the jump INTO fullscreen, which is a resize like any other. */
+      (function () {
+        var frame = 0;
+        function write() {
+          frame = 0;
+          var vv = window.visualViewport;
+          var h = Math.floor(vv ? vv.height : window.innerHeight);
+          if (h > 0) document.documentElement.style.setProperty('--viewport-block', h + 'px');
+        }
+        function schedule() { if (!frame) frame = window.requestAnimationFrame(write); }
+        write();
+        window.addEventListener('resize', schedule, { passive: true });
+        window.addEventListener('orientationchange', schedule, { passive: true });
+        if (window.visualViewport) window.visualViewport.addEventListener('resize', schedule, { passive: true });
+      })();
+    </script>
+    <title>Musie · Fokus-Sheet-Experiment</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

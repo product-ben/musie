@@ -13187,3 +13187,208 @@ stored on an earlier visit (all six figures) and preferred it to `START`.
 - `settings.test.ts` holds it: both old kinds of stored state give way, a
   current one is kept, a link wins, and the page opens with Frage und Antwort
   and Pendel only.
+
+## Experiment „Vollbild“: the focus sheet in the browser's real fullscreen (2026-11-26)
+
+Where: `apps/web/experiments/vollbild/**`, `apps/web/package.json` (`build`,
+`typecheck`, `experiment:vollbild:dev`). Live after merge at
+`/experiments/vollbild/`.
+
+What I checked: Ben asked how YouTube's mobile site hides the browser bars and
+whether musie could. On Android (and iPad, desktop) it is the Fullscreen API —
+`requestFullscreen()` on an element, so the site's own controls stay. On an
+iPhone the API does not exist (WebKit bug 206854, open since 2020; nothing in
+the Safari 27 beta notes): a page can only send a `<video>` to the system
+player, and musie has no video. Then: „mach mal ein experiment … zuerst nur den
+listen?overview step, dann drückt man den Button und öffnet das focus sheet als
+immersives sheet auf vollbild.“
+
+What I did:
+- **The Reflexion shape**: a Vite build that mounts the app's REAL
+  `SessionListen` — overview, transport, and the `Sheet` it opens on `?focus` —
+  inside the session's `WizardPanel`. Four shims (`lib/audio`, `lib/session`,
+  `lib/reveal`, and the throwing `lib/supabase`); `apps/web/src` is untouched.
+- **The run is Freie Bahn, digital, MC-01 and „Aura“** — Reflexion's
+  `freie-bahn` run, so the sheet carries the picture, the clock and the
+  transport. Length 2:00, the app's starting length for a card exercise. The
+  audio is Reflexion's file, fetched whole (musie.org has no `Range`).
+- **Into fullscreen on the press**: a capturing click handler on the wrapper
+  sees the tap on `.musie-listen__transport` before the step navigates, and
+  requests fullscreen on `<html>` inside the gesture. `<html>` and not the
+  sheet, because the sheet is a portalled base-ui Dialog and a fullscreened
+  popup would hide everything portalled beside it.
+- **Out with the sheet**: X, Escape, scrim, browser Back and „Beginne zu
+  reflektieren“ all take `?focus` off the address; the falling edge leaves
+  fullscreen. **Leaving fullscreen does not close the sheet** — on Android
+  the first Back gesture ends fullscreen, the second closes the sheet. Kept as
+  the browser's order so it can be judged; it is a decision, not an accident.
+- **A status line in the empty header band** says what the browser can do
+  (fullscreen available / on / not available — the iPhone case / opened from
+  the home screen), so a phone reports it itself.
+- **Not built:** PostHog and a consent card (nothing is measured — Ben tries it
+  himself), the Back button and rail taps (there is no other step; `back` is
+  null), orientation lock, English, dark mode.
+
+Verified: in Chromium at 393×852 (dev server and the built `dist/`, served by
+a server without `Range`): press → `?focus`, `document.fullscreenElement` is
+`<html>`, sheet open; X, browser Back and the way on each leave both; with the
+API removed (as on an iPhone) the line says so and the sheet opens as in the
+app; the piece played and opened the gate. `pnpm check` green, `pnpm --filter
+web build` green. **Not verified on a real phone** — Playwright's WebKit is
+not iOS Safari, and no emulator shows Android's real bars.
+
+What I need from Ben:
+- **Try it on the phones that matter**: an Android phone (the bars should go)
+  and an iPhone (the line should say it cannot, and the sheet open as today).
+  Watch the moment of the switch: the sheet grows out of the button while the
+  viewport grows under it.
+- **Then decide among the three ways** from the investigation: fullscreen
+  where the browser offers it (Android, iPad), the home-screen web app (the
+  only way on an iPhone, but a QR scan from the camera opens Safari, not the
+  app), or nothing.
+
+### Follow-up, 2026-11-27 — the Figma listening view replaces the immersive Sheet
+
+Ben: „get rid of the immersive sheet again, implement this instead (read the
+comments) … Quick and dirty to allow me to test it“ — Layer 1 file, page 30,
+„Achtsame Pause · Hören · digitale Karte · Anweisung an“, two frames.
+
+- **The Sheet is no longer reached.** The capturing handler on the transport
+  now STOPS the tap, so `SessionListen` never navigates to `?focus`. In the
+  same tap it requests fullscreen, starts this page's own `<audio>`
+  (`player.ts`) and pushes `?hoeren`, which shows `Hoeren.tsx`.
+- **The view, as drawn:** the card fills what is left, cropped (cover), radius
+  card; the progress bar (share of the minimum, continuous — Figma's 10 %
+  steps are only how Figma draws it) and the X over its top edge; Pause and
+  „Was sollte ich machen?“ in a row at the bottom edge.
+- **Ben's four comments:** the bottom row — and the instruction under it when
+  open — sticks to the bottom of the screen; opening the instruction takes its
+  height from the card, which is cropped further, not scaled (765 → 694 px at
+  393 × 852, Figma 764 → 693); the X is `--on-surface` on a light picture and
+  `--on-surface-inverse` on a dark one, measured from the crop actually under
+  it. The threshold (luminance 0.55) is a GUESS.
+- **Quick and dirty, knowingly:** the instruction is the rotation's first
+  question only; no way on inside the view — reaching the minimum unlocks
+  „Beginne zu reflektieren“ on the overview behind it; the overview's own
+  transport still reads „mindestens 2:00“ after listening; no focus trap;
+  German only, strings inline.
+- Verified in Chromium at 393 × 852, with and without the Fullscreen API.
+  Not on a phone.
+
+### Follow-up, 2026-11-27 — a new headline, and the picture can be played with
+
+Ben: the headline „Nimm die Klänge wahr und sieh dir dabei die Karte intensiv
+an“ becomes „Achte beim Hören darauf, welches Bild vor deinem inneren Auge
+entsteht. Wenn du magst, interagiere dabei mit dem Bild“; and four effects of
+„Mit dem Bild spielen“ — Wasser, Morphen, Farbe verrühren, Marmorieren — one
+at random per session, discarded with the tab, a new draw next time.
+
+- **The headline** is the fixture's `listenMd`, with a closing full stop (the
+  first sentence has one). Its old body „Lass dich von ihnen mitnehmen …“ went
+  too: its „ihnen“ were the Klänge of the old headline.
+- **The effects run as they were, in an iframe** over the card:
+  `apps/web/public/experiments/vollbild/effects/{water,morph,stir,marble}.html`
+  are copies of the originals without header and buttons; the effect scripts
+  are byte-for-byte the same. `embed.js` is `shell.js` without the music, the
+  buttons and „Andere Karte“, and its `fit` crops like `object-fit: cover`, so
+  the effect shows exactly the crop of the card under it. `gl.js` is copied,
+  so this page does not break when that experiment is deleted.
+- **Per tab = `sessionStorage`** (`effect.ts`): a reload and closing/opening
+  the view keep the draw; a new tab draws again (eight new tabs drew all
+  four). `?effekt=wasser|morphen|verruehren|marmorieren` forces one, for
+  trying all four. The status line names the tab's effect.
+- **The mask is now a mask.** Card and effect sit in a layer as tall as the
+  box is with the instruction closed, computed from the view rather than the
+  box; opening the instruction cuts the layer off at the bottom. Before, the
+  card rescaled (cover) — and a resized iframe would have restarted its
+  effect and lost what was played. Measured: iframe 765 px with the
+  instruction closed and open, box 765 → 694, canvas unchanged.
+- **The bar and X no longer catch touches**, except the X itself: the picture
+  under the bar can be played with.
+
+Verified in Chromium (SwiftShader WebGL 2) at 393 × 852: each effect draws
+(no „WebGL 2 fehlt“), a drag changes the picture, the instruction toggle keeps
+it. Not on a phone — the effects' cost there is the originals' cost.
+
+### Follow-up, 2026-11-27 — page 30 again: Ben's annotations
+
+Ben: „mach die changes bitte! Schau vor allem auf die Anmerkungen im File.“
+Read from the page's comments and its Dev Mode annotations.
+
+- **Head at Figma's exact insets** („consider spacing here“, „consider the
+  exact gap“): 10 / 22 / 11 px from top / left / right of the card. Measured:
+  the bar starts 22 px in, the X's glyph ends 23 px from the right and 22 px
+  from the top.
+- **„bg with opacity“** on the track: rgb(199 204 192 / 0.7), written out.
+- **„ONLY dark palette inside image“** on the X and the new reset: both sit
+  in a wrapper with `data-theme="dark"`, so they read the dark tokens (the
+  glyph renders rgb(237 240 236)). This replaces the X that measured the
+  picture's brightness — that comment is resolved in Figma.
+- **The reset** („a reset button to reset the image. Only appears when the
+  user has manipulated the image“), bottom right, 10 / 11 px in, moving up
+  with the card's edge when the instruction opens. The effect page posts each
+  touch and release; reset posts back and the effect resets (Verrühren and
+  Marmorieren by their own `reset`, Wasser and Morphen by starting over).
+  For the three that heal by themselves the button goes again once they have
+  (Wasser and Morphen 4 s after the finger lifts, Verrühren 18 s — read off
+  their constants, not tuned); for Marmorieren it stays. Measured: absent
+  before a touch, there after, gone after a press, and the picture is
+  pixel-identical to the untouched one.
+- **Its glyph is `RotateCcw`, not the drawn `Square`.** Figma has Icon/Square
+  there, which reads as a stop button beside Pause; the annotation says it
+  resets. A guess — one line to swap back.
+- **Pause is an icon button** (44 px), labelled Pause / Abspielen / Nochmal
+  hören; the ended state shows Play rather than a second rotate arrow.
+- **Card corners 32 px** (no token holds 32), and **the instruction has
+  --sp-4 below it** as well.
+
+### Follow-up, 2026-11-27 — a gradient under the X, at 40 %
+
+Ben asked what gradient from the top right keeps the X visible, then chose
+40 % of the two measured answers.
+
+- **Measured, all nine cards at 393 × 852** (cover crop, pixels under the
+  X's 20 × 20 glyph, X = dark palette's rgb(237 240 236), target 3:1 for a
+  control, WCAG 1.4.11): eight of nine fall below 3:1 on average; the worst
+  pixels reach 1.1:1 (mc-08). Only mc-09 passes untouched.
+- **40 % black brings every pixel of every card to ≥ 3.1:1** (mc-08 the
+  lowest). 46 % would hold for anything, pure white included. Chosen: 40 % —
+  lighter, and enough for today's deck at rest. **Left open on purpose:**
+  Verrühren and Marmorieren can push light colour under the X, and a lighter
+  future card can too; then the X can drop below 3:1.
+- **Shape:** a radial gradient from the card's top-right corner, full
+  strength to 60 px (the glyph lies 32–60 px from the corner), fading to 0 by
+  150 px. The fade is by eye. Over card and effect, under the controls,
+  `pointer-events: none`.
+- **Verified as rendered** (mc-01, X hidden while sampling): worst pixel
+  1.54:1 → 4.03:1, mean 2.2:1 → 5.3:1; a touch in the darkened corner still
+  reaches the effect.
+- **Not covered:** the progress bar, which has the same light-on-light
+  problem and runs outside the corner.
+
+### Follow-up, 2026-11-27 — the gradient under the X is gone again
+
+Ben: „mach den shadow weg“. The only shadow in the listening view was that
+corner gradient (checked: nothing else there paints a box-shadow, filter or
+gradient), so it came out — element and rule. The X is back to the measured
+state above: below 3:1 under its glyph on eight of nine cards. The numbers
+stay in the entry before this one, for whenever it comes back up.
+
+### Follow-up, 2026-11-27 — renamed: /experiments/focus-sheet/261127-1218/
+
+Ben: „das bitte als Experiment-PR unter /experiments/focus-sheet/…“. The
+experiment „Vollbild“ is „Fokus-Sheet“ now, in rule 10's version folder.
+Every path above that says `vollbild` means this:
+
+- Source `apps/web/experiments/focus-sheet/` (was `…/vollbild/`); scripts
+  `experiment:focus-sheet:dev`, and the `build` / `typecheck` chains.
+- Built page `dist/experiments/focus-sheet/261127-1218/index.html`; the
+  effect pages beside it from `apps/web/public/experiments/focus-sheet/
+  261127-1218/effects/`. A later version gets a new stamp beside it.
+- Identifiers followed: the `sessionStorage` key `focus-sheet-effect`, the
+  `postMessage` sources, the console prefix, the status class. The German UI
+  words for fullscreen („Vollbild ist an“) stay — they describe the browser,
+  not the experiment.
+- Verified on the built `dist/`, served without `Range`: the page at the new
+  path, `noindex`, fullscreen on the press, the effect drawing, a touch, the
+  reset, close; no 4xx, no console error.

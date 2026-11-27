@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "vite build && vite build -c experiments/reflexion/vite.config.ts && vite build -c experiments/duett/vite.config.ts",
+    "build": "vite build && vite build -c experiments/reflexion/vite.config.ts && vite build -c experiments/duett/vite.config.ts && vite build -c experiments/focus-sheet/vite.config.ts",
     "predev": "node ../../scripts/db-warn.mjs",
     "dev": "vite",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json && tsc --noEmit -p experiments/reflexion/tsconfig.json && tsc --noEmit -p experiments/duett/tsconfig.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json && tsc --noEmit -p experiments/reflexion/tsconfig.json && tsc --noEmit -p experiments/duett/tsconfig.json && tsc --noEmit -p experiments/focus-sheet/tsconfig.json",
     "test": "vitest run --project unit",
     "test:db": "vitest run --project db",
     "test:e2e": "playwright test",
@@ -19,7 +19,8 @@
     "content:export": "node scripts/content-export.mjs",
     "assets:check": "node scripts/assets-check.mjs",
     "experiment:reflexion:dev": "vite -c experiments/reflexion/vite.config.ts",
-    "experiment:duett:dev": "vite -c experiments/duett/vite.config.ts"
+    "experiment:duett:dev": "vite -c experiments/duett/vite.config.ts",
+    "experiment:focus-sheet:dev": "vite -c experiments/focus-sheet/vite.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

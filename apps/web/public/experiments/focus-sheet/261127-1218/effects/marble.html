@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<!-- Eingebettet ins Fokus-Sheet-Experiment (Ben, 2026-11-27): Kopie von
+     /experiments/digital-image-entertainment/261126-1028/marble.html ohne Kopf und Knöpfe;
+     der Effekt darunter ist unverändert. -->
+<title>Musie · Marmorieren</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Marmorieren, wie Ebru: ein Zug mit dem
+     Finger zieht die Farbbänder zu Bögen, ein Zug zurück macht Federn daraus; ein Tippen setzt einen
+     Tropfen aus der Farbe darunter, der die Umgebung ringförmig verdrängt. Nichts federt zurück.
+     So gebaut: wie Morphen ein Verschiebungsfeld auf der CPU, aber mit der langen, spitzen Reichweite
+     einer Marmorier-Nadel, w = (λ / (d + λ))², und der Tropfenformel x' = C + (x − C)·√(1 + r²/|x − C|²)
+     (Lu, Jaffer u. a., „Mathematical Marbling“). -->
+<link rel="stylesheet" href="embed.css">
+</head>
+<body>
+<main id="stage"></main>
+<script src="embed.js"></script>
+<script src="gl.js"></script>
+<script>
+const CELL = 3;          // CSS-Pixel je Zelle – fein, damit die Linien scharf bleiben
+const TINE = 9;          // λ: wie spitz die Nadel zieht, in CSS-Pixeln
+const TINE_REACH = 10;   // Reichweite in Vielfachen von λ
+const DROP = 0.06;       // Radius eines Tropfens, Anteil der kürzeren Bildseite (± 30 %)
+const DROP_REACH = 7;    // wie weit ein Tropfen die Umgebung verdrängt, in Vielfachen seines Radius
+const TAP_MOVE = 6;      // so wenig darf sich ein Finger bewegen, damit es ein Tippen ist
+
+const FS = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 outColor;
+${PICTURE_GLSL}
+uniform sampler2D uField;
+void main() {
+  float edge = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+  vec2 d = texture(uField, vUv).rg * smoothstep(0.0, 0.03, edge);
+  outColor = vec4(picture(vUv - d), 1.0);
+}`;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const gl = glContext(canvas);
+let prog; let quad; let imgTex; let fieldTex;
+if (gl) {
+  prog = glProgram(gl, FS);
+  quad = glQuad(gl);
+  imgTex = glTexture(gl);
+  fieldTex = glTexture(gl);
+}
+
+let g = null;
+let fw = 0; let fh = 0;
+let disp; let scratch;
+let changed = true;
+const fingers = new Map();
+
+function sample(u, v) { // Verschiebung bei (u, v), aus der Kopie vor dieser Änderung
+  const fx = clamp(u * fw - 0.5, 0, fw - 1.001);
+  const fy = clamp(v * fh - 0.5, 0, fh - 1.001);
+  const x0 = Math.floor(fx); const y0 = Math.floor(fy);
+  const tx = fx - x0; const ty = fy - y0;
+  const i = (y0 * fw + x0) * 2; const j = i + fw * 2;
+  return [
+    (scratch[i] * (1 - tx) + scratch[i + 2] * tx) * (1 - ty) + (scratch[j] * (1 - tx) + scratch[j + 2] * tx) * ty,
+    (scratch[i + 1] * (1 - tx) + scratch[i + 3] * tx) * (1 - ty) + (scratch[j + 1] * (1 - tx) + scratch[j + 3] * tx) * ty,
+  ];
+}
+function box(cx, cy, reach) {
+  return [
+    Math.max(0, Math.floor(((cx - reach) / g.cssW) * fw)), Math.min(fw - 1, Math.ceil(((cx + reach) / g.cssW) * fw)),
+    Math.max(0, Math.floor(((cy - reach) / g.cssH) * fh)), Math.min(fh - 1, Math.ceil(((cy + reach) / g.cssH) * fh)),
+  ];
+}
+
+/* Die Nadel: D'(x) = δ·w(x) + D(x − δ·w(x)), w = (λ / (d + λ))². */
+function tine(x0, y0, x1, y1) {
+  const du = (x1 - x0) / g.cssW; const dv = (y1 - y0) / g.cssH;
+  if (du === 0 && dv === 0) return;
+  scratch.set(disp);
+  const reach = TINE * TINE_REACH;
+  const [a0, a1, b0, b1] = box(x1, y1, reach);
+  for (let cy = b0; cy <= b1; cy++) {
+    for (let cx = a0; cx <= a1; cx++) {
+      const u = (cx + 0.5) / fw; const v = (cy + 0.5) / fh;
+      const d = Math.hypot(u * g.cssW - x1, v * g.cssH - y1);
+      if (d > reach) continue;
+      const w = (TINE / (d + TINE)) ** 2;
+      const [ox, oy] = sample(u - du * w, v - dv * w);
+      const i = (cy * fw + cx) * 2;
+      disp[i] = du * w + ox;
+      disp[i + 1] = dv * w + oy;
+    }
+  }
+  changed = true;
+}
+
+/* Der Tropfen: alles um C rückt nach außen, innen liegt die Farbe, die bei C lag. */
+function drop(x, y) {
+  const r = DROP * Math.min(g.cssW, g.cssH) * (0.7 + Math.random() * 0.6);
+  scratch.set(disp);
+  const [a0, a1, b0, b1] = box(x, y, r * DROP_REACH);
+  for (let cy = b0; cy <= b1; cy++) {
+    for (let cx = a0; cx <= a1; cx++) {
+      const px = ((cx + 0.5) / fw) * g.cssW; const py = ((cy + 0.5) / fh) * g.cssH;
+      const ex = px - x; const ey = py - y;
+      const d = Math.hypot(ex, ey);
+      if (d > r * DROP_REACH) continue;
+      let sx = x; let sy = y;
+      if (d > r) { const k = Math.sqrt(1 - (r * r) / (d * d)); sx = x + ex * k; sy = y + ey * k; }
+      const su = sx / g.cssW; const sv = sy / g.cssH;
+      const [ox, oy] = sample(su, sv);
+      const i = (cy * fw + cx) * 2;
+      // neue Quelle = alte Quelle des Punktes, auf den der Tropfen zeigt
+      disp[i] = (cx + 0.5) / fw - (su - ox);
+      disp[i + 1] = (cy + 0.5) / fh - (sv - oy);
+    }
+  }
+  changed = true;
+}
+
+const effect = {
+  setImage(im) {
+    if (!gl) return;
+    g = fit(im);
+    glFit(gl, canvas, im, g, prog);
+    glImage(gl, imgTex, im);
+    fw = Math.max(8, Math.round(g.cssW / CELL));
+    fh = Math.max(8, Math.round(g.cssH / CELL));
+    disp = new Float32Array(fw * fh * 2);
+    scratch = new Float32Array(fw * fh * 2);
+    glFieldRG(gl, fieldTex, fw, fh, disp);
+    fingers.clear();
+    changed = true;
+  },
+  reset() { if (disp) { disp.fill(0); changed = true; } },
+};
+
+track(canvas, {
+  down(id, x, y) { fingers.set(id, { x, y, x0: x, y0: y, moved: 0 }); },
+  move(id, x, y) {
+    const f = fingers.get(id);
+    if (!f || !disp) return;
+    f.moved = Math.max(f.moved, Math.hypot(x - f.x0, y - f.y0));
+    if (f.moved < TAP_MOVE) return; // noch ein Tippen
+    tine(f.x, f.y, x, y);
+    f.x = x; f.y = y;
+  },
+  up(id) {
+    const f = fingers.get(id);
+    if (f && disp && f.moved < TAP_MOVE) drop(f.x0, f.y0);
+    fingers.delete(id);
+  },
+});
+
+if (gl) {
+  loop(() => {
+    if (!disp || !changed) return;
+    gl.useProgram(prog);
+    glUpdateRG(gl, fieldTex, fw, fh, disp);
+    glBind(gl, prog, 'uImg', 0, imgTex);
+    glBind(gl, prog, 'uField', 1, fieldTex);
+    quad.draw();
+    changed = false;
+  });
+}
+
+boot(effect);
+</script>
+</body>
+</html>

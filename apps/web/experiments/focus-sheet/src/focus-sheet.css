@@ -1,0 +1,167 @@
+/* Experiment-only styles (CLAUDE.md rule 10: L14 does not bind here, but
+   Layer 1 tokens anyway).
+
+   THE STATUS LINE SITS WHERE THE APP'S HEADER WOULD. `.musie-app` pads its
+   top by the header band whether or not a header is drawn, and the listen
+   step's three views are sized from the viewport minus that band — so the
+   band stays, and the line that says what this browser can do lives in it,
+   visible on the first screen. At the foot of the step it would be two full
+   screens down. Type and colour are `.musie-session__context`'s. */
+.musie-focus-sheet-status {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  margin: 0;
+  padding: var(--sp-4) var(--gutter);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+}
+
+/* ═══ THE NEW LISTENING VIEW (Hoeren.tsx) — Figma page 30, 2026-11-27 ═══════
+   Quick and dirty. Full screen, fixed: under the browser's fullscreen it is
+   the whole screen; where there is none (iPhone) it is what the browser
+   shows. The safe-area insets keep the bottom row off the home indicator. */
+.musie-hoeren {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding:
+    max(var(--sp-4), env(safe-area-inset-top))
+    max(var(--sp-4), env(safe-area-inset-right))
+    max(var(--sp-4), env(safe-area-inset-bottom))
+    max(var(--sp-4), env(safe-area-inset-left));
+  background-color: var(--surface);
+  color: var(--on-surface);
+}
+
+/* The card takes what the foot leaves it — which is the „mask“ when the
+   instruction opens. 32 px corners as drawn: no token holds 32 (xl 24,
+   2xl 40), and an experiment may say a number. */
+.musie-hoeren__media {
+  position: relative;
+  flex: 1 1 0;
+  min-block-size: 0;
+  overflow: hidden;
+  border-radius: 32px;
+}
+
+/* Card and effect, as tall as the box is with the instruction closed
+   (Hoeren.tsx sets the height). Anchored at the top, so opening the
+   instruction cuts it off at the bottom instead of rescaling it. */
+.musie-hoeren__layer {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 100%;
+}
+
+.musie-hoeren__layer > img,
+.musie-hoeren__effect {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+}
+
+.musie-hoeren__layer > img {
+  object-fit: cover;
+}
+
+/* The effect page is transparent until it has drawn, so the card shows. */
+.musie-hoeren__effect {
+  display: block;
+  background: transparent;
+  touch-action: none;
+}
+
+/* Over the card's top edge: the bar, then the X in its 44px target — at
+   Figma's exact insets („consider spacing here“, „consider the exact gap“):
+   10 from the top, 22 from the left, 11 from the right. The X's glyph sits
+   12 inside its target, so it ends 23 from the right and 22 from the top,
+   level with where the bar begins. */
+.musie-hoeren__head {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline: 22px 11px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: var(--target-primary);
+  /* The picture under the bar can be played with; only the X takes a tap. */
+  pointer-events: none;
+}
+
+.musie-hoeren__progress {
+  flex: 1 1 auto;
+  block-size: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  /* „bg with opacity“ — Figma's value; it is #C7CCC0, --green-5's light
+     value, written out so it does not flip with a theme. */
+  background-color: rgb(199 204 192 / 0.7);
+}
+
+.musie-hoeren__fill {
+  block-size: 100%;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-raised);
+  transition: inline-size 250ms linear;
+}
+
+/* „ONLY dark palette inside image“: the wrappers carry data-theme="dark", so
+   the buttons read the dark tokens. The wrappers take taps; the head around
+   them does not. */
+.musie-hoeren__on-image {
+  display: flex;
+  pointer-events: auto;
+  background: transparent;
+}
+
+/* Bottom right of the card, 10 / 11 in, as drawn — and it moves up with the
+   card's edge when the instruction opens. Only there once the picture was
+   touched. */
+.musie-hoeren__reset {
+  position: absolute;
+  inset-block-end: 10px;
+  inset-inline-end: 11px;
+}
+
+/* At the bottom edge, always: the column's last child. */
+.musie-hoeren__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.musie-hoeren__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Flush with the card's edges, as drawn: the min rung's baked-in margin
+   would push both buttons --sp-2 in. */
+.musie-hoeren__actions > .musy-btn {
+  margin: 0;
+}
+
+/* --sp-4 below the text as well as beside it, as drawn (the frame's own
+   padding comes on top). */
+.musie-hoeren__instruction {
+  margin: 0;
+  padding: 0 var(--sp-4) var(--sp-4);
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+  text-wrap: pretty;
+}

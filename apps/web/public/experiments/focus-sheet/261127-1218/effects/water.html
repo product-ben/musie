@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<!-- Eingebettet ins Fokus-Sheet-Experiment (Ben, 2026-11-27): Kopie von
+     /experiments/digital-image-entertainment/261126-1028/water.html ohne Kopf und Knöpfe;
+     der Effekt darunter ist unverändert. -->
+<title>Musie · Wasser</title>
+<!-- Musie-Experiment „Mit dem Bild spielen“ (siehe index.html). Wasser: Berührung wirft Wellen, die das
+     Bild darunter brechen und langsam auslaufen. Eine Höhenkarte auf der CPU (Zwei-Puffer-Welle), jedes
+     Bild als Textur hochgeladen. Aus „Weiches Bild“ 261126-0948 herausgelöst. -->
+<link rel="stylesheet" href="embed.css">
+</head>
+<body>
+<main id="stage"></main>
+<script src="embed.js"></script>
+<script src="gl.js"></script>
+<script>
+const CELL = 4;        // CSS-Pixel je Zelle
+const DAMP = 0.986;    // je Schritt; nach 1 s ist eine Welle auf gut 40 % abgeklungen
+const HZ = 60;         // Schritte je Sekunde, unabhängig von der Bildrate
+const TAP = 3.0;       // Tiefe eines Tippens
+const TAP_R = 4;       // in Zellen
+const DRAG = 0.7;      // Tiefe der Spur eines gezogenen Fingers
+const DRAG_R = 3;
+const REFRACT_PX = 6;  // wie weit die Oberfläche das Bild darunter verschiebt
+const SLOPE = 0.45;    // wie steil die Wellen für das Licht wirken
+
+const FS = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 outColor;
+${PICTURE_GLSL}
+uniform sampler2D uField;
+uniform vec2 uTexel;
+uniform vec2 uRefract;
+uniform float uSlope;
+void main() {
+  float hl = texture(uField, vUv - vec2(uTexel.x, 0.0)).r;
+  float hr = texture(uField, vUv + vec2(uTexel.x, 0.0)).r;
+  float hu = texture(uField, vUv - vec2(0.0, uTexel.y)).r;
+  float hd = texture(uField, vUv + vec2(0.0, uTexel.y)).r;
+  vec2 g = vec2(hr - hl, hd - hu);
+  vec3 c = picture(vUv + g * uRefract);
+  vec3 n = normalize(vec3(-g * uSlope, 1.0));
+  vec3 L = normalize(vec3(-0.5, -0.6, 1.0));
+  vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+  float diffuse = dot(n, L) - L.z;
+  float spec = max(pow(max(dot(n, H), 0.0), 90.0) - pow(H.z, 90.0), 0.0);
+  outColor = vec4(c + diffuse * 0.35 + spec * 0.5, 1.0);
+}`;
+
+const canvas = document.createElement('canvas');
+stage.append(canvas);
+const gl = glContext(canvas);
+let prog;
+let quad;
+let imgTex;
+let fieldTex;
+if (gl) {
+  prog = glProgram(gl, FS);
+  quad = glQuad(gl);
+  imgTex = glTexture(gl);
+  fieldTex = glTexture(gl);
+}
+
+let g = null;
+let fw = 0;
+let fh = 0;
+let cur;
+let prev;
+let upload;
+const fingers = new Map();
+
+function step() {
+  for (let y = 1; y < fh - 1; y++) {
+    let i = y * fw + 1;
+    for (let x = 1; x < fw - 1; x++, i++) {
+      prev[i] = ((cur[i - 1] + cur[i + 1] + cur[i - fw] + cur[i + fw]) * 0.5 - prev[i]) * DAMP;
+    }
+  }
+  const t = cur;
+  cur = prev;
+  prev = t;
+}
+
+function splash(cx, cy, r, amount) {
+  const x0 = Math.max(1, Math.floor(cx - r));
+  const x1 = Math.min(fw - 2, Math.ceil(cx + r));
+  const y0 = Math.max(1, Math.floor(cy - r));
+  const y1 = Math.min(fh - 2, Math.ceil(cy + r));
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const d = Math.hypot(x - cx, y - cy);
+      if (d < r) cur[y * fw + x] -= amount * 0.5 * (1 + Math.cos((Math.PI * d) / r));
+    }
+  }
+}
+
+const effect = {
+  setImage(im) {
+    if (!gl) return;
+    g = fit(im);
+    glFit(gl, canvas, im, g, prog);
+    glImage(gl, imgTex, im);
+    fw = Math.max(8, Math.round(g.cssW / CELL));
+    fh = Math.max(8, Math.round(g.cssH / CELL));
+    cur = new Float32Array(fw * fh);
+    prev = new Float32Array(fw * fh);
+    upload = new Float32Array(fw * fh * 2);
+    glFieldRG(gl, fieldTex, fw, fh, upload);
+    gl.uniform2f(prog.u('uTexel'), 1 / fw, 1 / fh);
+    gl.uniform2f(prog.u('uRefract'), REFRACT_PX / g.cssW, REFRACT_PX / g.cssH);
+    gl.uniform1f(prog.u('uSlope'), SLOPE);
+    fingers.clear();
+  },
+};
+
+track(canvas, {
+  down(id, x, y) {
+    fingers.set(id, { x, y });
+    splash(x / CELL, y / CELL, TAP_R, TAP);
+  },
+  move(id, x, y) {
+    const f = fingers.get(id);
+    if (!f || !cur) return;
+    const n = Math.floor(Math.hypot(x - f.x, y - f.y) / CELL / 1.5);
+    if (n === 0) return; // erst nach einem Stück Weg – sonst summieren sich winzige Schritte
+    for (let k = 1; k <= n; k++) {
+      const t = k / n;
+      splash((f.x + (x - f.x) * t) / CELL, (f.y + (y - f.y) * t) / CELL, DRAG_R, DRAG);
+    }
+    f.x = x;
+    f.y = y;
+  },
+  up(id) { fingers.delete(id); },
+});
+
+let acc = 0;
+if (gl) {
+  loop((dt) => {
+    if (!cur) return;
+    acc += dt;
+    while (acc >= 1 / HZ) { step(); acc -= 1 / HZ; }
+    for (let i = 0; i < cur.length; i++) upload[i * 2] = cur[i];
+    gl.useProgram(prog);
+    glUpdateRG(gl, fieldTex, fw, fh, upload);
+    glBind(gl, prog, 'uImg', 0, imgTex);
+    glBind(gl, prog, 'uField', 1, fieldTex);
+    quad.draw();
+  });
+}
+
+boot(effect);
+</script>
+</body>
+</html>
