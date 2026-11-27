@@ -13246,3 +13246,31 @@ What I need from Ben:
   where the browser offers it (Android, iPad), the home-screen web app (the
   only way on an iPhone, but a QR scan from the camera opens Safari, not the
   app), or nothing.
+
+### Follow-up, 2026-11-27 — the Figma listening view replaces the immersive Sheet
+
+Ben: „get rid of the immersive sheet again, implement this instead (read the
+comments) … Quick and dirty to allow me to test it“ — Layer 1 file, page 30,
+„Achtsame Pause · Hören · digitale Karte · Anweisung an“, two frames.
+
+- **The Sheet is no longer reached.** The capturing handler on the transport
+  now STOPS the tap, so `SessionListen` never navigates to `?focus`. In the
+  same tap it requests fullscreen, starts this page's own `<audio>`
+  (`player.ts`) and pushes `?hoeren`, which shows `Hoeren.tsx`.
+- **The view, as drawn:** the card fills what is left, cropped (cover), radius
+  card; the progress bar (share of the minimum, continuous — Figma's 10 %
+  steps are only how Figma draws it) and the X over its top edge; Pause and
+  „Was sollte ich machen?“ in a row at the bottom edge.
+- **Ben's four comments:** the bottom row — and the instruction under it when
+  open — sticks to the bottom of the screen; opening the instruction takes its
+  height from the card, which is cropped further, not scaled (765 → 694 px at
+  393 × 852, Figma 764 → 693); the X is `--on-surface` on a light picture and
+  `--on-surface-inverse` on a dark one, measured from the crop actually under
+  it. The threshold (luminance 0.55) is a GUESS.
+- **Quick and dirty, knowingly:** the instruction is the rotation's first
+  question only; no way on inside the view — reaching the minimum unlocks
+  „Beginne zu reflektieren“ on the overview behind it; the overview's own
+  transport still reads „mindestens 2:00“ after listening; no focus trap;
+  German only, strings inline.
+- Verified in Chromium at 393 × 852, with and without the Fullscreen API.
+  Not on a phone.

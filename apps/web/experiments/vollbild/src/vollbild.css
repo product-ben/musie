@@ -20,3 +20,105 @@
   letter-spacing: var(--type-label-md-tracking);
   color: var(--on-surface-muted);
 }
+
+/* ═══ THE NEW LISTENING VIEW (Hoeren.tsx) — Figma page 30, 2026-11-27 ═══════
+   Quick and dirty. Full screen, fixed: under the browser's fullscreen it is
+   the whole screen; where there is none (iPhone) it is what the browser
+   shows. The safe-area insets keep the bottom row off the home indicator. */
+.musie-hoeren {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding:
+    max(var(--sp-4), env(safe-area-inset-top))
+    max(var(--sp-4), env(safe-area-inset-right))
+    max(var(--sp-4), env(safe-area-inset-bottom))
+    max(var(--sp-4), env(safe-area-inset-left));
+  background-color: var(--surface);
+  color: var(--on-surface);
+}
+
+/* The card takes what the foot leaves it and is cropped to it (cover) —
+   which is the „mask“ when the instruction opens. */
+.musie-hoeren__media {
+  position: relative;
+  flex: 1 1 0;
+  min-block-size: 0;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+}
+
+.musie-hoeren__media > img {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Over the card's top edge: the bar, then the X in its 44px target. */
+.musie-hoeren__head {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: var(--sp-3) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: var(--target-primary);
+}
+
+.musie-hoeren__progress {
+  flex: 1 1 auto;
+  block-size: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-sunken);
+}
+
+.musie-hoeren__fill {
+  block-size: 100%;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-raised);
+  transition: inline-size 250ms linear;
+}
+
+/* „Wenn bg is dark → icon white, when bg is light → icon dark“ */
+.musie-hoeren .musie-hoeren__close.musy-icon-btn {
+  color: var(--on-surface);
+}
+.musie-hoeren .musie-hoeren__close.musy-icon-btn[data-tone='dark'] {
+  color: var(--on-surface-inverse);
+}
+
+/* At the bottom edge, always: the column's last child. */
+.musie-hoeren__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.musie-hoeren__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Flush with the card's edges, as drawn: the min rung's baked-in margin
+   would push both buttons --sp-2 in. */
+.musie-hoeren__actions > .musy-btn {
+  margin: 0;
+}
+
+.musie-hoeren__instruction {
+  margin: 0;
+  padding-inline: var(--sp-4);
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+  text-wrap: pretty;
+}
