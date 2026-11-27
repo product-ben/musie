@@ -13341,3 +13341,27 @@ Read from the page's comments and its Dev Mode annotations.
   hören; the ended state shows Play rather than a second rotate arrow.
 - **Card corners 32 px** (no token holds 32), and **the instruction has
   --sp-4 below it** as well.
+
+### Follow-up, 2026-11-27 — a gradient under the X, at 40 %
+
+Ben asked what gradient from the top right keeps the X visible, then chose
+40 % of the two measured answers.
+
+- **Measured, all nine cards at 393 × 852** (cover crop, pixels under the
+  X's 20 × 20 glyph, X = dark palette's rgb(237 240 236), target 3:1 for a
+  control, WCAG 1.4.11): eight of nine fall below 3:1 on average; the worst
+  pixels reach 1.1:1 (mc-08). Only mc-09 passes untouched.
+- **40 % black brings every pixel of every card to ≥ 3.1:1** (mc-08 the
+  lowest). 46 % would hold for anything, pure white included. Chosen: 40 % —
+  lighter, and enough for today's deck at rest. **Left open on purpose:**
+  Verrühren and Marmorieren can push light colour under the X, and a lighter
+  future card can too; then the X can drop below 3:1.
+- **Shape:** a radial gradient from the card's top-right corner, full
+  strength to 60 px (the glyph lies 32–60 px from the corner), fading to 0 by
+  150 px. The fade is by eye. Over card and effect, under the controls,
+  `pointer-events: none`.
+- **Verified as rendered** (mc-01, X hidden while sampling): worst pixel
+  1.54:1 → 4.03:1, mean 2.2:1 → 5.3:1; a touch in the darkened corner still
+  reaches the effect.
+- **Not covered:** the progress bar, which has the same light-on-light
+  problem and runs outside the corner.
