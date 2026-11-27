@@ -172,6 +172,7 @@ function ListenPage() {
           imageAlt={CARD.imageAlt ?? ''}
           effectSrc={CARD.imageUrl === null ? null : effectUrl(SESSION_EFFECT, CARD.imageUrl)}
           effectName={SESSION_EFFECT.name}
+          effectSettleMs={SESSION_EFFECT.settleMs}
           instruction={question.text?.listen ?? EXERCISE.name}
           progress={player.position / GATE_SECONDS}
           player={player}

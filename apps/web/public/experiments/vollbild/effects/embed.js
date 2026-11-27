@@ -54,6 +54,11 @@ function pictureCanvas(im, g, w, h) {
   return c;
 }
 
+/* Der Hören-Ansicht sagen, dass das Bild berührt wurde – sie zeigt dann „Bild zurücksetzen“. */
+function tell(type) {
+  if (window.parent !== window) window.parent.postMessage({ source: 'vollbild-effect', type }, location.origin);
+}
+
 /* Zeiger in CSS-Pixeln des Elements; mehrere Finger zugleich. */
 function track(el, { down, move, up }) {
   el.addEventListener('pointerdown', (e) => {
@@ -61,6 +66,7 @@ function track(el, { down, move, up }) {
     el.setPointerCapture(e.pointerId);
     const r = el.getBoundingClientRect();
     down(e.pointerId, e.clientX - r.left, e.clientY - r.top);
+    tell('touch');
   });
   el.addEventListener('pointermove', (e) => {
     if (!el.hasPointerCapture(e.pointerId)) return;
@@ -68,7 +74,10 @@ function track(el, { down, move, up }) {
     const list = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [];
     for (const c of list.length ? list : [e]) move(e.pointerId, c.clientX - r.left, c.clientY - r.top);
   });
-  const end = (e) => up(e.pointerId);
+  const end = (e) => {
+    up(e.pointerId);
+    tell('release');
+  };
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
 }
@@ -104,5 +113,12 @@ function boot(effect) {
   loadImage(cardSrc).then((im) => {
     img = im;
     effect.setImage(im);
+  });
+  /* „Bild zurücksetzen“ aus der Hören-Ansicht: der Effekt seine eigene Rücksetzung, wo er eine
+     hat (Verrühren, Marmorieren), sonst von vorn mit demselben Bild (Wasser, Morphen). */
+  window.addEventListener('message', (e) => {
+    if (e.origin !== location.origin || e.data?.source !== 'vollbild' || e.data.type !== 'reset' || !img) return;
+    if (typeof effect.reset === 'function') effect.reset();
+    else effect.setImage(img);
   });
 }

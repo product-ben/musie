@@ -1,75 +1,43 @@
 /**
  * THE NEW LISTENING VIEW — Figma „Achtsame Pause · Hören · digitale Karte ·
- * Anweisung an“ (Layer 1 file, page 30), with Ben's four comments, 2026-11-27.
- * Quick and dirty, to be tried on a phone; it replaces the immersive Sheet in
- * this experiment only.
+ * Anweisung an“ (Layer 1 file, page 30), with Ben's comments and annotations,
+ * 2026-11-27. Quick and dirty, to be tried on a phone; it replaces the
+ * immersive Sheet in this experiment only.
  *
- *   · The card fills what the layout leaves it, cropped (cover), corners
- *     radius/card. Progress bar and X lie over its top edge.
- *   · „make the icon white! Wenn bg is dark → icon white, when bg is light →
- *     icon dark“: the X's colour follows the brightness of the picture under
- *     it, sampled from the crop that is actually on screen (`toneUnder`).
- *   · „this is sticky to the bottom of the screen“ (twice): the action row —
- *     and the instruction under it, when open — sit at the bottom edge.
- *   · „Image mask: if the panel on the bottom is open, the image gets
- *     masked“: opening the instruction takes its height from the card, which
- *     is cropped further rather than scaled.
+ *   · The card fills what the layout leaves it, cropped (cover), corners 32 px.
+ *     Progress bar and X lie over its top edge at Figma's exact insets
+ *     („consider spacing here“, „consider the exact gap“): 10 px from the top,
+ *     22 px from the left, 11 px from the right — so the bar starts 22 px in
+ *     and the X's glyph ends 23 px in.
+ *   · „ONLY dark palette inside image“ (X and reset): the controls laid on the
+ *     picture sit under `data-theme="dark"`, so every token they read is the
+ *     dark one. This replaced the X that measured the picture's brightness.
+ *   · The track is „bg with opacity“: rgb(199 204 192 / 0.7).
+ *   · „this is sticky to the bottom of the screen“: the action row — and the
+ *     instruction under it, when open — sit at the bottom edge.
+ *   · „Image mask: if the panel on the bottom is open, the image gets masked“.
+ *   · Pause is an icon button now.
  *
- * The progress bar is the share of the minimum time listened (Figma
- * „Progress“: it replaces the countdown figure). Continuous here; the 10 %
- * steps are only how Figma can draw it.
- *
- * ── THE PICTURE CAN BE PLAYED WITH (2026-11-27) ──────────────────────────
+ * ── THE PICTURE CAN BE PLAYED WITH ───────────────────────────────────────
  * Over the card lies one of four effects from „Mit dem Bild spielen“, picked
- * per tab (`effect.ts`), in an iframe. The card `<img>` stays underneath: it
- * shows until the effect has drawn, and the X's tone is measured from it.
+ * per tab (`effect.ts`), in an iframe. The card `<img>` stays underneath and
+ * shows until the effect has drawn.
  *
- * THE MASK IS A MASK NOW. Card and effect sit in a LAYER as tall as the card
- * is with the instruction closed; opening the instruction shortens the box
- * and the layer is cut off at the bottom — nothing rescales. That is Ben's
- * comment taken literally, and it is also what keeps the effect alive: a
- * resized iframe would start its effect over and lose what was played.
+ * THE RESET (annotation: „a reset button to reset the image. Only appears
+ * when the user has manipulated the image“). The effect page reports each
+ * touch and release by `postMessage`; the button shows on the first touch and
+ * goes on reset — or by itself once an effect that heals on its own has had
+ * time to (`Effect.settleMs`). Marmorieren never heals, so there it stays.
+ *
+ * THE MASK IS A MASK. Card and effect sit in a LAYER as tall as the card is
+ * with the instruction closed; opening the instruction shortens the box and
+ * the layer is cut off at the bottom — nothing rescales, so the effect keeps
+ * what was played.
  */
 import * as React from 'react';
 import { Info, Pause, Play, RotateCcw, X } from 'lucide-react';
 import { Button, IconButton } from '@musie/design-system';
 import type { Player } from './player';
-
-type Tone = 'light' | 'dark';
-
-/**
- * Light or dark, for the picture under `box` — where `img` is drawn with
- * `object-fit: cover` (centred) into `media`. Reads the source pixels of
- * exactly that crop into an 8×8 canvas and averages their luminance.
- */
-function toneUnder(img: HTMLImageElement, media: DOMRect, box: DOMRect): Tone {
-  const width = img.naturalWidth;
-  const height = img.naturalHeight;
-  if (width === 0 || height === 0 || media.width === 0 || media.height === 0) return 'light';
-  const scale = Math.max(media.width / width, media.height / height);
-  const offsetX = (media.width - width * scale) / 2;
-  const offsetY = (media.height - height * scale) / 2;
-  const sx = (box.left - media.left - offsetX) / scale;
-  const sy = (box.top - media.top - offsetY) / scale;
-  const canvas = document.createElement('canvas');
-  canvas.width = 8;
-  canvas.height = 8;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (context === null) return 'light';
-  try {
-    context.drawImage(img, sx, sy, box.width / scale, box.height / scale, 0, 0, 8, 8);
-    const data = context.getImageData(0, 0, 8, 8).data;
-    let sum = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
-    }
-    const luminance = sum / (data.length / 4) / 255;
-    /* A GUESS, not tuned: below the middle reads as dark under a thin X. */
-    return luminance < 0.55 ? 'dark' : 'light';
-  } catch {
-    return 'light';
-  }
-}
 
 export interface HoerenProps {
   imageSrc: string;
@@ -78,6 +46,8 @@ export interface HoerenProps {
   effectSrc: string | null;
   /** What the effect is, for the iframe's accessible name. */
   effectName: string;
+  /** How long after the last release the effect has healed by itself; null if never. */
+  effectSettleMs: number | null;
   instruction: string;
   /** 0–1: the share of the minimum time listened. */
   progress: number;
@@ -85,28 +55,28 @@ export interface HoerenProps {
   onClose: () => void;
 }
 
+/** What the embedded effect page says (see `effects/embed.js`). */
+interface EffectMessage {
+  source: 'vollbild-effect';
+  type: 'touch' | 'release';
+}
+
+function isEffectMessage(data: unknown): data is EffectMessage {
+  return typeof data === 'object' && data !== null
+    && (data as { source?: unknown }).source === 'vollbild-effect';
+}
+
 export function Hoeren({
-  imageSrc, imageAlt, effectSrc, effectName, instruction, progress, player, onClose,
+  imageSrc, imageAlt, effectSrc, effectName, effectSettleMs, instruction, progress, player, onClose,
 }: HoerenProps) {
   const [showInstruction, setShowInstruction] = React.useState(false);
-  const [tone, setTone] = React.useState<Tone>('light');
+  const [touched, setTouched] = React.useState(false);
   /* The layer's height: what the card's box is with the instruction CLOSED.
      Null until measured, and then the layer simply fills the box. */
   const [layerHeight, setLayerHeight] = React.useState<number | null>(null);
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const mediaRef = React.useRef<HTMLDivElement>(null);
-  const imgRef = React.useRef<HTMLImageElement>(null);
-  const closeRef = React.useRef<HTMLButtonElement>(null);
   const actionsRef = React.useRef<HTMLDivElement>(null);
-
-  /* The X's tone, from the card as the layer draws it — which is the same
-     crop the effect shows (its `fit` is cover too). */
-  const measure = React.useCallback(() => {
-    const img = imgRef.current;
-    const close = closeRef.current;
-    if (img === null || close === null || !img.complete) return;
-    setTone(toneUnder(img, img.getBoundingClientRect(), close.getBoundingClientRect()));
-  }, []);
+  const frameRef = React.useRef<HTMLIFrameElement>(null);
 
   /* COMPUTED FROM THE VIEW, NOT FROM THE BOX: the view's inner height minus
      the gap and the action row. So the instruction opening and closing does
@@ -121,13 +91,34 @@ export function Hoeren({
       const gap = Number.parseFloat(style.rowGap) || 0;
       const actions = actionsRef.current?.getBoundingClientRect().height ?? 0;
       setLayerHeight(Math.round(inner - gap - actions));
-      measure();
     };
     const observer = new ResizeObserver(update);
     observer.observe(root);
     update();
     return () => observer.disconnect();
-  }, [measure]);
+  }, []);
+
+  /* The effect page's touches: show the reset on a touch, and — for an effect
+     that heals by itself — hide it again once it has had time to. */
+  React.useEffect(() => {
+    let settle: number | undefined;
+    function onMessage(event: MessageEvent) {
+      if (event.source !== frameRef.current?.contentWindow || !isEffectMessage(event.data)) return;
+      window.clearTimeout(settle);
+      if (event.data.type === 'touch') setTouched(true);
+      else if (effectSettleMs !== null) settle = window.setTimeout(() => setTouched(false), effectSettleMs);
+    }
+    window.addEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      window.clearTimeout(settle);
+    };
+  }, [effectSettleMs]);
+
+  const reset = React.useCallback(() => {
+    frameRef.current?.contentWindow?.postMessage({ source: 'vollbild', type: 'reset' }, window.location.origin);
+    setTouched(false);
+  }, []);
 
   /* Escape closes, as the old sheet's did. */
   React.useEffect(() => {
@@ -148,21 +139,22 @@ export function Hoeren({
 
   let transport: { label: string; icon: typeof Pause; onClick: () => void };
   if (player.playing) transport = { label: 'Pause', icon: Pause, onClick: player.pause };
-  else if (player.ended) transport = { label: 'Nochmal hören', icon: RotateCcw, onClick: player.play };
+  else if (player.ended) transport = { label: 'Nochmal hören', icon: Play, onClick: player.play };
   else transport = { label: 'Abspielen', icon: Play, onClick: player.play };
 
   const percent = Math.round(Math.min(1, Math.max(0, progress)) * 100);
 
   return (
     <div ref={rootRef} className="musie-hoeren" role="dialog" aria-modal="true" aria-label="Hören">
-      <div ref={mediaRef} className="musie-hoeren__media">
+      <div className="musie-hoeren__media">
         <div
           className="musie-hoeren__layer"
           style={layerHeight === null ? undefined : { blockSize: `${layerHeight}px` }}
         >
-          <img ref={imgRef} src={imageSrc} alt={imageAlt} onLoad={measure} />
+          <img src={imageSrc} alt={imageAlt} />
           {effectSrc !== null && (
             <iframe
+              ref={frameRef}
               className="musie-hoeren__effect"
               src={effectSrc}
               title={`Mit dem Bild spielen: ${effectName}`}
@@ -180,28 +172,26 @@ export function Hoeren({
           >
             <div className="musie-hoeren__fill" style={{ inlineSize: `${percent}%` }} />
           </div>
-          <IconButton
-            ref={closeRef}
-            className="musie-hoeren__close"
-            data-tone={tone}
-            glyph={X}
-            label="Hören beenden"
-            tooltip={false}
-            onClick={onClose}
-          />
+          {/* „ONLY dark palette inside image“ */}
+          <div className="musie-hoeren__on-image" data-theme="dark">
+            <IconButton glyph={X} label="Hören beenden" tooltip={false} onClick={onClose} />
+          </div>
         </div>
+        {touched && (
+          <div className="musie-hoeren__reset musie-hoeren__on-image" data-theme="dark">
+            <IconButton glyph={RotateCcw} label="Bild zurücksetzen" tooltip={false} onClick={reset} />
+          </div>
+        )}
       </div>
       <div className="musie-hoeren__foot">
         <div ref={actionsRef} className="musie-hoeren__actions">
-          <Button
-            variant="ghost"
-            size="min"
-            leadingIcon={transport.icon}
+          <IconButton
+            glyph={transport.icon}
+            label={transport.label}
+            tooltip={false}
             disabled={!player.ready}
             onClick={transport.onClick}
-          >
-            {transport.label}
-          </Button>
+          />
           <Button
             variant="ghost"
             size="min"

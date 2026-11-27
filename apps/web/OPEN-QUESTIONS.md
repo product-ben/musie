@@ -13309,3 +13309,35 @@ at random per session, discarded with the tab, a new draw next time.
 Verified in Chromium (SwiftShader WebGL 2) at 393 × 852: each effect draws
 (no „WebGL 2 fehlt“), a drag changes the picture, the instruction toggle keeps
 it. Not on a phone — the effects' cost there is the originals' cost.
+
+### Follow-up, 2026-11-27 — page 30 again: Ben's annotations
+
+Ben: „mach die changes bitte! Schau vor allem auf die Anmerkungen im File.“
+Read from the page's comments and its Dev Mode annotations.
+
+- **Head at Figma's exact insets** („consider spacing here“, „consider the
+  exact gap“): 10 / 22 / 11 px from top / left / right of the card. Measured:
+  the bar starts 22 px in, the X's glyph ends 23 px from the right and 22 px
+  from the top.
+- **„bg with opacity“** on the track: rgb(199 204 192 / 0.7), written out.
+- **„ONLY dark palette inside image“** on the X and the new reset: both sit
+  in a wrapper with `data-theme="dark"`, so they read the dark tokens (the
+  glyph renders rgb(237 240 236)). This replaces the X that measured the
+  picture's brightness — that comment is resolved in Figma.
+- **The reset** („a reset button to reset the image. Only appears when the
+  user has manipulated the image“), bottom right, 10 / 11 px in, moving up
+  with the card's edge when the instruction opens. The effect page posts each
+  touch and release; reset posts back and the effect resets (Verrühren and
+  Marmorieren by their own `reset`, Wasser and Morphen by starting over).
+  For the three that heal by themselves the button goes again once they have
+  (Wasser and Morphen 4 s after the finger lifts, Verrühren 18 s — read off
+  their constants, not tuned); for Marmorieren it stays. Measured: absent
+  before a touch, there after, gone after a press, and the picture is
+  pixel-identical to the untouched one.
+- **Its glyph is `RotateCcw`, not the drawn `Square`.** Figma has Icon/Square
+  there, which reads as a stop button beside Pause; the annotation says it
+  resets. A guess — one line to swap back.
+- **Pause is an icon button** (44 px), labelled Pause / Abspielen / Nochmal
+  hören; the ended state shows Play rather than a second rotate arrow.
+- **Card corners 32 px** (no token holds 32), and **the instruction has
+  --sp-4 below it** as well.

@@ -15,11 +15,16 @@
  * `apps/web/public/experiments/vollbild/effects/`.
  */
 
+/* `settleMs`: how long after the finger lifts the effect has healed by itself,
+   so the reset button can go again — read off each effect's own constants,
+   not tuned. Wasser: DAMP 0.986 per 1/60 s leaves ~3 % after 4 s. Morphen:
+   RELAX_FREE 1.2 s leaves ~4 % after 4 s. Verrühren: RETURN_TAU 6 s, „nach
+   3·TAU ist fast alles zurück“. Marmorieren never springs back. */
 export const EFFECTS = [
-  { id: 'water', name: 'Wasser', alias: 'wasser' },
-  { id: 'morph', name: 'Morphen', alias: 'morphen' },
-  { id: 'stir', name: 'Farbe verrühren', alias: 'verruehren' },
-  { id: 'marble', name: 'Marmorieren', alias: 'marmorieren' },
+  { id: 'water', name: 'Wasser', alias: 'wasser', settleMs: 4000 },
+  { id: 'morph', name: 'Morphen', alias: 'morphen', settleMs: 4000 },
+  { id: 'stir', name: 'Farbe verrühren', alias: 'verruehren', settleMs: 18000 },
+  { id: 'marble', name: 'Marmorieren', alias: 'marmorieren', settleMs: null },
 ] as const;
 
 export type Effect = (typeof EFFECTS)[number];

@@ -41,14 +41,15 @@
   color: var(--on-surface);
 }
 
-/* The card takes what the foot leaves it and is cropped to it (cover) —
-   which is the „mask“ when the instruction opens. */
+/* The card takes what the foot leaves it — which is the „mask“ when the
+   instruction opens. 32 px corners as drawn: no token holds 32 (xl 24,
+   2xl 40), and an experiment may say a number. */
 .musie-hoeren__media {
   position: relative;
   flex: 1 1 0;
   min-block-size: 0;
   overflow: hidden;
-  border-radius: var(--radius-card);
+  border-radius: 32px;
 }
 
 /* Card and effect, as tall as the box is with the instruction closed
@@ -81,11 +82,15 @@
   touch-action: none;
 }
 
-/* Over the card's top edge: the bar, then the X in its 44px target. */
+/* Over the card's top edge: the bar, then the X in its 44px target — at
+   Figma's exact insets („consider spacing here“, „consider the exact gap“):
+   10 from the top, 22 from the left, 11 from the right. The X's glyph sits
+   12 inside its target, so it ends 23 from the right and 22 from the top,
+   level with where the bar begins. */
 .musie-hoeren__head {
   position: absolute;
-  inset-block-start: 0;
-  inset-inline: var(--sp-3) 0;
+  inset-block-start: 10px;
+  inset-inline: 22px 11px;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -94,16 +99,14 @@
   pointer-events: none;
 }
 
-.musie-hoeren__head > .musie-hoeren__close {
-  pointer-events: auto;
-}
-
 .musie-hoeren__progress {
   flex: 1 1 auto;
   block-size: 4px;
   overflow: hidden;
   border-radius: var(--radius-full);
-  background-color: var(--surface-sunken);
+  /* „bg with opacity“ — Figma's value; it is #C7CCC0, --green-5's light
+     value, written out so it does not flip with a theme. */
+  background-color: rgb(199 204 192 / 0.7);
 }
 
 .musie-hoeren__fill {
@@ -113,12 +116,22 @@
   transition: inline-size 250ms linear;
 }
 
-/* „Wenn bg is dark → icon white, when bg is light → icon dark“ */
-.musie-hoeren .musie-hoeren__close.musy-icon-btn {
-  color: var(--on-surface);
+/* „ONLY dark palette inside image“: the wrappers carry data-theme="dark", so
+   the buttons read the dark tokens. The wrappers take taps; the head around
+   them does not. */
+.musie-hoeren__on-image {
+  display: flex;
+  pointer-events: auto;
+  background: transparent;
 }
-.musie-hoeren .musie-hoeren__close.musy-icon-btn[data-tone='dark'] {
-  color: var(--on-surface-inverse);
+
+/* Bottom right of the card, 10 / 11 in, as drawn — and it moves up with the
+   card's edge when the instruction opens. Only there once the picture was
+   touched. */
+.musie-hoeren__reset {
+  position: absolute;
+  inset-block-end: 10px;
+  inset-inline-end: 11px;
 }
 
 /* At the bottom edge, always: the column's last child. */
@@ -140,9 +153,11 @@
   margin: 0;
 }
 
+/* --sp-4 below the text as well as beside it, as drawn (the frame's own
+   padding comes on top). */
 .musie-hoeren__instruction {
   margin: 0;
-  padding-inline: var(--sp-4);
+  padding: 0 var(--sp-4) var(--sp-4);
   font-family: var(--type-heading-md-family);
   font-size: var(--type-heading-md-size);
   font-weight: var(--type-heading-md-weight);
